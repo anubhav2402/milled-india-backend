@@ -6,7 +6,6 @@ from datetime import datetime
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from bs4 import BeautifulSoup
@@ -19,26 +18,16 @@ LABEL_NAME = 'Search Engine'
 PROCESSED_FILE = 'processed_ids.txt'
 OUTPUT_DIR = 'emails'
 
+def _use_processed_file() -> bool:
+    """
+    On servers (Render cron), local filesystems may not be persistent.
+    Default to NOT using processed_ids.txt and rely on DB de-duplication instead.
+    """
+    return os.getenv("USE_PROCESSED_FILE", "").strip().lower() in {"1", "true", "yes", "y"}
+
 
 def authenticate():
     creds = None
-
-    # Server-friendly auth (Render cron/job): use env vars instead of local files/browser OAuth.
-    client_id = os.getenv("GOOGLE_CLIENT_ID")
-    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-    refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
-    if client_id and client_secret and refresh_token:
-        creds = Credentials(
-            token=None,
-            refresh_token=refresh_token,
-            token_uri="https://oauth2.googleapis.com/token",
-            client_id=client_id,
-            client_secret=client_secret,
-            scopes=SCOPES,
-        )
-        # Force refresh to obtain an access token
-        creds.refresh(Request())
-        return creds
 
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
@@ -60,6 +49,8 @@ def authenticate():
 
 
 def load_processed_ids():
+    if not _use_processed_file():
+        return set()
     if not os.path.exists(PROCESSED_FILE):
         return set()
     with open(PROCESSED_FILE, 'r') as f:
@@ -67,6 +58,8 @@ def load_processed_ids():
 
 
 def save_processed_id(msg_id):
+    if not _use_processed_file():
+        return
     with open(PROCESSED_FILE, 'a') as f:
         f.write(msg_id + '\n')
 
