@@ -6,6 +6,7 @@ from datetime import datetime
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 from bs4 import BeautifulSoup
@@ -27,8 +28,25 @@ def _use_processed_file() -> bool:
 
 
 def authenticate():
-    creds = None
+    # Server-friendly auth (Render cron/job): use env vars instead of local files/browser OAuth.
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    refresh_token = os.getenv("GOOGLE_REFRESH_TOKEN")
+    if client_id and client_secret and refresh_token:
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=SCOPES,
+        )
+        # Force refresh to obtain an access token
+        creds.refresh(Request())
+        return creds
 
+    # Fallback to local file-based auth (for local development)
+    creds = None
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
