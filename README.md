@@ -13,6 +13,27 @@ pip install -r requirements.txt
 
 ### 2. Gmail credentials
 
+You have two options:
+
+#### Option A (recommended for Render): refresh token via env vars (no browser)
+
+1) Create an OAuth client in Google Cloud Console (Desktop app) with Gmail API enabled.
+2) Download the OAuth client JSON (often called `credentials.json`) locally.
+3) Generate a refresh token locally:
+
+```bash
+python get_refresh_token.py --credentials credentials.json
+```
+
+4) Add these env vars on Render (both the **web service** and the **cron job**):
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REFRESH_TOKEN`
+
+After that, ingestion can run headlessly on Render (no `token.pickle`, no browser).
+
+#### Option B (local only): browser OAuth + token.pickle
+
 - Place your Gmail API `credentials.json` in the project root (next to `engine.py`).
 - First run of ingestion will open a browser for OAuth and create `token.pickle`.
 
