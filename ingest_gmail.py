@@ -9,7 +9,10 @@ from engine import fetch_label_emails
 
 
 def upsert_emails(db: Session):
-    records = fetch_label_emails()
+    # Fetch more emails per run (configurable via env var, default 100)
+    import os
+    max_results = int(os.getenv("GMAIL_MAX_RESULTS", "100"))
+    records = fetch_label_emails(max_results=max_results)
     created = 0
     skipped = 0
 
