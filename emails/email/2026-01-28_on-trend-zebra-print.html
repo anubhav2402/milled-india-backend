@@ -1,0 +1,814 @@
+
+
+
+
+
+
+
+
+MANGO
+<style>
+      @font-face {
+        font-family: 'MangoSans-Light';
+        src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangosans/otf/MangoSans-Light.otf') format('opentype');
+      }
+      @font-face {
+        font-family: 'MangoSans-Regular';
+        src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangosans/otf/MangoSans-Regular.otf') format('opentype');
+      }
+      @font-face {
+        font-family: 'MangoSans-Bold';
+        src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangosans/otf/MangoSans-Bold.otf') format('opentype');
+      }
+      @font-face {
+        font-family: 'MangoSans-Black';
+        src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangosans/otf/MangoSans-Black.otf') format('opentype');
+      }
+     @font-face {font-family: 'MangoHeritage-Regular'; src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangoheritage/otf/MangoHeritageHeadline-Regular.otf') format('opentype');}
+     @font-face {font-family: 'MangoHeritage-Medium'; src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangoheritage/otf/MangoHeritageHeadline-Medium.otf') format('opentype');}
+     @font-face {font-family: 'MangoNew-Medium'; src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangonew/otf/MangoNew-Medium.otf') format('opentype');}
+     @font-face {font-family: 'MangoNew-ExtraBold'; src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangonew/otf/MangoNew-ExtraBold.otf') format('opentype');}
+      @font-face {
+        font-family: 'Austin';
+        src: url('https://st.mngbcn.com/web/rcsemail/fonts/austin/otf/Austin-Light-Cy.otf') format('opentype');
+      }
+      @font-face {
+        font-family: 'Austin-Italic';
+        src: url('https://st.mngbcn.com/web/rcsemail/fonts/austin/otf/Austin-LightItalic-Cy.otf') format('opentype');
+      }
+      html{
+        width: 100%;
+      }
+      body{
+        width:100% !important;
+        -webkit-text-size-adjust:none;
+        -ms-text-size-adjust:100%;
+        margin:0!important;
+        padding:0!important;
+      }
+      .ExternalClass * {
+        line-height: 100%}
+      div[style*="margin: 16px 0"] {
+        margin:0 !important;
+      }
+      table td {
+        border-collapse: collapse;
+      }
+      table {
+        border-collapse:collapse;
+        mso-table-lspace:0pt;
+        mso-table-rspace:0pt;
+      }
+      a {
+        color: #121314;
+        text-decoration: none;
+      }
+      a:link, a:visited {
+        color: #121314;
+        text-decoration: none;
+      }
+      .hide-desktop{
+        display:none;
+        mso-hide:all;
+        margin:0;
+        font-size:0;
+        max-height:0;
+      }
+      .container {
+        min-width: 600px;
+        margin: 0 auto;
+      }
+      .boton {
+        -webkit-box-shadow: 0px 0px 0px 0px rgba(0,0,0,0);
+        -moz-box-shadow: 0px 0px 0px 0px rgba(0,0,0,0);
+        box-shadow: 0px 0px 0px 0px rgba(0,0,0,0);
+      }
+      .boton:hover,.botonjetlore:hover,.botonancho:hover{
+        background-color: #121314!important;
+        color: #ffffff!important;
+      }
+      * [lang~="x-boton"]:hover{
+        background-color: #121314!important;
+        color: #ffffff!important;
+      }
+      /* Fuentes */ 
+      .font-light{
+        font-family:MangoSans-Light, -apple-system, Roboto, Arial;
+        font-weight:300;
+      }
+      .font-regular{
+        font-family:MangoSans-Regular, -apple-system, Roboto, Arial;
+        font-weight:500;
+      }
+      .font-bold{
+        font-family:MangoSans-Bold, -apple-system, Roboto, Arial;
+        font-weight:700;
+      }
+      .font-black{
+        font-family: MangoSans-Black, -apple-system, Roboto, Arial,"Arial Black";
+        font-weight:900;
+      }
+      .font-austin{
+        font-family:Austin, "Times New Roman";
+      }
+      .font-austin-italic{
+        font-family:Austin-Italic, "Times New Roman";
+      }
+      /* Footer */
+      a.link_footer {
+        color: #121314;
+        text-decoration: none;
+      }
+      a.link_footer:hover {
+        color: #8C8C8C !important;
+        text-decoration: none!important;
+      }
+      a.link_footer_unsubscribe {
+        color: #6D6F71;
+        text-decoration: underline!important;
+        font-weight: bold;
+      }
+      a.link_footer_unsubscribe:hover {
+        color: #8C8C8C !important;
+        text-decoration: none!important;
+        font-weight: bold;
+      }
+      a.link_privacy {
+        color: #121314;
+        text-decoration: none;
+      }
+      a.link_privacy:active,a.link_privacy:link {
+        color: #121314;
+        text-decoration: none;
+      }
+      a.link_privacy:hover {
+        color: #8C8C8C !important;
+        text-decoration: none!important;
+      }
+      .paddingt24 {
+        padding-top: 24px;
+      }
+      .paddingt25 {
+        padding-top: 25px;
+      }
+      .paddingt32 {
+        padding-top: 32px;
+      }
+      .paddingt16 {
+        padding-top: 16px;
+      }
+      .paddingt33 {
+        padding-top: 33px;
+      }
+      /*Estilos Faldon Rebajas */
+      a.titulo-faldon-rebajas, a.titulo-faldon-rebajas:link, a.titulo-faldon-rebajas:visited {
+        color: #AE2E2E !important;
+        text-decoration: none!important;
+      }
+      a.link-faldon-rebajas{
+        color: #AE2E2E !important;
+        text-decoration: underline!important;
+      }
+      a.link-faldon-rebajas:link, a.link-faldon-rebajas:visited {
+        color: #AE2E2E;
+        text-decoration: none;
+      }
+      a.link-faldon-rebajas:hover {
+        color: #AE2E2E !important;
+        text-decoration: underline!important;
+        opacity: 0.6;
+      }
+      @media only screen and (max-width: 600px) {
+        /* Header mobile*/
+        .boton {
+          height: auto!important;
+          width: auto!important;
+          min-width: 130px;
+        }
+        .devicewidth {
+          width: 100%!important;
+          min-width: 220px!important;
+        }
+        /* Footer mobile*/
+        .link_footer {
+          line-height: 21px!important;
+        }
+        .link_footer_unsubscribe {
+          font-size: 12px!important;
+          line-height: 18px!important;
+        }
+        .hiddenmobile {
+          width: 0px!important;
+          display: none;
+        }
+        .label_menu_footer {
+          text-decoration: none;
+          display: block!important;
+          width: 100%!important;
+          height: auto!important;
+          text-align: left!important;
+          margin: auto!important;
+          letter-spacing: 0.3px!important;
+          padding: 10px 0!important;
+        }
+        .label_unsubscribe {
+          line-height: 22px!important;
+          font-size: 12px!important;
+          letter-spacing: 0.036px!important;
+        }
+        .label_legal_address {
+          line-height: 18px;
+          text-decoration: none;
+          display: block!important;
+          font-size: 12px!important;
+          letter-spacing: 0.036px!important;
+        }
+        table.hiddendesktop {
+          width: 100%!important;
+        }
+        td.hiddendesktop {
+          width: 100%!important;
+          height:auto!important;
+          background-color: #ffffff!important;
+          text-align: center}
+        .bordertop {
+          border-top: 1px solid #EEEEEE;
+        }
+        .borderbottom {
+          border-bottom: 1px solid #eeeeee;
+        }
+        .devicewidth85 {
+          width: 90%!important;
+          text-align:center!important;
+          min-width: 140px!important;
+        }
+        .devicewidth90 {
+          width: 90%!important;
+          text-align:center!important;
+          min-width: 220px!important;
+        }
+        .devicewidth100 {
+          width: 100%!important;
+          text-align:center!important;
+          min-width: 220px!important;
+        }
+        /* Fuentes */
+        .font-light{
+          font-family:MangoSans-Light, -apple-system, Arial, Roboto;
+          font-weight:300;
+        }
+        .font-regular{
+          font-family:MangoSans-Regular, -apple-system, Arial, Roboto;
+          font-weight:500;
+        }
+        .font-bold{
+          font-family:MangoSans-Bold, -apple-system, Arial, Roboto;
+          font-weight:700;
+        }
+        .font-black{
+          font-family:MangoSans-Black, -apple-system, Arial, Roboto;
+          font-weight:900;
+        }
+
+    .font-mangoheritage-regular{font-family:MangoHeritage-Regular, "Times New Roman"; font-weight:500;}
+    .font-mangoheritage-medium{font-family:MangoHeritage-Medium, "Times New Roman"; font-weight:900;}     
+    .font-mangonew-semimedium{font-family:MangoNew-Medium, Arial!important; font-weight:400;}
+    .font-mangonew-medium{font-family:MangoNew-Medium, Arial!important; font-weight:500;}
+    .font-mangonew-extrabold{font-family: MangoNew-ExtraBold, Arial,"Arial Black"!important; font-weight:900;}
+ 
+        /* Devicewith mobile */
+        .container {
+          width: 100%!important;
+          text-align:center!important;
+          min-width: 220px!important;
+        }
+        .devicewidth50 {
+          width: 50%!important;
+          text-align:center!important;
+          min-width: 140px!important;
+        }
+        .devicewidth45 {
+          width: 45%!important;
+          text-align:center!important;
+          min-width: 140px!important;
+        }
+        .devicewidth80 {
+          width: 80%!important;
+          text-align:center!important;
+          min-width: 140px!important;
+        }
+        .devicewidth90 {
+          width: 90%!important;
+          text-align:center!important;
+          min-width: auto!important;
+        }
+        .devicewidth95 {
+          width: 95%!important;
+          text-align:center!important;
+          min-width: 140px!important;
+        }
+        .devicewidth {
+          width: 100%!important;
+          min-width: 220px!important;
+        }
+        /* Imagenes mobile */
+        img.banner {
+          width: 100%!important;
+          height: auto!important;
+        }
+        img.banner90 {
+          width: 90%!important;
+          height: auto!important}
+        img.banner95 {
+          width: 95%!important;
+          height: auto!important}
+        /* Ocultar/mostrar en mobile */
+        .mobile-only-show {
+          display: block !important;
+          max-height: none !important;
+          mso-hide:none !important;
+        }
+        .mobile-only-hide {
+          max-height:0 !important;
+          display:none !important;
+          mso-hide:all !important;
+          overflow:hidden !important;
+        }
+        div[class=mobilecontent]{
+          display: block !important;
+          max-height: none !important;
+        }
+        /* Apps legales */
+        .devicewidth95 {
+          width: 95%!important;
+          text-align:center!important;
+          min-width: 140px!important;
+        }
+        .mobile-only-show2 {
+          display: table-cell !important;
+          max-height: none !important;
+          mso-hide:none !important;
+        }
+        .text-app{
+          font-size: 10px !important;
+          line-height: 16px !important;
+        }
+        .paddignbmobile24{
+          padding-bottom:24px !important;
+        }
+        .paddignmobile24{
+          padding-top: 24px !important;
+        }
+        /* Estilos faldon dinamico */
+        .paddingmobile14{
+          padding-top: px !important;
+        }
+        .paddingmobile28{
+          padding-top: 28px !important;
+        }
+        img.banner95 {
+          width: 95%!important;
+          height: auto!important}
+        /* Clases personalizadas */
+        .text-slogan {
+          font-size: 40px !important;
+          line-height:40px !important;
+          letter-spacing: 0px !important;
+        }
+        .text-body{
+          font-size: 13px !important;
+          line-height:20px !important;
+          letter-spacing: 0.3px !important;
+        }
+         .text-seccion{
+          font-size: 24px !important;
+          line-height: 27px!important;
+          letter-spacing: 0.3px !important;
+        }
+
+        /*Estilos Faldon Rebajas mobile */
+        .titulo-faldon-rebajas{
+          font-size: 38px !important;
+          line-height: 38px !important;
+        }
+        .link-faldon-rebajas{
+          font-size: 13px !important;
+          line-height: 13px !important;
+        }
+        .padd_mobile_36 {
+          padding-top: 36px !important;
+        }
+        .padd_mobile_28 {
+          padding-top: 28px !important;
+        }
+        .padd_mobile_12 {
+          padding-top: 12px !important;
+        }
+        .padd_mobile_16 {
+          padding-top: 16px !important;
+        }
+        .paddingmobile56{
+          padding-top: 56px !important;
+        }
+      }
+    </style>
+
+
+<style>
+div.preheader 
+{ display: none !important; } 
+</style>
+
+The most sophisticated animal print of the moment
+<table>
+<tbody><tr>
+<td>
+<table style="">
+
+<tbody><tr>
+<td>
+<table style=""><tbody><tr><td>
+
+<table style="">
+<tbody><tr>
+<td style="">    ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ 
+        ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ 
+    </td>
+</tr>
+<tr>
+<td style=""></td>
+</tr>
+
+<tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6ImM4NmIyOTc1LTM3NTAtNGY4MC04ZjkwLWM0M2E5OTNmZmE5NyIsImRla1ZlcnNpb24iOjEsIml2IjoiTzAxcGxxSU9qc3BoY2NyS0FUaGIvUT09IiwiY2lwaGVyVGV4dCI6ImhuWU5pcHY3T05sNlRvaitlT3pGajMzVUZJem1LVHNtbDBDdkcySU5NcmFHcjhUMUZTVG5ZTDVVaHFtenpoZndNcUp1RWl2VjBNZi9EMnIzUmtSUE1FbjhLUW9KTi9vbTJjdHdPMDFwbHFJT2pzcGhjY3JLQVRoYi9RPT0iLCJhdXRoVGFnIjoiOTBaRVR6QkovQ2tLQ1RmNkp0bkxjQT09In0%3D">
+<img alt="MANGO" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/3/27bf3d76-c4b0-455d-a10c-4f1554675df2.png" style="" width="216">
+</a>
+</td>
+</tr>
+
+<tr>
+<td style="">
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjBlNzZiMTkwLTI2NTAtNDUzNy1iYTllLWRkYWJjYmVhOWJiYSIsImRla1ZlcnNpb24iOjEsIml2IjoiYll4WmNZM25rdSs5YkdISERxbWZ1Zz09IiwiY2lwaGVyVGV4dCI6IkV3UE9WRldKWXdOY1oyYmNaU3Y4YjFZQlpqSGhTemFVbEUxSUNEWWFVRmdYQ1JlMEJKeGI1SlFRYlZUY1N5QVQzWEd1UFU0SktlZ1AwSk9FUlY2SFZvZ29OYXE1ZUJ1MXluTDBiWXhaY1kzbmt1KzliR0hIRHFtZnVnPT0iLCJhdXRoVGFnIjoiaEVWZWgxYUlLRFdxdVhnYnRjcHk5QT09In0%3D">
+<img alt="MANGO" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/3/a3f6122e-890c-4e20-a525-f70d1a6d06dc.png" style="" width="144">
+</a>
+</td>
+</tr>
+
+
+<tr>
+<td style=""></td>
+</tr>
+</tbody></table></td></tr></tbody></table>
+</td>
+</tr>
+
+<tr>
+<td>
+<table style="">
+
+
+<tbody><tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6ImZhNzZjOTc2LTJiOTEtNGJhNS1iM2U4LWVhNjc2ZGI1YzQ5MyIsImRla1ZlcnNpb24iOjEsIml2IjoiRGdCbWpYOGJ6YjNPMGhma1I0cW1aQT09IiwiY2lwaGVyVGV4dCI6IkJtRGlxejlYS1FaUWd2YVZJam1VYmU2MmFjZ0NFSUVIcWJ1WEczSTd1V1pqMHRydU9NVWlZWmRuVHJjUVdCWWdoUjNVNVM1S3NmVzhnYVhjTUcvZTJkVlhUekQrUkl3dVhISGlEZ0Jtalg4YnpiM08waGZrUjRxbVpBPT0iLCJhdXRoVGFnIjoiM0RCdjN0blZWMDh3L2tTTUxseHg0Zz09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/1d0fb65c-d8a7-463f-b3dd-553d51a24490.jpg" style="" width="600">
+</a>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td style="">
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjgwYjliMmVhLTg2NGItNGFiZC1iZGM3LTIxNWZiY2U4MmI3MSIsImRla1ZlcnNpb24iOjEsIml2IjoiRWVNMUU2c2kwZ0FTTVhvUUV6NEdsQT09IiwiY2lwaGVyVGV4dCI6InVpRm9DdEpXQ0NKMWJXT3N5YlBHd1lUWE9tSmljOFFpREhIVW9VWHZMMHcyYmYvMVVKZEZVU0IvZnF1bzgxczF5cE5CUi8rREM5QXFXQ3V5RXpLRDg3eFM4cjBZd3Exb09CcmNFZU0xRTZzaTBnQVNNWG9RRXo0R2xBPT0iLCJhdXRoVGFnIjoic2hNeWcvTzhVdks5R01LdGFEZ2EzQT09In0%3D" style="">
+                              ON TREND: ZEBRA
+                            </a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjJmZDcxMjY2LTk5NjMtNGI1NS1hMDM4LWFhMGQwNjIzZjFhZSIsImRla1ZlcnNpb24iOjEsIml2IjoicDFhYjZaZTR5Zlo3RmRyL1pGWmZxZz09IiwiY2lwaGVyVGV4dCI6IldlWElORFU0ZXFaVDZmQm1IVXlDOTgzdXA0d29tSUd4Z0dyT09YaU5mNnVSWkh1Y2lvbGNnZzM4L2lHdXlPSFhPd1RxQk9YOEFxdThSYzhVT3MrdCs2bEY1SHc0a04wVnBYcERwMWFiNlplNHlmWjdGZHIvWkZaZnFnPT0iLCJhdXRoVGFnIjoiRkRyUHJmdXBSZVI4T0pEZEZhVjZRdz09In0%3D" style="">
+</a>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6ImIwYzE5YTgzLTBhYTctNDgxOS1hMDY5LTg4ODgzNjAxYjRiMSIsImRla1ZlcnNpb24iOjEsIml2IjoiT0xYUHJnQ250dTVoWnJ0USt2L2NHdz09IiwiY2lwaGVyVGV4dCI6IlJwMUJhLzgrSEN5dU9Ybm1HaWxnaVNHSHB0NUpLRm5vTkliL2orZGduOUxWZWxpVVJ3WEUyMGRBeUFHUnVCQnRRM1d2OEVLZEJjQXoraGkvU08vV1FuYk1JekxnSEdPaE1IT2pPTFhQcmdDbnR1NWhacnRRK3YvY0d3PT0iLCJhdXRoVGFnIjoidjBqdjFrSjJ6Q015NEJ4am9UQnpvdz09In0%3D" style="">   
+                              Graphic, elegant and surprisingly versatile. Zebra print is reaffirming itself as the new wild card in your wardrobe, adding character to the first outfits of the year.    
+                            </a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+
+
+
+
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td style="">
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjU4ZmI0ZTk1LTc2YmItNDY3Ni05MGE1LWM3ZGExYmZkOWRhMiIsImRla1ZlcnNpb24iOjEsIml2IjoiR0g3a3ErdHZoTkVQdWttV2pLT1pFdz09IiwiY2lwaGVyVGV4dCI6IjJzUk93UzUyalpqSmlpVzgzS2hBeCtQcE5qZGticDRtOTFqVXg3dE83Ryt5aU1pS1BFNHEvOG81VkZKSm5MYjR0ZlZJRis2dm52RVArT0NiMmQycmZjQjJEb0RZWEh6QUZWYnpHSDdrcSt0dmhORVB1a21XaktPWkV3PT0iLCJhdXRoVGFnIjoibTluZHEzM0FkZzZBMkZ4OHdCVlc4dz09In0%3D" style="">
+
+                                TRY IT
+                              
+</a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6ImYwMDkyZDhhLTUyMGYtNGI3YS1iNDIxLTYxODE5MzhjZjk1OCIsImRla1ZlcnNpb24iOjEsIml2IjoiTjUrSm5Xa2RvNHVIdmIzYmxhZWhYdz09IiwiY2lwaGVyVGV4dCI6InhpUkxqRHYzdnhCQ1VQNUdkclpxOE96ZW9UWkRrU013bzZHU0ttaTNzREhjNlhaRHplYmdidHZzOHpCT2ZwTUVUcDd6cHUyeGpMenI3NVVyVWU5dEUwTFhxSkFTUEgvM2xydHpONStKbldrZG80dUh2YjNibGFlaFh3PT0iLCJhdXRoVGFnIjoiSzFIdmJSTkMxNmlRRWp4Lzk1YTdjdz09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/059fc131-5e1b-43e3-9ea7-5deaefc657a2.jpg" style="" width="299">
+</a>
+</td>
+<td> </td>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6ImJjMDE3ODg3LWUyZWItNGM1MC04ZjY0LWRjM2YxNDI4M2Q3NiIsImRla1ZlcnNpb24iOjEsIml2IjoiRzFUdmlaM3lwWUdtUDIybFZOa0xCQT09IiwiY2lwaGVyVGV4dCI6IklFdXVaaGw3OWFqanY0NldmbXdvU1FoUXZiMmdVYU9URVF5VVR3RE8rbk1QZWtBbzRNb0Z2UjMzajVlTHg4bGloSGsvL1B5OGVMakZqSGxVaU1OYkJsNGZ3QTNvbWpNYmdUUHdHMVR2aVozeXBZR21QMjJsVk5rTEJBPT0iLCJhdXRoVGFnIjoiVklqRFd3WmVIOEFONkpvekc0RXo4QT09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/522fb96f-08d9-4641-b7a7-fbc11d4276db.jpg" style="" width="299">
+</a>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+<tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjAwMDc0Y2E5LTFjMmMtNDQwNC1hYTU1LTFlNjhmYjM4YzlmYyIsImRla1ZlcnNpb24iOjEsIml2IjoiSGZXRytrL2NuSHVxSE4xTWxXVmlBdz09IiwiY2lwaGVyVGV4dCI6IllGOUx3YTg1emxSbjdKUzZpbnNQM0N1N0FpYmlablNRNjRzcjJXY2c4RUpLNDdRZHNncnh1WUljcFd3QmNCZzhMVzlNVzhNUTlKUWYwRnMweW5KcUpRSjdpRDU4eVBEN1ZsZEdIZldHK2svY25IdXFITjFNbFdWaUF3PT0iLCJhdXRoVGFnIjoiTk1weWFpVUNlNGcrZk1qdysxWlhSZz09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/bf03d47b-1ee2-44c2-acbb-99d72fd5b249.jpg" style="" width="299">
+</a>
+</td>
+<td> </td>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjFkNTQxMGQzLTkxMTMtNDJkYy04NDMwLTI0NGMyZjBjNmZiNyIsImRla1ZlcnNpb24iOjEsIml2IjoiUFpYNFNROXpLTXZPZjBMZFdxR2Z3QT09IiwiY2lwaGVyVGV4dCI6IlBnaVNsTlV0Zm9zWjh4Zk80WG16YVN0dmFUZzQvTXAzNzNhTWlNbjJzb1NDWDdZK3N1NnFtcTRMTFVUQlBtNlVTdnBMa1drbW9DN0RLWUdIeCsyMGYyUThIQkliUU91SUFGVklQWlg0U1E5ektNdk9mMExkV3FHZndBPT0iLCJhdXRoVGFnIjoiaDhmdHRIOWtQQndTRzBEcmlBQlZTQT09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/b0bc71fc-7440-4b52-84b9-dcdeedf1c1a8.jpg" style="" width="299">
+</a>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+<tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjQzYmIyNmNjLWM0Y2ItNGRhZS05NTU1LTVhY2I3NTg0M2U1ZCIsImRla1ZlcnNpb24iOjEsIml2IjoiLzlBQTdvQkFYVlhqSHZIQ1EyQkNZdz09IiwiY2lwaGVyVGV4dCI6Im11YWN3bmRTbDllU3hNN2htemRHNStFMENwdTVkUkVkVzRIUktZMEJSV0FOaW1LdCtHcWRaQnRSZnJsc1EycURNUzhWN1pVeXlBOUJCR1g4eHYvVjdic3VKWDVlaFhhVzlMUE4vOUFBN29CQVhWWGpIdkhDUTJCQ1l3PT0iLCJhdXRoVGFnIjoiL01iLzFlMjdMaVYrWG9WMmx2U3p6UT09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/526e77cd-ee26-467b-b206-282f838e3e82.jpg" style="" width="299">
+</a>
+</td>
+<td> </td>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjdmMTA2MmM4LTBjODEtNGVkNS04ZmM3LTBjOTFiNzg4YTUwYSIsImRla1ZlcnNpb24iOjEsIml2IjoieitMMnQvcXZlR2JEcG5PNWtMVmlwQT09IiwiY2lwaGVyVGV4dCI6ImZISDdMU1JpY1NzbnBwZmxiZ3FuN0VTY2pHMXdDMmwxc1ZmbHo3WE5ybUZETy9GOEdBQVRZRGtGYUNwYXZQcjVkL0pzN1E1dnJVNkRtVEpJNUhzUzRtVnVVR1FSbkpzVTJQN296K0wydC9xdmVHYkRwbk81a0xWaXBBPT0iLCJhdXRoVGFnIjoiU09SN0V1SmxibEJrRVp5YkZOais2QT09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/644fef87-1d6a-41af-ba2d-8a70e4b82844.jpg" style="" width="299">
+</a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjhiZmY1Mzk1LTVkYjktNDVhNS04Y2IxLTA4ODhlMDc3NGExOCIsImRla1ZlcnNpb24iOjEsIml2IjoiczV3Z2lKbkZrRVhWcGhLc0l2WHl5Zz09IiwiY2lwaGVyVGV4dCI6IlBFNnhMMzB6cWVjSm5IM2V2c1oyWEMxeDBYZmVGVFMvRzZjNmhhMVlnbDlLdE5KenYvc2pacnR3b2ZNZHFOeDhmNDI4Y3lBZkxaU0FBZVJNeWl4T3p6VGlMVHYxMkJSRkhTM3pzNXdnaUpuRmtFWFZwaEtzSXZYeXlnPT0iLCJhdXRoVGFnIjoiVE1vc1RzODA0aTA3OWRnVVJSMHQ4dz09In0%3D" style="">     
+                              In its iconic black-and-white version, this trend will help you elevate minimalist outfits and enhance your most daring looks.    
+                            </a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+<tr>
+<td>
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjA1ZjFmZWEwLWM1YmEtNDgyOC1hZDc3LTVkZmZjYjM0NmZjOCIsImRla1ZlcnNpb24iOjEsIml2IjoiYzlKdEoyekZRek1hWCtqNnZnLy9PUT09IiwiY2lwaGVyVGV4dCI6Ik5weVErWDNZZHFSWVhka1JYWnBTcTNBVVVidGkrQWpkckUyYXpOay9UbDFxZG9sczE0Z2FjVnVTSld4YlVUREFEazhzRFVjTFN0clJlOXc3dU91VnBLaTVLVU9vamEvc2FmYTVjOUp0SjJ6RlF6TWFYK2o2dmcvL09RPT0iLCJhdXRoVGFnIjoiTzdqcmxhU291U2xEcUkydjdHbjJ1UT09In0%3D">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/1/79541781-c53e-4d56-a54a-e04d9bc42847.jpg" style="" width="600">
+</a>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td style="">
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjdmM2MwZWRjLTUzMjAtNDMxMi1iNWVmLTk4MTI2ZDM5YTU0NCIsImRla1ZlcnNpb24iOjEsIml2IjoiNHFSQmtxODJCdnI5eGlOaHo3bGt1UT09IiwiY2lwaGVyVGV4dCI6IlF4U2xhU3hPOW53YlErUmtaYzBYcUZMSnBHZ01wbkMxaUM0c3hJbzgxT0c1amhuTlprL3E0MWtKcThFYk1FMTFzbUVTQUJkZVhyWkxWZFY3N0xTbjRQVUpGM1RmNDE1MVZaMGc0cVJCa3E4MkJ2cjl4aU5oejdsa3VRPT0iLCJhdXRoVGFnIjoiZSt5MHArRDFDUmQwMytOZWRWV2RJQT09In0%3D" style="">
+
+                                DISCOVER THE COLLECTION
+                              
+</a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+
+
+
+
+
+<tr><td style=""></td></tr>
+
+
+</tbody></table>
+</td>
+</tr>
+
+<tr>
+<td>
+<table style=""><tbody><tr><td>
+<style>
+  @font-face {font-family: 'MangoSans-Black'; src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangosans/otf/MangoSans-Black.otf') format('opentype');}
+  .font-black{font-family: MangoSans-Black, -apple-system, Roboto, Arial,"Arial Black"; font-weight:900;}
+  a.titulo-faldon-rebajas, a.titulo-faldon-rebajas:link, a.titulo-faldon-rebajas:visited {color: #AE2E2E !important; text-decoration: none!important;}
+  a.link-faldon-rebajas{color: #AE2E2E !important; text-decoration: underline!important;}
+  a.link-faldon-rebajas:link, a.link-faldon-rebajas:visited {color: #AE2E2E;text-decoration: none;}
+  a.link-faldon-rebajas:hover {color: #AE2E2E !important; text-decoration: underline!important; opacity: 0.6;}
+  @media only screen and (max-width: 600px) {
+    .titulo-faldon-rebajas{font-size: 38px !important; line-height: 38px !important;}
+    .link-faldon-rebajas{font-size: 13px !important; line-height: 13px !important;}
+    .padd_mobile_36 {padding-top: 36px !important;} 
+    .padd_mobile_28 {padding-top: 28px !important;} 
+  }
+</style>
+
+</td></tr></tbody></table>
+</td>
+</tr>
+
+<tr>
+<td>
+<table style=""><tbody><tr><td>
+
+
+
+MANGO
+<style>
+@font-face {font-family: 'MangoSans-Regular'; src: url('https://st.mngbcn.com/web/rcsemail/fonts/mangosans/otf/MangoSans-Regular.otf') format('opentype');}
+.hide-desktop{display:none;mso-hide:all;margin:0;font-size:0;max-height:0;}      
+.font-mangonew-medium{font-family:MangoNew-Medium, Arial!important; font-weight:500;}
+@media only screen and (max-width: 600px) { 
+  /* Ocultar/mostrar en mobile */    
+  .devicewidth95 {width: 95%!important;text-align:center!important;min-width: 140px!important;}
+  .mobile-only-show2 {display: table-cell !important;max-height: none !important;mso-hide:none !important;}
+  .text-app{font-size: 10px !important; line-height: 16px !important;}
+  .paddignbmobile24{padding-bottom:24px !important;}
+  .paddignmobile24{padding-top: 24px !important;}
+}
+</style>
+
+
+<table style="">
+<tbody><tr><td style=""></td></tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td style="">
+            DOWNLOAD OUR APP
+          </td>
+<td style="">
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjhjNmUzZjE2LTE1YmItNDkzNy1iNDc0LTVjOGQ1ZmJkYzQwYiIsImRla1ZlcnNpb24iOjEsIml2IjoiVG9wL2VHWmZaUjF5TmJBa21mb2FrUT09IiwiY2lwaGVyVGV4dCI6IkNsYlMwS3lkeDNHZnMxVmpxU0Mxd2tDb1JHS0lmMkRqS1Vpby9wYWxQMTNPSnVhM1NMNDdOZEI5dm5IS3cxcjVOZzByQVBDSVpvMStYWHAwQ3p0Ui9HcWJVNkRMcThWT2luOTRabDlsSFhJMXNDU1oraHFSIiwiYXV0aFRhZyI6ImpYNWRlblFMTzFIOGFwdFRvTXVyeFE9PSJ9" style="">
+<img alt="Descripción de la imagen" height="18" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/7/3f40e41a-805a-45c2-aa11-0a2d44ef5bd1.png" width="18">
+</a>
+</td>
+<td>
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjQ4OGEyZGFhLWNkMWUtNDg1Ni05NmIzLWMyYjc2NzBhMDkwYSIsImRla1ZlcnNpb24iOjEsIml2IjoiOFZJZnZZWjdRbVhjOGRIbFdEWmY5UT09IiwiY2lwaGVyVGV4dCI6InF0Z1lNV1Nta09rVVRPQzVzdlQydWR3YW1seEc4b0xDby93UTBDcnFJUlBaYW1uVXpiUnI0NGR5K1RVWTd5NVViTmtwNUZhVGgyMDVaSkNTaUEyOW9CdXNxVFRFMG1MeFVoKzlobnRDWmR6eDBlVllObC8xIiwiYXV0aFRhZyI6ImJUbGtrSktJRGIyZ0c2eXBOTVRTWWc9PSJ9" style="">
+                     APP STORE
+                  </a>
+</td>
+</tr>
+</tbody></table>
+</td>
+<td style="">
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6ImQ0OGZlMDRjLTlhNzItNGYyOC05NDk1LWY3MTVlNGQ3YjMwNSIsImRla1ZlcnNpb24iOjEsIml2IjoiTnNoYzRwSEpvM1NZbnM0VE5GNFhndz09IiwiY2lwaGVyVGV4dCI6Ik5hR2dpMFM1aG5tVXRXdGFVM1lxQ2hNZHlNY0Q2SmxXQURERGxMV0pkT0RvTTZ4VEpRRENDSmxMb0FSOVpqd2N2NGVLOG1BeTNZbTQwWGllSTNUYThQaUdLbU9rMW5zMnlGemlrY21qZEppZXpoTTBYaGVEIiwiYXV0aFRhZyI6ImlialJlSjRqZE5ydytJWXFZNlRXZXc9PSJ9" style="">
+<img alt="Descripción de la imagen" height="18" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/7/614546bf-5fcf-4db2-b66b-fab450c9edac.png" width="18">
+</a>
+</td>
+<td>
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjYyZTIwNjkwLTFiMGMtNDZlMC1iYjQ1LTJjOTg4ZmRkNWFhMSIsImRla1ZlcnNpb24iOjEsIml2IjoidThaRG1zamxpOWkrVjRFQ0hPRUtwUT09IiwiY2lwaGVyVGV4dCI6IjBLdVFtZkY1STVXdDJBVEdjb2dnS0ZvTXZzTlJsa0VIUFFQcGxFZXlPSFArUE90OWxKQ3NRbXpoY2dJdm5FOVFXRHRSajlHUmRqYXVBMllDL2t1MFBWdWNKdXFoQUxDN3hrT2F5T1dMMkw1WGdRSWM0UXFsIiwiYXV0aFRhZyI6Ik5xNERaZ0wrUzdROVc1d202cUVBc0E9PSJ9" style="">
+                     GOOGLE PLAY
+                  </a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td style="">
+DOWNLOAD OUR APP
+</td>
+<td style="">
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjUzZWRjNDY0LWJhOTItNGFiZC04YjI5LWM0YjZhMzAyMzg4YSIsImRla1ZlcnNpb24iOjEsIml2IjoiUVpzMTNuSk5FL0ludFB1WiswY2EwUT09IiwiY2lwaGVyVGV4dCI6InRXcFpYWGVmRzRIMjVZU0RrZDhKcGRPcWRMTFIxNzZaUjQwOEVnTFN5Wm9wUjhFZzFMMHp4cFM2YlM3RHVGbnhXOVlUZW4ySmV0aWhCUXdyVSttcC8rMW5ZbDZFaXFGQm16WGVjazBUOGllMCs1bjdSeHJSIiwiYXV0aFRhZyI6IjJLRUZEQ3RUNmFuLzdXZGlYb1NLb1E9PSJ9">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/7/45fa432b-7e2d-4a1b-ad57-5e464c26c601.png" style="" width="14"> APP STORE
+</a>
+</td>
+<td style="">
+<a href="https://click.a.mango.com/?qs=eyJkZWtJZCI6IjhmZTEzNmY3LWI1NDItNGEwNC1iODA3LTlmMzhkYTlmMzllZSIsImRla1ZlcnNpb24iOjEsIml2IjoiQkVWVG1YY1RUWlZqWjRTV1VPVGlxZz09IiwiY2lwaGVyVGV4dCI6InU0cWkxbFRaT2VCTVBJOU1ibGxsZ3dXZDMwSGd1aXBKMTVsL1dKVlhoRm16MEZtLzN1MVNOVDdvSkRkeDc0MUV5bTI3SWRwQW5SZFFTZGlQbkdlWk9XN0JTa29HZXJvRVJWT1pkeE5ObFdObmhKWlE1T0txIiwiYXV0aFRhZyI6IkYxQkoySStjWjVrNWJzRktTZ1o2dWc9PSJ9">
+<img alt="" src="https://image.a.mango.com/lib/fe8c137271630d7977/m/7/f0362a7c-a5d4-4c59-a6fc-eb8694797c98.png" style="" width="14"> GOOGLE PLAY
+</a>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+</tbody></table></td></tr></tbody></table>
+</td>
+</tr>
+
+<tr>
+<td>
+<table style=""><tbody><tr><td>
+
+<table style="">
+
+<tbody><tr><td style=""></td></tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjljZDQ5ZTBkLTFhNDQtNGM4NS1hYTVlLTY0ZmY5OGRiYTNkZSIsImRla1ZlcnNpb24iOjEsIml2IjoieXRZU3lzME5KS1grTnV1Zmx1aDZhdz09IiwiY2lwaGVyVGV4dCI6IlRxSU5mVnpuVzI1TEt6VUZSOFhQcFYzWE81UHBPMExtdGtYV1Y2cU5HaWlXNjkyOGtueFk4dFl6VGlzMkZjcnA4R1VQYzMyUWpqZjdQbmVQVmYvQXVHR0ZSaVJPNFFRakJYQSt5dFlTeXMwTkpLWCtOdXVmbHVoNmF3PT0iLCJhdXRoVGFnIjoiajFYL3dMaGhoVVlrVHVFRUl3VndQZz09In0%3D" style="">INSTAGRAM</a>
+  
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjJiZmY0ZTczLTliODAtNGE4MS04NzJiLTAwNTZjNTkwNjgzMSIsImRla1ZlcnNpb24iOjEsIml2IjoiSVk3YzBFZzNwajBmM0haNUpBMWFKQT09IiwiY2lwaGVyVGV4dCI6InJNcjFXc1Bra09jRStSRTZieFpoRHE5amlMYkRqbEFaZ0lYcDlqcjJuaTJxbXpDZlBoRHZScUM2NFRlMlhZL0ZtOVQ3T2o5TmxUY3NkL3R1YVdCZ1Ntc2JWN3RZYnU2UmpmMmpJWTdjMEVnM3BqMGYzSFo1SkExYUpBPT0iLCJhdXRoVGFnIjoiYm1sZ1lFcHJHMWU3V0c3dWtZMzlvdz09In0%3D" style="">FACEBOOK</a>
+  
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjJlZWRkMTgwLTJkNjItNGM3Ny1iNWM0LWViNjZlMDllNzA2ZiIsImRla1ZlcnNpb24iOjEsIml2IjoibmcyeC9mUmNKazZJcGlid0FESEFoUT09IiwiY2lwaGVyVGV4dCI6ImlIZTVIWEI4SWtSeG9nVXVvbGNNWVU1ZThRVUFsQkYzc09tQit3cTgwQ2lydFlrd3BFUVlzcnBqVGlhdG4vMkpwOHlaYlVSNHh5K0JMK2tkU2xzUzJwQ0tFcHAvTjBrTFRJOGFuZzJ4L2ZSY0prNklwaWJ3QURIQWhRPT0iLCJhdXRoVGFnIjoiSFVwYkV0cVFpaEthZnpkSkMweVBHZz09In0%3D" style="">YOUTUBE</a>
+  
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6ImNlY2FiZDlhLTU3NjEtNDFkYy1iMDA0LTU4MDY5YzZkZWVkOSIsImRla1ZlcnNpb24iOjEsIml2IjoiWVhTTU9FKzdzTXVyb0txRWJZOHovUT09IiwiY2lwaGVyVGV4dCI6Imp5UGZ2ZDlLQ1JNUVYyZkJOYlV5WVZyUkI3aXB0OTNOR2RPaFN6dVVJWDRLc2dtUVByeHR0cS9VL3dyYXB6MkVEclNCVDdleC9KZCtzaUNSTTdKUjVFalk4MmVsMk0xQ1A0N3ZZWFNNT0UrN3NNdXJvS3FFYlk4ei9RPT0iLCJhdXRoVGFnIjoia1RPeVVlUkkyUE5ucGRqTlFqK083dz09In0%3D" style="">TIKTOK</a>
+  
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjI0ZDk1MjFmLWQ4MGUtNDkyNi04YzYwLTNiYmNlZjk0ZTMxMCIsImRla1ZlcnNpb24iOjEsIml2IjoiR3hPclFOd0g4amZPbTZKOHA4SWc2Zz09IiwiY2lwaGVyVGV4dCI6InhJM1ZrY2VYM1RCY0Y1V1Q2NWYrMU5aY1k5ZldIdjF4bDF3bkRabmlmUExranZGS0RyendvaUlRMkNWdDFPampEZm5RS3ladjcvQ3dHbmZVQXB0QnZneWVlU2dQV21McUk2bDVHeE9yUU53SDhqZk9tNko4cDhJZzZnPT0iLCJhdXRoVGFnIjoiMUFLYlFiNE1ubmtvRDFwaTZpT3BlUT09In0%3D" style="">SPOTIFY</a>
+  
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6Ijc0MGVjZDkwLWQ5ZjMtNGIzOS05YTViLTFhMTYwY2I4ZmQ5NCIsImRla1ZlcnNpb24iOjEsIml2IjoidUhGNE5WdGJOblhienQ4MnljMUpldz09IiwiY2lwaGVyVGV4dCI6IlFLcVdMelJFa3Jkdi9lT3gvamc4empCMDZXSDAzSWpkTCtSVFowd3NhRTZjWnN3UzNVbkliSFFnaUZEQSt2ZFZQVGorWW45NDBFNW04SVNmSnpBR0JDK1EvMGVHajZqb1h2T251SEY0TlZ0Yk5uWGJ6dDgyeWMxSmV3PT0iLCJhdXRoVGFnIjoibnljd0JnUXZrUDlIaG8rbzZGN3pwdz09In0%3D" style="">PINTEREST</a>
+  
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjFiOTRiM2I0LWM4NGYtNDhjYS1iZTE4LTFjMTc4MzEyMzJhNCIsImRla1ZlcnNpb24iOjEsIml2Ijoib3RZYnFlY3R3VUFJbDVsMjJoQ3V6UT09IiwiY2lwaGVyVGV4dCI6IkM1OFV6QzdNUExWUWNkWXI5aU5OdUNIcVdmVFkvTjVweHI4dTN1bUlqdU4zN2M5dnc3ZTlkNlFDQnQwK2pqNkFSQyt1ZWRRR0tvUzBRQTBVMkFKSXFrUmhGSHZ3RWQyNXdrWFFvdFlicWVjdHdVQUlsNWwyMmhDdXpRPT0iLCJhdXRoVGFnIjoiRk5nQ1NLcEVZUlI3OEJIZHVjSkYwQT09In0%3D" style="">X</a>
+</td>
+</tr>
+
+</tbody></table>
+</td>
+</tr>
+<tr><td style=""></td></tr>
+
+<tr>
+<td>
+<table style="">
+
+
+
+<tbody><tr>
+<td>
+You are receiving this e-mail because you have subscribed to our commercial communications.This e-mail was sent by MANGO MNG, S.A., headquartered at Via Augusta, 10,  Pol. Ind. Riera de Caldes, 08184 Palau-solità i Plegamans, Spain. You can find all the information about the processing of your personal data in our <a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjgyMTY3MGJkLWI1Y2EtNGU2YS1hMjk0LTQzODFmMzRlZmYyNiIsImRla1ZlcnNpb24iOjEsIml2IjoiTGpDMnJXZ21aL1pJRklDMGdHeUlmdz09IiwiY2lwaGVyVGV4dCI6Ikp0dlJ4NjJ0MlRIdjNOQ3puSTFuM3ltdnNDck9FMkpBR0duRnArZUQvcUF3SUZiNTJ2ZzMxbjlBT3JLK0NmRnM4aXpvWHNhbzhEOCtRRy92TnU1TFVkcFJQUVZEQXJKTDdiZUFMakMycldnbVovWklGSUMwZ0d5SWZ3PT0iLCJhdXRoVGFnIjoiN3pidVMxSGFVVDBGUXdLeVMrMjNnQT09In0%3D" style="">Privacy Policy</a> 
+</td>
+</tr>
+
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td>
+<table style="">
+<tbody><tr><td style=""></td></tr>
+
+<tr>
+<td>
+
+<a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6ImJjNDFjNjM3LTg1MTktNGFlNS1hODgxLWE0MTMyMzllNDg3NCIsImRla1ZlcnNpb24iOjEsIml2IjoiKzVZNTBkR2EzcHIwQklZWDZ4YUZmZz09IiwiY2lwaGVyVGV4dCI6Im8vQ2FpUjVZcGhjUG12bEs2QkZMc3BvZVNHLzJjYThzeVd1Q0hBaWdTQnhvS0F2Rk9aS0RNWFh0S3FNMGZYN25WM1MvL21JSjdQS0xwV0NDb2dyZWxDaVlvOHFlMGU3N2xqblIwWnJlbXZRRWhoZnJGb1YrIiwiYXV0aFRhZyI6IjhvdWxZSUtpQ3Q2VUtKaWp5cDdSN2c9PSJ9" style="">View in browser</a>    <a href="https://click.a.mango.com/u/?qs=eyJkZWtJZCI6IjVhMWU0OWU2LTg4M2QtNDU0Ni05MTIxLWM2MjE3NTRmZDMyNiIsImRla1ZlcnNpb24iOjEsIml2IjoidVlRWGlodjhDdnVpSnFXY1pRNU5Sdz09IiwiY2lwaGVyVGV4dCI6Ik5idzlQSmNwSUREU3p3T2RuUkY4elNVQWJOR3pIOThCMldvbnR6SjhaYW1RWGc0ek1Ca3ZXUlpGemFHV1VWUWJaN3l4YzJRNnpYMUcrbTVwdkRJTEg0RHFQU1B0am8wVmZVOUF1WVFYaWh2OEN2dWlKcVdjWlE1TlJ3PT0iLCJhdXRoVGFnIjoiYWJ3eUN4K0E2ajBqN1k2TkZYMVBRQT09In0%3D" style=""> Unsubscribe</a>    © 2026 MANGO
+
+</td>
+</tr>
+<tr><td style=""></td></tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table></td></tr></tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+

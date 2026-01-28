@@ -1,0 +1,982 @@
+
+
+
+
+
+
+
+
+
+
+
+
+CK
+
+
+
+<style>
+    @font-face {
+        font-family: 'Klein 75 Bold';
+        src: url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-75Bold-Web.eot);
+        src: url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-75Bold-Web.eot) format('embedded-opentype'), url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-75Bold-Web.woff2) format('woff2'), url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-75Bold-Web.woff) format('woff');
+        mso-font-alt: 'Helvetica';
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    @font-face {
+        font-family: 'Klein 65 Medium';
+        src: url(https://mediaeu.calvinklein.com/b2c/static/fonts/klein/Klein-65Medium-Web.eot);
+        src: url(https://mediaeu.calvinklein.com/b2c/static/fonts/klein/Klein-65Medium-Web.eot) format('embedded-opentype'), url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-65Medium-Web.woff2) format('woff2'), url(https://mediaeu.calvinklein.com/b2c/static/fonts/klein/Klein-65Medium-Web.woff) format('woff');
+        mso-font-alt: 'Helvetica';
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    @font-face {
+        font-family: 'Klein 55 Regular';
+        src: url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-55Regular-Web.eot);
+        src: url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-55Regular-Web.eot) format('embedded-opentype'), url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-55Regular-Web.woff2) format('woff2'), url(https://mediaeu.calvinklein.com/b2c/static/fonts/Klein-55Regular-Web.woff) format('woff');
+        mso-font-alt: 'Helvetica';
+        font-weight: normal;
+        font-style: normal;
+    }
+</style>
+<style>
+  
+    :root {
+    color-scheme: light dark;
+    supported-color-schemes: light dark;
+  }
+
+    body {
+        margin: 0;
+        padding: 0;
+        -ms-text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    table {
+        border-spacing: 0;
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+    }
+
+    .ReadMsgBody {
+        width: 100%;
+        background-color: #ffffff;
+    }
+
+    span.MsoHyperlink {
+        mso-style-priority: 99;
+        color: inherit;
+    }
+
+    span.MsoHyperlinkFollowed {
+        mso-style-priority: 99;
+        color: inherit;
+    }
+
+    .link-color-reset a {
+        color: inherit !important;
+    }
+
+    a {
+        text-decoration: none;
+    }
+  
+
+    u + #body a {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+
+    #MessageViewBody a.cta-link,
+    u + #body a.cta-link {
+        text-decoration: underline !important;
+    }
+
+    u + #body .gmail {
+        width: 90% !important;
+    }
+
+    #MessageViewBody a {
+        color: inherit;
+        text-decoration: none;
+        font-size: inherit;
+        font-family: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+    }
+
+    table td, table th, table {
+        border-collapse: collapse;
+    }
+
+    .show-mobile-td {
+        display: none;
+    }
+
+    .show-mobile-block {
+        display: none;
+    }
+
+    .show-mobile-tr {
+        display: none;
+    }
+
+    .show-mobile-th {
+        display: none;
+    }
+
+    @media screen and (max-width: 639px) {
+        .container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .column {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .resize-img {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .resize-copy {
+            min-height: 320px;
+        }
+
+        .force-row {
+            display: block !important;
+            padding-right: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+        }
+
+        .hide-mobile {
+            display: none !important;
+        }
+
+        .show-mobile-block {
+            display: block !important;
+        }
+
+        .show-mobile-td {
+            display: table-cell !important;
+        }
+
+        .w100 {
+            width: 100% !important;
+        }
+
+        .w-cta-150 {
+            width: 150px !important;
+        }
+
+        .w-cta-200 {
+            width: 200px !important;
+        }
+
+        .w-stack-cta {
+            width: 220px !important;
+        }        
+        
+        .w-auto {
+            width: auto !important;
+        }
+
+        .mobile-padding10 {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+
+        .mobile-padding8 {
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+        }
+
+        .mobile-padding15 {
+            padding-left: 15px !important;
+            padding-right: 15px !important;
+        }
+
+        .mobile-padding20 {
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+        }
+
+        .mobile-padding0 {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .mobile-padding {
+            padding-left: 30px !important;
+            padding-right: 30px !important;
+        }
+
+        .margin-reset {
+            margin: 0px !important;
+        }
+
+        .margin-bottom-10 {
+            margin-bottom: 10px !important;
+        }
+
+        .margin-bottom-20 {
+            margin-bottom: 20px !important;
+        }
+
+        .margin-bottom-25 {
+            margin-bottom: 25px !important;
+        }
+
+        .margin-bottom-30 {
+            margin-bottom: 30px !important;
+        }
+
+        .padding-tb10 {
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+        }
+
+        .padding-tb25 {
+            padding-top: 25px !important;
+            padding-bottom: 25px !important;
+        }
+
+        .padding-tb54 {
+            padding-top: 54px !important;
+            padding-bottom: 54px !important;
+        }
+
+        .padding-top0 {
+            padding-top: 0 !important;
+        }
+
+        .padding-top10 {
+            padding-top: 10px !important;
+        }
+
+        .padding-top12 {
+            padding-top: 12px !important;
+        }
+
+        .padding-top13 {
+            padding-top: 13px !important;
+        }
+
+        .padding-top15 {
+            padding-top: 15px !important;
+        }
+
+        .padding-top20 {
+            padding-top: 20px !important;
+        }
+
+        .padding-top25 {
+            padding-top: 25px !important;
+        }
+
+        .padding-top30 {
+            padding-top: 30px !important;
+        }
+
+        .padding-top50 {
+            padding-top: 50px !important;
+        }
+
+       
+
+        .padding-bottom0 {
+            padding-bottom: 0px !important;
+        }
+
+        .padding-bottom5 {
+            padding-bottom: 5px !important;
+        }
+
+        .padding-bottom10 {
+            padding-bottom: 10px !important;
+        }
+
+        .padding-bottom12 {
+            padding-bottom: 12px !important;
+        }
+
+        .padding-bottom13 {
+            padding-bottom: 13px !important;
+        }
+
+        .padding-bottom15 {
+            padding-bottom: 15px !important;
+        }
+
+        .padding-bottom20 {
+            padding-bottom: 20px !important;
+        }
+
+        .padding-bottom25 {
+            padding-bottom: 25px !important;
+        }
+
+        .padding-bottom30 {
+            padding-bottom: 30px !important;
+        }
+
+        .padding-bottom35 {
+            padding-bottom: 35px !important;
+        }
+
+        .padding-bottom40 {
+            padding-bottom: 40px !important;
+        }
+
+        .padding-bottom45 {
+            padding-bottom: 45px !important;
+        }
+
+        .padding-bottom60 {
+            padding-bottom: 60px !important;
+        }
+
+        .m-lh-15 {
+            line-height: 15px !important;
+        }
+
+
+        .m-lh-25 {
+            line-height: 25px !important;
+        }
+
+        .m-fs-14 {
+            font-size: 14px !important;
+        }
+
+        .m-lh-21 {
+            line-height: 21px !important;
+        }
+
+        .m-fs-16 {
+            font-size: 16px !important;
+            line-height: 1.5 !important;
+        }
+
+        .m-fs-20 {
+            font-size: 20px !important;
+            line-height: 1.5 !important;
+        }
+
+        .m-fs-22 {
+            font-size: 22px !important;
+            line-height: 1.5 !important;
+        }
+
+        .m-fs-25 {
+            font-size: 25px !important;
+            line-height: 1.25 !important;
+        }
+
+        .m-fs-30 {
+            font-size: 30px !important;
+            line-height: 1.25 !important;
+        }
+
+        .h2-font30 {
+            font-size: 30px !important;
+            line-height: 39px !important;
+        }
+
+        .mobile-cta {
+            font-size: 14px !important;
+            line-height: 25px !important;
+        }
+
+        .mobile-padding-cta {
+            padding: 8px 5px 10px !important;
+        }
+
+        .main-a-last-cta:last-child {
+            padding-bottom: 0 !important;
+        }
+
+        .w50 {
+            width: 50% !important;
+        }
+
+        .padding-20 {
+            padding: 20px !important;
+        }
+      
+        .lapsed-font {
+            font-size: 17px !important;
+        }
+      
+       
+    }
+
+  
+   @media screen and (max-width: 590px) {
+
+      u + #body #wrapper {min-width: 100vw;}
+      
+      .salebnrhdr{font-size: 30px !important; font-weight:bold;}
+      .salebnrreg{font-size: 25px !important;}
+      .padding-right15 {padding-right: 15px !important;}
+      .padding-left15 {padding-left: 15px !important;}
+      .padding-right20 {padding-right: 20px !important;}
+      .padding-left20 {padding-left: 20px !important;}
+      .width50percent{width:50% !important;}
+     
+    
+      
+    }    
+    
+    @media screen and (max-width: 360px) {
+        .w-cta-sm {
+            width: 145px !important;
+        }
+    }
+    
+    @media screen and (max-width: 320px) {
+        .w-cta-sm {
+            width: 125px !important;
+        }
+
+        .footer-sm {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+    }
+  
+
+ 
+</style>
+<style>
+    div[style*="margin: 16px 0;"] {
+        margin: 0 !important;
+    }
+
+    .ExternalClass img[class^=Emoji] {
+        width: 10px !important;
+        height: 10px !important;
+        display: inline !important;
+    }
+
+    a[x-apple-data-detectors] {
+        color: inherit !important;
+        text-decoration: none !important;
+        font-size: inherit !important;
+        font-family: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+    }
+
+</style>
+<style>
+div &gt; u + .body1 .mobile-pad-left30 {padding-left: 30px !important;}
+  
+@media (prefers-color-scheme: dark) {
+  
+
+   .darkmodetextblack { color: #000000 !important; }
+   .darkmodetextwhite { color: #ffffff !important; }
+   .cta-header-dark-stayblack { color: #000000 !important; }
+   .cta-header-dark-staywhite { color: #ffffff !important; }
+   .dark-border { border-bottom: 1px solid #FFFFFF !important; }
+  
+ /* Shows Dark Mode-Only Content, Like Images */     
+    .dark-img { 
+        display: block !important;
+        width: auto !important;
+        max-width: inherit !important;
+        max-height: inherit !important;
+        line-height: auto !important;
+        margin-top: 0px !important;
+        visibility: inherit !important;
+    }     
+
+ /* Hides Light Mode-Only Content, Like Images */   
+    .light-img { display: none !important; }
+  
+  
+  }
+  
+ 
+  
+[data-ogsc] .darkmodetextblack { color:#000000 !important; }
+[data-ogsc] .darkmodetextwhite { color:#ffffff !important; }
+[data-ogsc] .cta-header-dark-stayblack { color:#000000 !important; }
+[data-ogsc] .cta-header-dark-staywhite { color:#ffffff !important; }
+[data-ogsc] .dark-border { border-bottom: 1px solid #FFFFFF !important; }
+  
+
+
+  
+
+
+  
+</style>
+
+
+
+<style>
+div.preheader 
+{ display: none !important; } 
+</style>
+
+Who do you share your Calvins with?
+
+
+  ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ 
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
+ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ 
+‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌
+    
+<table>
+<tbody><tr>
+<td>
+
+
+
+<table style=""><tbody><tr><td>
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjQ2MzFhNjc1LTY4NTktNDlkNC04MDY3LWM3NGE0NjdjYTNmZiIsImRla1ZlcnNpb24iOjEsIml2IjoiMDduc1RnZ3IvUW1URUJYWFFqRTJxZz09IiwiY2lwaGVyVGV4dCI6Im5teVQ0SXV0M1UxR0J4ZHlOWTJMVHpVV01ZbVdwTVZJdnZsTjVyYTBYZjVTM3pGZlhad3JRUjNBVVc1dkJNdzlaeGRFOFhCUFFnNm1SZm1xWVZTS3lyZkhzVENXQU9oMmlibzdmR0E3MDduc1RnZ3IvUW1URUJYWFFqRTJxZz09IiwiYXV0aFRhZyI6ImlzcTN4N0V3bGdEb2RvbTZPM3hnT3c9PSJ9">
+<img alt="Calvin Klein" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/logo_blackonwhite_nov2025.jpg" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImFmOGIxYmY1LTUwYzQtNDYyMy1iZDVkLTJmODI5NTcyOTI1NSIsImRla1ZlcnNpb24iOjEsIml2IjoiNEV2ZkVEc2d3RUFCZFViS2N0cHhRUT09IiwiY2lwaGVyVGV4dCI6IlZBYjdEc09WbXUweGVSdXMvZjJzWnkvSDNtZW9OUW9pcXB0dDNTNFd5bXdQRG8zV1hWdEV6Y2xhTUpBc1pSOFZKV2dieVNlREp0Rk1VRnFGdnZyREl6UityVWsxL3M4QkpnOUJ3Qi9tNEV2ZkVEc2d3RUFCZFViS2N0cHhRUT09IiwiYXV0aFRhZyI6Ind5TTBmcTFKTmY3UEFTWVBRY0FmNWc9PSJ9">
+<img alt="Calvin Klein" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/logo_blackonwhite_nov2025.jpg" style="" width="100%">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImQwMmVhODcxLTkwYTAtNGRmOS04MWNjLTI0ZjQ3YjQ0ZmE3NyIsImRla1ZlcnNpb24iOjEsIml2IjoiYmtCYWloYjZqZWc4bEU2c3lKMFpjUT09IiwiY2lwaGVyVGV4dCI6IkNsRktLODIwdEtCdTRpWFIzYWs2QWw4L1RSTFhORzErRVZVamQ4Yk9pSHcwSkZJamx4NVh4b0cxVUdtTWpta3dNUktWbTJobi90ck9sSWVRYmJWZk5jNTFaVVcrbll6S1lVTC8rdEcxYmtCYWloYjZqZWc4bEU2c3lKMFpjUT09IiwiYXV0aFRhZyI6Ilh6WE9kV1ZGdnAyTXltRkMvL3JSdFE9PSJ9">
+<img alt="Place Your Order by 12pm on 2.05 to Receive Your Gifts by Valentine's Day" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_1.jpg" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImFmZGM2YzUxLTY5MDYtNDkyYy1iNmE5LTUxOGU5ZDRmNDlmMCIsImRla1ZlcnNpb24iOjEsIml2IjoidVJ0TmRYbTFXcW45TWRFcU5GQXFDZz09IiwiY2lwaGVyVGV4dCI6ImwvZncyKzRUTDA5dHE3S2xQTUJKZk9lelJLNTRlVmlYckMyZmlFSGdWaWtKQXVDS2pneStTRXRlRWNPWm4wdzI0cmNzVXNMQ2gvZHRyUE9NdEVXOXVlY0dLYVFuM1dxN0dCQ3dqakladVJ0TmRYbTFXcW45TWRFcU5GQXFDZz09IiwiYXV0aFRhZyI6InZibm5CaW1rSjkxcXV4Z1FzSTR5R1E9PSJ9">
+<img alt="Place Your Order by 12pm on 2.05 to Receive Your Gifts by Valentine's Day" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_1.jpg" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjIzODI5ZTIzLTY4OTItNDU0ZS1iZTlkLWQ0MThhMDVjOWFjMCIsImRla1ZlcnNpb24iOjEsIml2IjoiQVVNSTQ5MWFGeVN2bVZ1TlIwY2dmdz09IiwiY2lwaGVyVGV4dCI6IjcvWENVSkNlSTNSeTRXakNSbEVDaW00aThtRDBhYXAzTThzVHM3b21aZjBSWjZKVzBnNWt6d2VhU3g5RWFNOFNNRHJqb21oRndqdXBkR1ljUjRPTzk1Y2dvVHBtUDB2NmZDYSsyc0U1QVVNSTQ5MWFGeVN2bVZ1TlIwY2dmdz09IiwiYXV0aFRhZyI6Imp2ZVhJS0U2Wmo5TCtud212dHJCT1E9PSJ9">
+<img alt="Gift Them" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_2.gif" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6Ijg0YjU1MGJhLWFmYmUtNDEwNC05NjVmLTM3ZjQzNjY4M2NkYiIsImRla1ZlcnNpb24iOjEsIml2IjoidkJTQVB5eFJTdXltSEdlTVBYWWtpQT09IiwiY2lwaGVyVGV4dCI6IldEc202MnhxeEJ2WUlObzlCUzNYVlRXMHFlQXIzUDZWL25UczRZWG1HUE04cGh6anBSSThaS0ZUV3orQXVnZ0dsRmxjcnV0WUVVbDBjRmVkaE5MYmY4Q0J2a2VUM2p3a0dDUHpLaURidkJTQVB5eFJTdXltSEdlTVBYWWtpQT09IiwiYXV0aFRhZyI6IjIzL0FnYjVIazk0OEpCZ2o4eW9nMnc9PSJ9">
+<img alt="Gift Them" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_2.gif" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjA2OWViNDE1LWEyMWYtNDhmNS04M2FmLTQ3Y2EyZGNhZjMxOSIsImRla1ZlcnNpb24iOjEsIml2IjoiVGxSNWpGMWhKbUVKUkdpR2x6UDlnZz09IiwiY2lwaGVyVGV4dCI6IjV3WkVMa1llSlRLSXYrR050bm5yR1d6SmYveHI2SnR4d0x1aFQzL3ZLUThDbk5zaTJlVmRBN0VHdnQzL3dJRGc2MXpabHZDY1ZZY0VqVjZBMW9kaEdhblBXbUJNMnZPYU9mcEVEY0lOVGxSNWpGMWhKbUVKUkdpR2x6UDlnZz09IiwiYXV0aFRhZyI6IllSbXB6MXBnVE5yem1qbjZSQTNDRFE9PSJ9">
+<img alt="Yours And Mine" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_3.jpg" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImFjZTE1NGY3LTBjZWEtNDNlYi04ODIyLWViNjRlNjNmYjkzYyIsImRla1ZlcnNpb24iOjEsIml2IjoiQ1hXYTJ5cVYxaUxBOTdJYVg4Y2F3Zz09IiwiY2lwaGVyVGV4dCI6IjMxSjVKV1BPcmROL0tpbE9hRjRBeEVqYmpUL0owRWJ0enhETzlaR3VwcUpMN2RrUkpHQXNIMXVtYjNzQXltUGhiT1FSVUpGOVRJQ1VYOWNOTlN0Y2VaYkVCQmgzeEhTdTlYMGlpc2tHQ1hXYTJ5cVYxaUxBOTdJYVg4Y2F3Zz09IiwiYXV0aFRhZyI6IlhIbVd4QVFZZDhSMHJ2VjlJb3JKQmc9PSJ9">
+<img alt="Yours And Mine" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_3.jpg" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImUxNjYyNmIwLWZiNGMtNDlkYi1hMWNhLTQ1OTRjMjU4ZWU1OSIsImRla1ZlcnNpb24iOjEsIml2IjoiZ0JzeEdKZmZkRUd6VktOTjFtcDUyZz09IiwiY2lwaGVyVGV4dCI6ImZDbzNLWFhPOVZpTncxZ3VSYW5NUlVMdmh0YlZWQ1R3cy9aczZvMEMxc0l3ZzhLM1hvTGIwVXB3Y1pRV21xZjQrYktiTjR2a0FHOGRoNkVRZ053M0I4ZFV0OFhuQTJ6QUNZK3dGNTVHZ0JzeEdKZmZkRUd6VktOTjFtcDUyZz09IiwiYXV0aFRhZyI6Ik53ZkhWTGZGNXdOc3dBbVBzQmVlUmc9PSJ9">
+<img alt="Show It Off" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_4.gif" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjRmNzdhNDQzLWEzMTktNDM3My1hZTgyLTY1M2JlYzA1NjBhNiIsImRla1ZlcnNpb24iOjEsIml2IjoiZk9DK28ycGFTb01uNm80RWxOYVhwdz09IiwiY2lwaGVyVGV4dCI6Inp1QXRyVUMvN09rbUdzMDZzVVA0VnUvOGFrZk5wQXZSSlo5b2JyNmN6UjhGUkFTR2djZjhnMTljdFgyT0h2UHBIYStweFcwWlMyelZtSytucGlaV0hpYXh3QUZ6cmV3akxmUFRwVklDZk9DK28ycGFTb01uNm80RWxOYVhwdz09IiwiYXV0aFRhZyI6IlZoNG1zY0FCYzYzc0l5M3owNlZTQWc9PSJ9">
+<img alt="Show It Off" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_4.gif" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImNjODA0ZjVkLTlhNTYtNDkyNC04OTkxLWUyMGEyN2M1OTUzOSIsImRla1ZlcnNpb24iOjEsIml2IjoiM3ViT2sxYllvOXhRaFpmYWtKZ0Y5Zz09IiwiY2lwaGVyVGV4dCI6ImIwQlRHSnRiYmNyYnJpZndPYkVZbFpYdDhjRVdESzY3dVk3M3RoSmsyVmtWTVQramQyZFJuWkxTcjkzZktRYUNhVzd0cTRjZnNqTVlHbUlQcWsyditNVFlDUUJYNWx4OWpScmJZcTA5M3ViT2sxYllvOXhRaFpmYWtKZ0Y5Zz09IiwiYXV0aFRhZyI6InIvakUyQWtBVitaY2ZZMGEyMkt0UFE9PSJ9">
+<img alt="The Perfect Pair" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_5.jpg" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjYwMTY2YzRlLWM1YzktNDA3Yy1hYmEwLTJmNTNlZTQwNTZiNSIsImRla1ZlcnNpb24iOjEsIml2Ijoic1g4TXF1ZXBNTzVPcEZrcVAyWTBUQT09IiwiY2lwaGVyVGV4dCI6Iksrc2dTSlR6N2FLSUhYcDNSbSt4ZG42RDlpNHhidU5tTW1JcVdDMXpvNXZpLy81SEhvaXN6T3lUOS8vTCtDUHVNTVFnMFE5dHpMNXVCVVpxdnRIVHpFNUxoZDlxL2VhM3c3NzNOaWZMc1g4TXF1ZXBNTzVPcEZrcVAyWTBUQT09IiwiYXV0aFRhZyI6IjA4eE9TNFhmYXYzbXQ4Tys5ellueXc9PSJ9">
+<img alt="The Perfect Pair" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_5.jpg" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImYwYjM1MmJkLTc2ZmQtNGNkYy05ODJhLWU5Mjc4YWQ0NDFiZiIsImRla1ZlcnNpb24iOjEsIml2IjoiVEdVdW50ckpHeWY1YzRKbE9OcERSUT09IiwiY2lwaGVyVGV4dCI6Ik9QdjBhL2ZRa3Y2ZDh3c1BuQWZWYzRMNklLenVUemt2eEQxN2dJZkVSRDhUbk1uNk5vdzRSR1ZPQmFkQU5kcDhMQk54c241b1RVSVM4ZlZsMzBFRDRCQTF1ZWgrTmNCVUZ3YUtsZENZVEdVdW50ckpHeWY1YzRKbE9OcERSUT09IiwiYXV0aFRhZyI6IkErQVFOYm5vZmpYQVZCY0dpcFhRbUE9PSJ9">
+<img alt="Ignite Desire" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_6.jpg" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6Ijc2NTkzOGU4LTZkN2MtNDcyMC05ZDQ5LWQxMWQyNjAyZjc0NiIsImRla1ZlcnNpb24iOjEsIml2IjoiYjdXclkvQkVCWGVOOFBtTG9VUWhUQT09IiwiY2lwaGVyVGV4dCI6IjJYeVN2Z3MzVVNUenV2R3V3cFRYdU9yd3ZRend3Wmt2Y2JERXNyL3V3N1RNSVRBeFYzTmhVS2Q5bVR4ZnU3SktvVW82b1g1QkFjVDNKUnhUdFBYcVNQU0NpNFFERVRxbUdpbjZNUC85YjdXclkvQkVCWGVOOFBtTG9VUWhUQT09IiwiYXV0aFRhZyI6IjZrajBnb3VFQXhFNnBob3ArakQvL1E9PSJ9">
+<img alt="Ignite Desire" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_6.jpg" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImY0ZjRiMDZlLTI3NTctNGFhMS1iZmEyLTRlZGJmMmI3MGE2MiIsImRla1ZlcnNpb24iOjEsIml2IjoiMGUxejR0ZWVaZEJQUUtJLzN5L0xDUT09IiwiY2lwaGVyVGV4dCI6InF3ODg5RGMrZStiR285Q3pHSytSMjljd3V1RXZSdjJSWVZZdGRZUStRVWNwT2oyZE1zR0YvdFliS2hnOHpMMEF0elFjVDFOMWhCSVlaU1NxNERZQ1Ftd3ZydzY2elAxT3gzTUZBRkphMGUxejR0ZWVaZEJQUUtJLzN5L0xDUT09IiwiYXV0aFRhZyI6IkFrSnNMNjhPdXN6OVRzZHpCUUJTV2c9PSJ9">
+<img alt="Shop Valentines Day Shop" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_7.jpg" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImRlOTJlM2RlLTk2MzItNDdiYy05OGFjLTMyNjljMTczMzExZSIsImRla1ZlcnNpb24iOjEsIml2IjoiT0JVaWNBZ29ZTlNGbmV2S0xUeER4QT09IiwiY2lwaGVyVGV4dCI6ImViMm5walBERml1QlNaWEhyNnlSQXVBOU95SGU3L09DS2gvS3JxQ2h5QitoSFJkakJZN1pmREdRMklXTm9GQ2tMZ29OUlk1ZlBNc05QcytnSTlXWTI2M1RlN25CSXprak1tbWhXWSszT0JVaWNBZ29ZTlNGbmV2S0xUeER4QT09IiwiYXV0aFRhZyI6Im1OdXQwM3U1d1NNNUl6SnBvVm1QdHc9PSJ9">
+<img alt="Shop Valentines Day Sho" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_7.jpg" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<td>
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImU3ZGMxZjc4LTliMjUtNDJmNC04YWYyLThmMTgyODI0YmMxZiIsImRla1ZlcnNpb24iOjEsIml2IjoiR3VrVUdtWmNCMHVNRFV1dXVoT0Yrdz09IiwiY2lwaGVyVGV4dCI6IndWcDBhOE10ZTVWeGJVd2xCQ095aENaZmdVTXdwbm54VEZaNTVIOWtyalJxR21BaW5ZcDFvOHpoNlVaN28waUV2Z003d3FMZDZsSnZKcXNwUnVuZ0o4RlVaR2VWMGhFQWt3M2ZJNzAzR3VrVUdtWmNCMHVNRFV1dXVoT0Yrdz09IiwiYXV0aFRhZyI6IjRDZkJWR1JubGRJUkFKTU4zeU85Tnc9PSJ9">
+<img alt="Our Calvins" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_8.jpg" style="" width="640">
+</a>
+</td>
+
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjBmNTliNmU4LTgyNjAtNGUwMy1hMTcxLTFlN2ZiMzNkOGZhMSIsImRla1ZlcnNpb24iOjEsIml2IjoiRVM4MDF5RG92RFlFYTJra1RhTmp1QT09IiwiY2lwaGVyVGV4dCI6IkpjN1ZkQnFlcmZBODJDYTZJeDk5WWxsa0dsdkEwR0wzL0xsTTJheGVNczlxZ1BOQklHaENwOElJaFNnWW15Yi9oVnFCcnFVVXMrSnZmWVdRMlNpUUJJcnRxRFNZajkvZmczTXA3WEEwRVM4MDF5RG92RFlFYTJra1RhTmp1QT09IiwiYXV0aFRhZyI6ImtBU0s3YWcwbUkvZjM0TnpLZTF3TkE9PSJ9">
+<img alt="Our Calvins" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/20260127_CK_FW52_OMNI_US_BROADENED_FUL_BAU_block_8.jpg" style="" width="640">
+</a>
+</td>
+
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td>
+<table style="">
+<tbody><tr>
+<td style="">
+<table>
+<tbody><tr>
+<td style="">
+
+
+                    Follow us to discover new offers.
+                  
+</td>
+</tr>
+</tbody></table>
+<table>
+<tbody><tr>
+<th style="">
+<table>
+<tbody><tr>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImI0ODljOWQwLTM4MzAtNGI3Ny1iNmVhLWI2NWQwZWNkNWRmMSIsImRla1ZlcnNpb24iOjEsIml2IjoiSnloSWI5VkNhbG1MZm9JMnN0eHgzUT09IiwiY2lwaGVyVGV4dCI6IjVQOC9tMTIvTm4vOTZBRlFkWTlTanV5NjIzcjlkaTJkd2VsWW1oellQUG1kWnNrdDZ3SGNBM3RpR3pRNHdJMHoyMlF5ZzI5M2o5Y25Fb3dIcEo5eGtoOGwrR0xucWdiSmpmWW5LRWh2MVVKcVdZdCtnamF5M0hIZCIsImF1dGhUYWciOiJqQWVrbjNHU0h5WDRZdWVxQnNtTjlnPT0ifQ%3D%3D">
+<img alt="Instagram" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/29/instagram.png" style="" width="20">
+</a>
+</td>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjgwNjc5YjFiLTRjNGYtNGY3NS04NjQ0LTY3NTlkNGY5MmYxMSIsImRla1ZlcnNpb24iOjEsIml2IjoiemJDUWU5Z3BvUU5ubUZEbHdLK2tBdz09IiwiY2lwaGVyVGV4dCI6IlFBaXo4bDRoUGdzKzc1SXR1V1lIWUQvcS9KaWM4UWpLTWJPQnIyRHdBOFVsWkZQeEd0MENWOGFuUHdXemp5S1J5d2VhTXRpVHE5OVpUNVAxcnJiRy9nWnBOaGU4Z01lRDliYk5zSkI3MkNtaEEyZVlVT1hBcjZRRCIsImF1dGhUYWciOiJrL1d1dHNiK0JtazJGN3lBeDRQMXRnPT0ifQ%3D%3D">
+<img alt="TikTok" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/tiktok.png" style="" width="20">
+</a>
+</td>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjNjYTNjZTM3LTUyMjQtNGRkYS1hMWYzLWFlNjg4MTVkN2YzZiIsImRla1ZlcnNpb24iOjEsIml2IjoiNmZQUlc4N0dOczBhUXVNbld5ckRsZz09IiwiY2lwaGVyVGV4dCI6ImNVajduQWFCN0l3a3Q5R29CeUgzaFNqTWxmSFRlNFRSTDBEQWh0bFUyRkJER1RoVXV5QURkMnBGV0JkVXo4b2huQTFkSmVjWW5Dd0s1VVJWdGsweWZaRE81cFZuZzZvdFVjL3A4OUZienNZMnpScEM0eWRiS3NPVyIsImF1dGhUYWciOiJSRlcyVFRKOWtNN21sV2VEcWkxUnp3PT0ifQ%3D%3D">
+<img alt="Facebook" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/29/facebook.png" style="" width="20">
+</a>
+</td>
+</tr>
+</tbody></table>
+</th>
+<th style="">
+<table>
+<tbody><tr>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6Ijg2NGQ2YmU5LWEwMjctNDE5YS04YTYwLWVlYTQ0ODE5ODI4YyIsImRla1ZlcnNpb24iOjEsIml2IjoiQXQ4Y0xhNHNzMEhSbFdQdlYxQlkrZz09IiwiY2lwaGVyVGV4dCI6InhUZ3o4Mkh1WXZVRHlreHF3TERFVnMyL2hVNWMxdGZDQ3F2LzFwVEVxaTBTdXhVdlNRTlFSSDhxa0lTbmxBYkxOVWlBWVBBVkRrcHhnOElyWVdoMXJKN0NwQ05mby83VE1xZ0MzeHd0cml5elFkR1ZZKzlYVUZqNiIsImF1dGhUYWciOiJ3aXRoYUhXc25zS2tJMStqL3RNeXFBPT0ifQ%3D%3D">
+<img alt="Twitter" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/1/x-social.png" style="" width="20">
+</a>
+</td>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6ImFiOGM0YzQ0LTE1ZWUtNGIyYS04YjUwLTY1NDBlNzAzYWFmYSIsImRla1ZlcnNpb24iOjEsIml2IjoicG1mUWptdWVDL1AyNE1mMldqSmxWZz09IiwiY2lwaGVyVGV4dCI6Ik1tcFdRZ2xKNWJZWi9pM2g2RlBxeXY0VEpML1NXZkZDS0lYMUlOazV3NnR1WkVvQmZLYzlvU1d0M2dZSHE4aXlWK3IzUHIyS0szbVduZGZVZUszTHhNMkF6SHpSdHUwbnVFcW1aOUNPYTU0TDgvYmd4L1phTW1WVyIsImF1dGhUYWciOiIxOVI0cmN2RXpZRE1mTkcyN1NlNFNnPT0ifQ%3D%3D">
+<img alt="Pinterest" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/29/pinterest.png" style="" width="20">
+</a>
+</td>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjJiNjNhM2U2LWI1NmQtNGQ2YS1iNTc4LTcwZGQ1YjkzYmNlYiIsImRla1ZlcnNpb24iOjEsIml2IjoiMDM5NldWUG9Pbys3WEhZVXRMZVdwQT09IiwiY2lwaGVyVGV4dCI6ImZOcGhwTTZjbDZENUhpaU1RWUl4Y25hSkN5STBzMTdMd281YUVXOVFuY0EyZVZRb3plSmtqVis4ZHh1bmR2NEI5cU52OEhYeEo5Rkd3eWh6SnB3SWhtYWhJK2J3ZGRDeGdBUFRmM3BaVStnNmo3dGNkaFMwdDVhayIsImF1dGhUYWciOiJLSE1tbkFpR1pxRWo1dkIxMExHQUF3PT0ifQ%3D%3D">
+<img alt="YouTube" src="https://image.em.calvinklein.com/lib/fe2d157075640675721379/m/29/youtube.png" style="" width="20">
+</a>
+</td>
+</tr>
+</tbody></table>
+</th>
+</tr>
+</tbody></table>
+<table>
+<tbody><tr>
+<td>
+<table>
+<tbody><tr>
+<th style="">
+<table style="">
+<tbody><tr>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjVhYzMzYTdjLTg5ZWUtNDZjMC1iNTRjLTAxMmYzM2E1ODY5NSIsImRla1ZlcnNpb24iOjEsIml2IjoiOFVSTGxSQ0hNNFQvUzFKTkxmd1VZQT09IiwiY2lwaGVyVGV4dCI6InVLa0dXcHhpY3pZVVdQdW1ucHBvYksrNWxHWmtHcEw2bEZ2amhzSkRhTExmbk8wOHZpa1Jrb1ROWkJXK3dyOUJyTGl3MDVmcHV1MWttejVXdmhIelNHWHlFQ21ybExYU2ZSd0R6MTJXOFVSTGxSQ0hNNFQvUzFKTkxmd1VZQT09IiwiYXV0aFRhZyI6IjgwaGw4aEFwcTVTMTBuMGNBODlkbGc9PSJ9" style="">Find a store</a>
+</td>
+</tr>
+</tbody></table>
+</th>
+<th style="">
+<table style="">
+<tbody><tr>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjFiZjY4Zjg2LWUwYmYtNGJjNS04YjQzLTAzODgxZTY5OWFkMyIsImRla1ZlcnNpb24iOjEsIml2IjoiN0RjdlBZeW1FY2prTXd0ems0WEZjQT09IiwiY2lwaGVyVGV4dCI6InZFNTFIYXc0eENxeStJYkhobzZCQTU1VFMxeFhDaDh3QldGM0lUamFPVUVHZDhJRnJTQVN2K0FXRlorVjdYV2xLWkh4TDNzSGVTdmVWRnkzYTAzYjI3amxYdU8zODVGTlpYZ2NGeGZZN0RjdlBZeW1FY2prTXd0ems0WEZjQT09IiwiYXV0aFRhZyI6IjI5dTQ1VjdqdC9PUlRXVjRIQmNYMkE9PSJ9" style="">
+                                Shop online
+                              </a>
+</td>
+</tr>
+</tbody></table>
+</th>
+<th style="">
+<table style="">
+<tbody><tr>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6Ijg1YmJmNzc2LWQwMTctNGEyZS1hNjEwLThkZjNmOGEyMjQ4ZiIsImRla1ZlcnNpb24iOjEsIml2IjoiZVgzS2R6Tm5JYWdvb1laZGJrVjdtZz09IiwiY2lwaGVyVGV4dCI6IlFDZzExMDhMVkFiOHNFbWN1bnVKL3lEZHFiTUo2a09wb1RzQnQ2UzlvY1dpaysraEppNkZqeVpKaklqQ1FDbDdMampWTTdYTjBaUFF0M2oyQWxZSXVWVjVCZjVIeXJYYTBFODRLeENhZVgzS2R6Tm5JYWdvb1laZGJrVjdtZz09IiwiYXV0aFRhZyI6IkNMbFZlUVgrUjhxMTJ0QlBPQ3NRbWc9PSJ9" style="">
+                                My Calvin <strong>Rewards</strong>
+</a>
+</td>
+</tr>
+</tbody></table>
+</th>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+<tr>
+<td style="">
+<table>
+<tbody><tr>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjcwMGQ0NDE2LTdiYTMtNDBiYS1iOTQ2LTM1YTIzNThjZDhhNSIsImRla1ZlcnNpb24iOjEsIml2IjoiQ1FxSU16dnNXd1RxVGFEQzdZdEt0Zz09IiwiY2lwaGVyVGV4dCI6IktBajJmSklhOGsrQ05RMFJ3L25jZG0yNndNZnZxL3cxaE4xVFdCbFJNUXZxQmtjQm5maVFwa1JwOXk0VTVqNHMzZHlScHB4UzJ1Q24xTTl2NHA2RVVGbFFWVjZuSXFVbHJRZitOcGduQ1FxSU16dnNXd1RxVGFEQzdZdEt0Zz09IiwiYXV0aFRhZyI6ImhGQlpVRlZlcHlLbEphMEgvamFZSnc9PSJ9" style="">Unsubscribe</a> ‌ ‌
+                  <a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjlkMjUwNzIzLTU5YzQtNGM0NC04ZjBhLWQ0NTA5ZmU5NGMxYiIsImRla1ZlcnNpb24iOjEsIml2IjoiRnNlNEZCQUxPblovVzhIc2IvUm11dz09IiwiY2lwaGVyVGV4dCI6IlAxTStjZVdKS3ZXMGVMUXR5VHNmSlhRSWtTOHRQMkZLbG9DblRmK3piby9pQXg2bk5rSTZHcHN4UVlUTm9rajFsK2wwd0JLMnYxQWNXaFpDSk1WS0QyM0ZFblVuUm5nWVZnNFd4N2dVRUFzNmRuOWJ3ZXh2OUdhNyIsImF1dGhUYWciOiJGa0lreFVvUGJjVVNkU2RHZUJoV0RnPT0ifQ%3D%3D" style="">View in Browser</a>
+</td>
+</tr>
+<tr>
+<td style="">
+<a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjQ3ZTMwOGE5LWI3NDQtNDU3Ny1hNWRjLTQ2YzQzMDY2NGIxZiIsImRla1ZlcnNpb24iOjEsIml2IjoiUnlVL3BzWFZ6RUpBMWVoR2NiU2pDZz09IiwiY2lwaGVyVGV4dCI6IlFBMXlvOEJjWjRHdHMxbGt3QmczaE1Cb0hNV3pyaHNWZzFGNXcyaS9PMThBWlVwZC9jeXpNbkJSaFFEM0dueFcvQmNaOGVNeGxXdld6YzB1aXRTNTNBcjRDbkJSbG15TDA4c0ptc1EwUnlVL3BzWFZ6RUpBMWVoR2NiU2pDZz09IiwiYXV0aFRhZyI6InVkd0srQXB3VVpac2k5UExDWnJFTkE9PSJ9" style="">My Calvin Rewards Program Terms</a>, 
+                  <a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjFlNDU1Yjk0LTBhYWItNDkzNy05MjNlLTk1NjczMTk4NzYxZCIsImRla1ZlcnNpb24iOjEsIml2IjoiYWtmc2ZmUFhNcG9oNm5vN2ZGWVJYQT09IiwiY2lwaGVyVGV4dCI6IlRKRzRFdDdLMjlsUnAxcXlpNk0vQ0lkMG01czJhLzZ4OTJiVkdYS00yV2E2c0Nlak5aNEN0d2tsUzIycFBNaGIzZGIxbVBkTHlLOWxxdWx5QUZVanpqcEFSZk9lYTZTZkQ0aSsrUHBpYWtmc2ZmUFhNcG9oNm5vN2ZGWVJYQT09IiwiYXV0aFRhZyI6Ikk4NDZRRVh6bm11a253K0l2dmo2WWc9PSJ9" style="">Privacy Policy</a> and our 
+                  <a href="https://click.em.calvinklein.com/?qs=eyJkZWtJZCI6IjcxZDc3ZDI4LTU3NDgtNDVhMy1iNTBmLTM0NDYxNWFmOWUyMCIsImRla1ZlcnNpb24iOjEsIml2Ijoid1dMTkdTTEZOR0NBcXF6WlJjQVBjUT09IiwiY2lwaGVyVGV4dCI6InpISG5wOUMxU3BHc0pUTjBvODJ2SFI1M1Z6K2YreERoV2FNaWVXQzd4cy9DZDBWMG1abFp4a3lIRlB5V2RxaGZxNnc5U3J0QVBxUk9pWnoxMmhUcnU3blhjN0ZxTWhHUkYwMk5zRXVUd1dMTkdTTEZOR0NBcXF6WlJjQVBjUT09IiwiYXV0aFRhZyI6IjY3dTUxM094YWpJUmtSZE5qYkJMa3c9PSJ9" style="">Terms and Conditions</a> ‌which contains information about our dispute resolution process including a mandatory individual arbitration clause.
+                </td>
+</tr>
+<tr>
+<td style="">
+                  Calvin Klein, 205 West 39th Street, New York, NY 10018
+                </td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+</td></tr></tbody></table>
+</td>
+</tr>
+</tbody></table>
+
+
+PVH Corp. 1001 Frontier Rd. Bridgewater Township NJ 08807 US
+      
+<a href="https://click.em.calvinklein.com/profile_center.aspx?qs=eyJkZWtJZCI6ImQzNzhiNzcxLTcwNjQtNDQyYi05Nzk0LTdmMjk3Mzg5NWEwMSIsImRla1ZlcnNpb24iOjEsIml2IjoiUVUyVWNBeGlxZDhrZ1dKVWRzUDdRQT09IiwiY2lwaGVyVGV4dCI6InIyV2tTUHhmZUFPTVRzcjQ0bWlpLzV6OVpWenlKMXh6WDIyYldDdzNkSW91WitCZkNybDlXbDdjWEt3aDJrcTVFdG9vZlEvR2tKTU1JVmxuZnlHeVhzV0x5b2dSYllGWGRMUEhYa3RUejVhODIwRk5sSEFNWXFuZkpJRmlWSGJEKzBBPSIsImF1dGhUYWciOiJ5b2dSYllGWGRMUEhYa3RUejVhODJ3PT0ifQ%3D%3D">Update Profile</a>
+
+
+<table>
+<tbody><tr>
+<td style="">
+
+</td>
+</tr>
+</tbody></table>
+
+
+<table>
+<tbody><tr>
+<td style="">
+
+</td>
+</tr>
+</tbody></table>
+
+
+
+

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: milled-india-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: milled-india-db
+          property: connectionString
+
+databases:
+  - name: milled-india-db
+    plan: free
+
+cronJobs:
+  - name: milled-india-ingest
+    schedule: "*/30 * * * *" # every 30 minutes
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python ingest_gmail.py
+

@@ -1,0 +1,64 @@
+from datetime import datetime
+from email.utils import parsedate_to_datetime
+
+from sqlalchemy.orm import Session
+
+from backend.db import SessionLocal, engine, Base
+from backend.models import Email
+from engine import fetch_label_emails
+
+
+def upsert_emails(db: Session):
+    records = fetch_label_emails()
+    created = 0
+    skipped = 0
+
+    for r in records:
+        existing = db.query(Email).filter(Email.gmail_id == r["gmail_id"]).first()
+        if existing:
+            skipped += 1
+            continue
+
+        # Gmail Date header is usually RFC 2822, not ISO 8601
+        raw_received = r["received_at"]
+        if isinstance(raw_received, str):
+            try:
+                received_dt = parsedate_to_datetime(raw_received)
+            except Exception:
+                received_dt = datetime.utcnow()
+        else:
+            received_dt = raw_received
+
+        email = Email(
+            gmail_id=r["gmail_id"],
+            subject=r["subject"],
+            sender=r["sender"],
+            brand=r["brand"],
+            category=None,
+            type=None,
+            received_at=received_dt,
+            html=r["html"],
+            preview=r["preview"],
+        )
+        db.add(email)
+        created += 1
+
+    db.commit()
+    return created, skipped
+
+
+def main():
+    # Ensure tables exist before we start using the session
+    Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()
+    try:
+        created, skipped = upsert_emails(db)
+        print(f"Ingestion complete. Created: {created}, Skipped (existing): {skipped}")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()
+
