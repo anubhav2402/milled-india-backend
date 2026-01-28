@@ -21,7 +21,8 @@ class EmailCreate(EmailBase):
 
 class EmailOut(EmailBase):
     id: int
+    html: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
