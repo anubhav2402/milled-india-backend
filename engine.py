@@ -209,11 +209,18 @@ def safe_filename(text):
 
 
 def clean_html(html):
+    """
+    Clean HTML while preserving email formatting.
+    Only removes dangerous elements (script, iframe, form) and tracking pixels.
+    Preserves all styling and layout elements for accurate email rendering.
+    """
     soup = BeautifulSoup(html, "html.parser")
 
-    for tag in soup(["script", "iframe"]):
+    # Remove dangerous/executable elements
+    for tag in soup(["script", "iframe", "form", "object", "embed"]):
         tag.decompose()
 
+    # Remove tracking pixels (1x1 images)
     for img in soup.find_all("img"):
         if not isinstance(img, Tag):
             continue
@@ -228,15 +235,46 @@ def clean_html(html):
             # Never let broken HTML crash ingestion
             continue
 
+    # Email-safe HTML tags - comprehensive list for proper email rendering
+    ALLOWED_TAGS = [
+        # Text formatting
+        "p", "br", "hr", "h1", "h2", "h3", "h4", "h5", "h6",
+        "b", "i", "u", "s", "strong", "em", "small", "mark", "del", "ins", "sub", "sup",
+        "span", "div", "font", "center",
+        # Lists
+        "ul", "ol", "li", "dl", "dt", "dd",
+        # Tables (critical for email layouts)
+        "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "colgroup", "col",
+        # Links and media
+        "a", "img",
+        # Semantic/structural
+        "article", "section", "header", "footer", "nav", "aside", "main",
+        "blockquote", "pre", "code", "address",
+        # Style
+        "style",
+    ]
+
+    # Attributes commonly used in email HTML
+    ALLOWED_ATTRIBUTES = {
+        "*": ["style", "class", "id", "dir", "lang", "title"],
+        "a": ["href", "title", "target", "rel"],
+        "img": ["src", "alt", "width", "height", "border"],
+        "table": ["width", "height", "cellpadding", "cellspacing", "border", "bgcolor", "align", "valign", "role"],
+        "tr": ["bgcolor", "align", "valign", "height"],
+        "td": ["width", "height", "bgcolor", "align", "valign", "colspan", "rowspan", "nowrap"],
+        "th": ["width", "height", "bgcolor", "align", "valign", "colspan", "rowspan", "scope"],
+        "font": ["color", "face", "size"],
+        "div": ["align"],
+        "p": ["align"],
+        "span": ["align"],
+        "col": ["width", "span"],
+        "colgroup": ["span"],
+    }
+
     return bleach.clean(
         str(soup),
-        tags=list(bleach.sanitizer.ALLOWED_TAGS) +
-        ["img", "table", "tr", "td", "th", "style", "tbody", "thead"],
-        attributes={
-            "*": ["style"],
-            "a": ["href", "title"],
-            "img": ["src", "alt", "width", "height"]
-        },
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
         strip=True
     )
 

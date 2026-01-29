@@ -22,6 +22,7 @@ class EmailCreate(EmailBase):
 class EmailOut(EmailBase):
     id: int
     html: str
+    preview_image_url: Optional[str] = None
 
     class Config:
         from_attributes = True
