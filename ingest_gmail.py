@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.db import SessionLocal, engine, Base
 from backend.models import Email
-from engine import fetch_label_emails
+from engine import fetch_label_emails, extract_industry
 
 
 def upsert_emails(db: Session):
@@ -32,13 +32,18 @@ def upsert_emails(db: Session):
         else:
             received_dt = raw_received
 
+        # Auto-detect industry from brand
+        brand = r["brand"]
+        industry = extract_industry(brand)
+
         email = Email(
             gmail_id=r["gmail_id"],
             subject=r["subject"],
             sender=r["sender"],
-            brand=r["brand"],
+            brand=brand,
             category=None,
             type=None,
+            industry=industry,
             received_at=received_dt,
             html=r["html"],
             preview=r["preview"],

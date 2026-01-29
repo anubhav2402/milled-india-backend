@@ -47,6 +47,7 @@ def health():
 def list_emails(
     brand: Optional[str] = Query(default=None),
     type: Optional[str] = Query(default=None),
+    industry: Optional[str] = Query(default=None),
     q: Optional[str] = Query(default=None),
     skip: int = 0,
     limit: int = 50,
@@ -58,6 +59,8 @@ def list_emails(
         query = query.filter(models.Email.brand == brand)
     if type:
         query = query.filter(models.Email.type == type)
+    if industry:
+        query = query.filter(models.Email.industry == industry)
     if q:
         like = f"%{q}%"
         query = query.filter(
@@ -77,6 +80,7 @@ def list_emails(
             "brand": email.brand,
             "category": email.category,
             "type": email.type,
+            "industry": email.industry,
             "received_at": email.received_at,
             "preview": email.preview,
             "html": email.html,
@@ -85,6 +89,15 @@ def list_emails(
         result.append(schemas.EmailOut(**email_dict))
     
     return result
+
+
+@app.get("/industries", response_model=List[str])
+def list_industries(db: Session = Depends(get_db)):
+    """Get list of all industries that have emails."""
+    result = db.query(models.Email.industry).filter(
+        models.Email.industry.isnot(None)
+    ).distinct().all()
+    return sorted([r[0] for r in result if r[0]])
 
 
 @app.get("/emails/{email_id}", response_model=schemas.EmailOut)
@@ -102,6 +115,7 @@ def get_email(email_id: int, db: Session = Depends(get_db)):
         "brand": email.brand,
         "category": email.category,
         "type": email.type,
+        "industry": email.industry,
         "received_at": email.received_at,
         "preview": email.preview,
         "html": email.html,

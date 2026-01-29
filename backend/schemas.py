@@ -11,6 +11,7 @@ class EmailBase(BaseModel):
     brand: Optional[str] = None
     category: Optional[str] = None
     type: Optional[str] = None
+    industry: Optional[str] = None
     received_at: datetime
     preview: Optional[str] = None
 

@@ -15,6 +15,7 @@ class Email(Base):
     brand = Column(String, index=True, nullable=True)
     category = Column(String, index=True, nullable=True)
     type = Column(String, index=True, nullable=True)
+    industry = Column(String, index=True, nullable=True)  # New field for industry classification
     received_at = Column(DateTime, index=True, default=datetime.utcnow)
     html = Column(Text, nullable=False)
     preview = Column(Text, nullable=True)
@@ -23,5 +24,6 @@ class Email(Base):
     __table_args__ = (
         UniqueConstraint("gmail_id", name="uq_emails_gmail_id"),
         Index("ix_emails_brand_type", "brand", "type"),
+        Index("ix_emails_industry", "industry"),
     )
 

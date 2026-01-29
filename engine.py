@@ -115,6 +115,232 @@ BRAND_MAPPING = {
     # Add more mappings as needed
 }
 
+# Industry categories
+INDUSTRIES = [
+    "Men's Fashion",
+    "Women's Fashion",
+    "Beauty & Personal Care",
+    "Food & Beverages",
+    "Travel & Hospitality",
+    "Electronics & Gadgets",
+    "Home & Living",
+    "Health & Wellness",
+    "Finance & Fintech",
+    "Kids & Baby",
+    "Sports & Fitness",
+    "Entertainment",
+    "General Retail",  # Fallback for multi-category retailers
+]
+
+# Brand to Industry mapping
+BRAND_INDUSTRY_MAPPING = {
+    # Beauty & Personal Care
+    "nykaa": "Beauty & Personal Care",
+    "purplle": "Beauty & Personal Care",
+    "mamaearth": "Beauty & Personal Care",
+    "sugar": "Beauty & Personal Care",
+    "plum": "Beauty & Personal Care",
+    "wow": "Beauty & Personal Care",
+    "myglamm": "Beauty & Personal Care",
+    "minimalist": "Beauty & Personal Care",
+    "dot & key": "Beauty & Personal Care",
+    "beardo": "Beauty & Personal Care",
+    "man matters": "Beauty & Personal Care",
+    "mcaffeine": "Beauty & Personal Care",
+    "re'equil": "Beauty & Personal Care",
+    "forest essentials": "Beauty & Personal Care",
+    "kama ayurveda": "Beauty & Personal Care",
+    "lakme": "Beauty & Personal Care",
+    "colorbar": "Beauty & Personal Care",
+    
+    # Women's Fashion
+    "myntra": "Women's Fashion",
+    "ajio": "Women's Fashion",
+    "westside": "Women's Fashion",
+    "w": "Women's Fashion",
+    "biba": "Women's Fashion",
+    "fabindia": "Women's Fashion",
+    "global desi": "Women's Fashion",
+    "zivame": "Women's Fashion",
+    "clovia": "Women's Fashion",
+    "shein": "Women's Fashion",
+    "urbanic": "Women's Fashion",
+    "stalkbuylove": "Women's Fashion",
+    "faballey": "Women's Fashion",
+    "libas": "Women's Fashion",
+    
+    # Men's Fashion
+    "bewakoof": "Men's Fashion",
+    "the souled store": "Men's Fashion",
+    "snitch": "Men's Fashion",
+    "rare rabbit": "Men's Fashion",
+    "jack & jones": "Men's Fashion",
+    "levis": "Men's Fashion",
+    "peter england": "Men's Fashion",
+    "van heusen": "Men's Fashion",
+    "louis philippe": "Men's Fashion",
+    "allen solly": "Men's Fashion",
+    
+    # Food & Beverages
+    "zomato": "Food & Beverages",
+    "swiggy": "Food & Beverages",
+    "bigbasket": "Food & Beverages",
+    "grofers": "Food & Beverages",
+    "blinkit": "Food & Beverages",
+    "zepto": "Food & Beverages",
+    "instamart": "Food & Beverages",
+    "dunzo": "Food & Beverages",
+    "dominos": "Food & Beverages",
+    "mcdonalds": "Food & Beverages",
+    "burger king": "Food & Beverages",
+    "kfc": "Food & Beverages",
+    "pizza hut": "Food & Beverages",
+    "starbucks": "Food & Beverages",
+    "chaayos": "Food & Beverages",
+    "blue tokai": "Food & Beverages",
+    "sleepy owl": "Food & Beverages",
+    "licious": "Food & Beverages",
+    "freshmeat": "Food & Beverages",
+    "country delight": "Food & Beverages",
+    
+    # Travel & Hospitality
+    "makemytrip": "Travel & Hospitality",
+    "goibibo": "Travel & Hospitality",
+    "cleartrip": "Travel & Hospitality",
+    "yatra": "Travel & Hospitality",
+    "ixigo": "Travel & Hospitality",
+    "booking": "Travel & Hospitality",
+    "airbnb": "Travel & Hospitality",
+    "oyo": "Travel & Hospitality",
+    "treebo": "Travel & Hospitality",
+    "fabhotels": "Travel & Hospitality",
+    "redbus": "Travel & Hospitality",
+    "indigo": "Travel & Hospitality",
+    "spicejet": "Travel & Hospitality",
+    "airindia": "Travel & Hospitality",
+    "vistara": "Travel & Hospitality",
+    
+    # Electronics & Gadgets
+    "croma": "Electronics & Gadgets",
+    "reliance digital": "Electronics & Gadgets",
+    "vijay sales": "Electronics & Gadgets",
+    "apple": "Electronics & Gadgets",
+    "samsung": "Electronics & Gadgets",
+    "oneplus": "Electronics & Gadgets",
+    "xiaomi": "Electronics & Gadgets",
+    "realme": "Electronics & Gadgets",
+    "boat": "Electronics & Gadgets",
+    "noise": "Electronics & Gadgets",
+    "fire-boltt": "Electronics & Gadgets",
+    "pebble": "Electronics & Gadgets",
+    
+    # Home & Living
+    "pepperfry": "Home & Living",
+    "urban ladder": "Home & Living",
+    "hometown": "Home & Living",
+    "ikea": "Home & Living",
+    "home centre": "Home & Living",
+    "nestasia": "Home & Living",
+    "ellementry": "Home & Living",
+    "wooden street": "Home & Living",
+    "sleepycat": "Home & Living",
+    "wakefit": "Home & Living",
+    "sunday": "Home & Living",
+    
+    # Health & Wellness
+    "pharmeasy": "Health & Wellness",
+    "netmeds": "Health & Wellness",
+    "1mg": "Health & Wellness",
+    "apollo pharmacy": "Health & Wellness",
+    "healthkart": "Health & Wellness",
+    "cult.fit": "Health & Wellness",
+    "cure.fit": "Health & Wellness",
+    "practo": "Health & Wellness",
+    "mfine": "Health & Wellness",
+    "truweight": "Health & Wellness",
+    "oziva": "Health & Wellness",
+    "kapiva": "Health & Wellness",
+    
+    # Finance & Fintech
+    "paytm": "Finance & Fintech",
+    "phonepe": "Finance & Fintech",
+    "gpay": "Finance & Fintech",
+    "google pay": "Finance & Fintech",
+    "cred": "Finance & Fintech",
+    "slice": "Finance & Fintech",
+    "jupiter": "Finance & Fintech",
+    "fi": "Finance & Fintech",
+    "groww": "Finance & Fintech",
+    "zerodha": "Finance & Fintech",
+    "upstox": "Finance & Fintech",
+    "policybazaar": "Finance & Fintech",
+    "acko": "Finance & Fintech",
+    "digit": "Finance & Fintech",
+    
+    # Kids & Baby
+    "firstcry": "Kids & Baby",
+    "hopscotch": "Kids & Baby",
+    "babyhug": "Kids & Baby",
+    "the mom co": "Kids & Baby",
+    "mamaearth baby": "Kids & Baby",
+    "mothercare": "Kids & Baby",
+    "the moms co": "Kids & Baby",
+    
+    # Sports & Fitness
+    "decathlon": "Sports & Fitness",
+    "puma": "Sports & Fitness",
+    "nike": "Sports & Fitness",
+    "adidas": "Sports & Fitness",
+    "reebok": "Sports & Fitness",
+    "asics": "Sports & Fitness",
+    "skechers": "Sports & Fitness",
+    "hrx": "Sports & Fitness",
+    
+    # Entertainment
+    "bookmyshow": "Entertainment",
+    "netflix": "Entertainment",
+    "amazon prime": "Entertainment",
+    "hotstar": "Entertainment",
+    "disney": "Entertainment",
+    "zee5": "Entertainment",
+    "sony liv": "Entertainment",
+    "jio cinema": "Entertainment",
+    "spotify": "Entertainment",
+    "gaana": "Entertainment",
+    "wynk": "Entertainment",
+    
+    # General Retail (multi-category)
+    "flipkart": "General Retail",
+    "amazon": "General Retail",
+    "snapdeal": "General Retail",
+    "meesho": "General Retail",
+    "tatacliq": "General Retail",
+    "reliance": "General Retail",
+    "jiomart": "General Retail",
+}
+
+
+def extract_industry(brand_name):
+    """
+    Extract industry from brand name using the mapping.
+    Returns None if brand is not found in mapping.
+    """
+    if not brand_name:
+        return None
+    
+    brand_lower = brand_name.lower().strip()
+    
+    # Direct lookup
+    if brand_lower in BRAND_INDUSTRY_MAPPING:
+        return BRAND_INDUSTRY_MAPPING[brand_lower]
+    
+    # Partial match - check if any key is contained in brand name
+    for key, industry in BRAND_INDUSTRY_MAPPING.items():
+        if key in brand_lower or brand_lower in key:
+            return industry
+    
+    return None
+
 
 def extract_brand(sender, html=None):
     """
