@@ -172,12 +172,16 @@ def update_industries(db: Session = Depends(get_db)):
     
     emails = db.query(models.Email).filter(models.Email.industry.is_(None)).all()
     updated = 0
+    unmatched_brands = set()
     
     for email in emails:
         industry = extract_industry(email.brand)
         if industry:
             email.industry = industry
             updated += 1
+        else:
+            if email.brand:
+                unmatched_brands.add(email.brand)
     
     db.commit()
     
@@ -185,4 +189,22 @@ def update_industries(db: Session = Depends(get_db)):
         "message": f"Updated {updated} emails with industry data",
         "total_processed": len(emails),
         "updated": updated,
+        "unmatched_brands": list(unmatched_brands)[:50],  # Show first 50 unmatched brands
+    }
+
+
+@app.get("/admin/brands-without-industry")
+def get_brands_without_industry(db: Session = Depends(get_db)):
+    """
+    Get list of all unique brands that don't have an industry assigned.
+    """
+    result = db.query(models.Email.brand).filter(
+        models.Email.industry.is_(None),
+        models.Email.brand.isnot(None)
+    ).distinct().all()
+    
+    brands = sorted([r[0] for r in result if r[0]])
+    return {
+        "count": len(brands),
+        "brands": brands
     }
