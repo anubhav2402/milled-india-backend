@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, schemas
@@ -11,6 +12,22 @@ from .utils import extract_preview_image_url
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Milled India API", version="0.1.0")
+
+# CORS middleware - allow frontend to make requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "https://mailmuse.vercel.app",
+        "https://milled-india-frontend.vercel.app",
+        # Allow any Vercel preview deployments
+        "https://*.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_db():
