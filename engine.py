@@ -680,73 +680,35 @@ def safe_filename(text):
 
 def clean_html(html):
     """
-    Clean HTML while preserving email formatting.
-    Only removes dangerous elements (script, iframe, form) and tracking pixels.
-    Preserves all styling and layout elements for accurate email rendering.
+    Minimal HTML cleaning - only remove dangerous executable elements.
+    Preserves ALL styling, attributes, and layout for accurate email rendering.
+    The iframe sandbox on frontend provides security.
     """
     soup = BeautifulSoup(html, "html.parser")
 
-    # Remove dangerous/executable elements
-    for tag in soup(["script", "iframe", "form", "object", "embed"]):
+    # Only remove truly dangerous executable elements
+    for tag in soup(["script", "object", "embed"]):
         tag.decompose()
+    
+    # Remove event handlers from all elements (onclick, onload, etc.)
+    for tag in soup.find_all(True):
+        attrs_to_remove = [attr for attr in tag.attrs if attr.startswith('on')]
+        for attr in attrs_to_remove:
+            del tag[attr]
 
-    # Remove tracking pixels (1x1 images)
+    # Remove tracking pixels (1x1 images) - optional, keeps emails cleaner
     for img in soup.find_all("img"):
         if not isinstance(img, Tag):
             continue
-
         try:
             width = img.get("width")
             height = img.get("height")
-
             if width == "1" or height == "1":
                 img.decompose()
         except Exception:
-            # Never let broken HTML crash ingestion
             continue
 
-    # Email-safe HTML tags - comprehensive list for proper email rendering
-    ALLOWED_TAGS = [
-        # Text formatting
-        "p", "br", "hr", "h1", "h2", "h3", "h4", "h5", "h6",
-        "b", "i", "u", "s", "strong", "em", "small", "mark", "del", "ins", "sub", "sup",
-        "span", "div", "font", "center",
-        # Lists
-        "ul", "ol", "li", "dl", "dt", "dd",
-        # Tables (critical for email layouts)
-        "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "colgroup", "col",
-        # Links and media
-        "a", "img",
-        # Semantic/structural
-        "article", "section", "header", "footer", "nav", "aside", "main",
-        "blockquote", "pre", "code", "address",
-        # Style
-        "style",
-    ]
-
-    # Attributes commonly used in email HTML
-    ALLOWED_ATTRIBUTES = {
-        "*": ["style", "class", "id", "dir", "lang", "title"],
-        "a": ["href", "title", "target", "rel"],
-        "img": ["src", "alt", "width", "height", "border"],
-        "table": ["width", "height", "cellpadding", "cellspacing", "border", "bgcolor", "align", "valign", "role"],
-        "tr": ["bgcolor", "align", "valign", "height"],
-        "td": ["width", "height", "bgcolor", "align", "valign", "colspan", "rowspan", "nowrap"],
-        "th": ["width", "height", "bgcolor", "align", "valign", "colspan", "rowspan", "scope"],
-        "font": ["color", "face", "size"],
-        "div": ["align"],
-        "p": ["align"],
-        "span": ["align"],
-        "col": ["width", "span"],
-        "colgroup": ["span"],
-    }
-
-    return bleach.clean(
-        str(soup),
-        tags=ALLOWED_TAGS,
-        attributes=ALLOWED_ATTRIBUTES,
-        strip=True
-    )
+    return str(soup)
 
 
 def extract_body(payload):

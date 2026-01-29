@@ -372,3 +372,20 @@ def reprocess_all(db: Session = Depends(get_db)):
         "brands_updated": brand_updated,
         "industries_updated": industry_updated
     }
+
+
+@app.delete("/admin/clear-all-emails")
+def clear_all_emails(db: Session = Depends(get_db)):
+    """
+    Delete ALL emails from the database.
+    Use this before re-ingesting to get fresh HTML with updated cleaning.
+    WARNING: This is irreversible!
+    """
+    count = db.query(models.Email).count()
+    db.query(models.Email).delete()
+    db.commit()
+    
+    return {
+        "message": f"Deleted {count} emails. Run the cron job with GMAIL_FETCH_ALL=true to re-ingest.",
+        "deleted": count
+    }
