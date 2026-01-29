@@ -104,27 +104,26 @@ def list_emails(
     if limit is not None:
         query = query.limit(limit)
     
+    # Only fetch needed columns (exclude HTML for speed)
     emails = query.all()
     
-    # Return lightweight response (no HTML)
-    result = []
-    for email in emails:
-        email_dict = {
-            "id": email.id,
-            "gmail_id": email.gmail_id,
-            "subject": email.subject,
-            "sender": email.sender,
-            "brand": email.brand,
-            "category": email.category,
-            "type": email.type,
-            "industry": email.industry,
-            "received_at": email.received_at,
-            "preview": email.preview,
-            "preview_image_url": extract_preview_image_url(email.html),
-        }
-        result.append(schemas.EmailListOut(**email_dict))
-    
-    return result
+    # Return lightweight response (no HTML parsing - very fast)
+    return [
+        schemas.EmailListOut(
+            id=email.id,
+            gmail_id=email.gmail_id,
+            subject=email.subject,
+            sender=email.sender,
+            brand=email.brand,
+            category=email.category,
+            type=email.type,
+            industry=email.industry,
+            received_at=email.received_at,
+            preview=email.preview,
+            preview_image_url=None,  # Skip for now - too slow to compute on-the-fly
+        )
+        for email in emails
+    ]
 
 
 @app.post("/emails/html")
