@@ -72,7 +72,7 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/emails", response_model=List[schemas.EmailOut])
+@app.get("/emails", response_model=List[schemas.EmailListOut])
 def list_emails(
     brand: Optional[str] = Query(default=None),
     type: Optional[str] = Query(default=None),
@@ -83,7 +83,7 @@ def list_emails(
     db: Session = Depends(get_db),
 ):
     """
-    Get emails, sorted by newest first.
+    Get emails (lightweight - no HTML), sorted by newest first.
     If no limit is specified, returns all emails.
     """
     query = db.query(models.Email).order_by(models.Email.received_at.desc())
@@ -106,7 +106,7 @@ def list_emails(
     
     emails = query.all()
     
-    # Add preview_image_url to each email
+    # Return lightweight response (no HTML)
     result = []
     for email in emails:
         email_dict = {
@@ -120,12 +120,27 @@ def list_emails(
             "industry": email.industry,
             "received_at": email.received_at,
             "preview": email.preview,
-            "html": email.html,
             "preview_image_url": extract_preview_image_url(email.html),
         }
-        result.append(schemas.EmailOut(**email_dict))
+        result.append(schemas.EmailListOut(**email_dict))
     
     return result
+
+
+@app.post("/emails/html")
+def get_emails_html(
+    ids: List[int],
+    db: Session = Depends(get_db),
+):
+    """
+    Get HTML content for specific email IDs (for lazy loading previews).
+    Returns a dict mapping email_id -> html content.
+    """
+    if len(ids) > 50:
+        ids = ids[:50]  # Limit to 50 at a time
+    
+    emails = db.query(models.Email).filter(models.Email.id.in_(ids)).all()
+    return {email.id: email.html for email in emails}
 
 
 @app.get("/industries", response_model=List[str])

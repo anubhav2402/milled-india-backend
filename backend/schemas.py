@@ -28,3 +28,12 @@ class EmailOut(EmailBase):
     class Config:
         from_attributes = True
 
+
+class EmailListOut(EmailBase):
+    """Lightweight schema for email listing (no HTML for faster loading)."""
+    id: int
+    preview_image_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
