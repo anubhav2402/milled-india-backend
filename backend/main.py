@@ -214,3 +214,120 @@ def get_brands_without_industry(db: Session = Depends(get_db)):
         "count": len(brands),
         "brands": brands
     }
+
+
+@app.post("/admin/update-brands")
+def update_brands(db: Session = Depends(get_db)):
+    """
+    Re-extract brand names for all emails using the improved extraction logic.
+    Uses sender, HTML content, and subject line for smart brand detection.
+    """
+    # Import here to avoid circular imports
+    import sys
+    sys.path.insert(0, '/opt/render/project/src')
+    try:
+        from engine import extract_brand, extract_industry
+    except ImportError:
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from engine import extract_brand, extract_industry
+    
+    # Get emails with "Unknown" brand or None
+    emails = db.query(models.Email).filter(
+        (models.Email.brand == "Unknown") | 
+        (models.Email.brand == "unknown") |
+        (models.Email.brand.is_(None))
+    ).all()
+    
+    updated = 0
+    results = []
+    
+    for email in emails:
+        old_brand = email.brand
+        
+        # Re-extract brand using all available info
+        new_brand = extract_brand(
+            sender=email.sender,
+            html=email.html,
+            subject=email.subject
+        )
+        
+        if new_brand and new_brand != "Unknown" and new_brand != old_brand:
+            email.brand = new_brand
+            # Also update industry based on new brand
+            email.industry = extract_industry(
+                brand_name=new_brand,
+                subject=email.subject,
+                preview=email.preview,
+                html=email.html
+            )
+            updated += 1
+            results.append({
+                "id": email.id,
+                "old_brand": old_brand,
+                "new_brand": new_brand,
+                "industry": email.industry
+            })
+    
+    db.commit()
+    
+    return {
+        "message": f"Updated {updated} email brand names",
+        "total_processed": len(emails),
+        "updated": updated,
+        "samples": results[:20]  # Show first 20 updates
+    }
+
+
+@app.post("/admin/reprocess-all")
+def reprocess_all(db: Session = Depends(get_db)):
+    """
+    Reprocess ALL emails - re-extract both brand and industry for every email.
+    Use this for a full refresh of the classification.
+    """
+    import sys
+    sys.path.insert(0, '/opt/render/project/src')
+    try:
+        from engine import extract_brand, extract_industry
+    except ImportError:
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from engine import extract_brand, extract_industry
+    
+    emails = db.query(models.Email).all()
+    
+    brand_updated = 0
+    industry_updated = 0
+    
+    for email in emails:
+        # Re-extract brand
+        new_brand = extract_brand(
+            sender=email.sender,
+            html=email.html,
+            subject=email.subject
+        )
+        
+        if new_brand and new_brand != email.brand:
+            email.brand = new_brand
+            brand_updated += 1
+        
+        # Re-extract industry
+        new_industry = extract_industry(
+            brand_name=email.brand,
+            subject=email.subject,
+            preview=email.preview,
+            html=email.html
+        )
+        
+        if new_industry and new_industry != email.industry:
+            email.industry = new_industry
+            industry_updated += 1
+    
+    db.commit()
+    
+    return {
+        "message": "Full reprocessing complete",
+        "total_emails": len(emails),
+        "brands_updated": brand_updated,
+        "industries_updated": industry_updated
+    }

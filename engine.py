@@ -470,90 +470,206 @@ def extract_industry(brand_name, subject=None, preview=None, html=None):
     return None
 
 
-def extract_brand(sender, html=None):
+def clean_brand_name(name):
     """
-    Extract brand name from email sender using multiple methods:
-    1. Extract display name from "Brand Name <email@domain.com>" format
-    2. Check brand mapping dictionary
-    3. Extract from domain name
-    4. Try to extract from email HTML (if provided)
+    Clean up a brand name by removing common suffixes/prefixes and formatting properly.
     """
-    if not sender:
-        return "unknown"
+    if not name:
+        return None
     
-    sender_lower = sender.lower()
+    # Common patterns to remove
+    patterns_to_remove = [
+        # Email-related
+        r'\b(newsletter|mailer|noreply|no-reply|donotreply|mail|email|emails)\b',
+        r'\b(support|help|info|contact|team|official|india|global)\b',
+        r'\b(notifications?|updates?|alerts?|digest)\b',
+        # Generic business terms
+        r'\b(pvt\.?\s*ltd\.?|private\s*limited|limited|llp|inc\.?|corp\.?)\b',
+        r'\b(customer\s*service|customer\s*care)\b',
+        # Greetings/common phrases
+        r'^(hi|hello|dear|from|the)\s+',
+        r'\s+(team|crew|family|club)$',
+    ]
     
-    # Method 1: Extract display name from "Brand Name <email@domain.com>" format
-    # Example: "Nykaa <noreply@nykaa.com>" -> "Nykaa"
-    display_name_match = re.search(r'^([^<]+)<', sender)
-    if display_name_match:
-        display_name = display_name_match.group(1).strip().strip('"').strip("'")
-        # Clean up common prefixes/suffixes
-        display_name = re.sub(r'^(noreply|no-reply|donotreply|donot-reply|mailer|newsletter)\s*[-:]?\s*', '', display_name, flags=re.IGNORECASE)
-        display_name = display_name.strip()
-        # If it looks like a brand name (not just an email), use it
-        if display_name and len(display_name) > 2 and '@' not in display_name:
-            # Check if it matches a known brand
-            for domain, brand_name in BRAND_MAPPING.items():
-                if domain in display_name.lower():
-                    return brand_name
-            return display_name.title()  # Capitalize properly
+    cleaned = name.strip()
+    for pattern in patterns_to_remove:
+        cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
     
-    # Method 2: Extract domain and check mapping
-    domain_match = re.search(r'@([\w\-]+(?:\.[\w\-]+)*)\.', sender_lower)
-    if domain_match:
-        domain = domain_match.group(1)
-        # Handle subdomains - take the main domain
-        domain_parts = domain.split('.')
-        main_domain = domain_parts[-1] if len(domain_parts) > 1 else domain
-        
-        # Check brand mapping
-        if main_domain in BRAND_MAPPING:
-            return BRAND_MAPPING[main_domain]
-        
-        # For known patterns, extract brand name
-        if main_domain in ['com', 'in', 'co'] and len(domain_parts) > 1:
-            brand_part = domain_parts[-2]  # e.g., "nykaa.com" -> "nykaa"
-            if brand_part in BRAND_MAPPING:
-                return BRAND_MAPPING[brand_part]
-            return brand_part.title()
-        
-        return main_domain.title()
+    # Remove extra whitespace and special characters at edges
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    cleaned = re.sub(r'^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$', '', cleaned)
     
-    # Method 3: Try to extract from HTML if provided
+    # If nothing left or too short, return None
+    if not cleaned or len(cleaned) < 2:
+        return None
+    
+    # Proper title case
+    return cleaned.title()
+
+
+def extract_brand(sender, html=None, subject=None):
+    """
+    Extract brand name from email using multiple smart methods:
+    1. Known brand mapping (most reliable)
+    2. Email sender display name
+    3. Email domain
+    4. HTML meta tags (og:site_name, twitter:site)
+    5. Logo alt text
+    6. Footer copyright text
+    7. Subject line brand detection
+    """
+    from bs4 import BeautifulSoup
+    
+    candidates = []  # List of (brand_name, confidence_score)
+    
+    # ===== Method 1: Check known brand mapping first =====
+    if sender:
+        sender_lower = sender.lower()
+        # Check if any known brand is in sender
+        for domain, brand_name in BRAND_MAPPING.items():
+            if domain in sender_lower:
+                return brand_name  # High confidence, return immediately
+    
+    # ===== Method 2: Extract from sender display name =====
+    if sender:
+        display_name_match = re.search(r'^([^<]+)<', sender)
+        if display_name_match:
+            display_name = display_name_match.group(1).strip().strip('"').strip("'")
+            cleaned = clean_brand_name(display_name)
+            if cleaned and len(cleaned) >= 2:
+                candidates.append((cleaned, 80))
+    
+    # ===== Method 3: Extract from email domain =====
+    if sender:
+        # Match domain from email like "name@brand.com" or "name@subdomain.brand.co.in"
+        domain_match = re.search(r'@([a-zA-Z0-9\-]+(?:\.[a-zA-Z0-9\-]+)*)\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?', sender)
+        if domain_match:
+            full_domain = domain_match.group(1)
+            domain_parts = full_domain.split('.')
+            
+            # Get the main brand part (usually first non-generic subdomain)
+            generic_subdomains = ['mail', 'email', 'smtp', 'newsletter', 'news', 'marketing', 'promo', 'mg', 'em', 'send']
+            brand_part = None
+            for part in domain_parts:
+                if part.lower() not in generic_subdomains and len(part) > 2:
+                    brand_part = part
+                    break
+            
+            if brand_part:
+                # Check brand mapping
+                if brand_part.lower() in BRAND_MAPPING:
+                    return BRAND_MAPPING[brand_part.lower()]
+                candidates.append((brand_part.title(), 60))
+    
+    # ===== Methods 4-6: Extract from HTML =====
     if html:
         try:
-            from bs4 import BeautifulSoup
             soup = BeautifulSoup(html, "html.parser")
-            # Look for common brand indicators in HTML
-            # Check title tag
-            title = soup.find('title')
-            if title:
-                title_text = title.get_text().lower()
-                for domain, brand_name in BRAND_MAPPING.items():
-                    if domain in title_text:
-                        return brand_name
             
-            # Check meta tags
-            meta_brand = soup.find('meta', {'name': re.compile(r'brand|company', re.I)})
-            if meta_brand and meta_brand.get('content'):
-                content = meta_brand.get('content').lower()
-                for domain, brand_name in BRAND_MAPPING.items():
-                    if domain in content:
-                        return brand_name
+            # Method 4a: og:site_name meta tag (very reliable)
+            og_site = soup.find('meta', {'property': 'og:site_name'})
+            if og_site and og_site.get('content'):
+                cleaned = clean_brand_name(og_site.get('content'))
+                if cleaned:
+                    candidates.append((cleaned, 90))
             
-            # Check for brand in common class names or IDs
-            brand_elements = soup.find_all(class_=re.compile(r'brand|logo|company', re.I))
-            for elem in brand_elements[:3]:  # Check first 3 matches
-                text = elem.get_text().strip()
-                if text and len(text) < 50:  # Reasonable brand name length
-                    for domain, brand_name in BRAND_MAPPING.items():
-                        if domain in text.lower():
-                            return brand_name
+            # Method 4b: twitter:site meta tag
+            twitter_site = soup.find('meta', {'name': 'twitter:site'})
+            if twitter_site and twitter_site.get('content'):
+                site = twitter_site.get('content').lstrip('@')
+                cleaned = clean_brand_name(site)
+                if cleaned:
+                    candidates.append((cleaned, 85))
+            
+            # Method 4c: application-name meta tag
+            app_name = soup.find('meta', {'name': 'application-name'})
+            if app_name and app_name.get('content'):
+                cleaned = clean_brand_name(app_name.get('content'))
+                if cleaned:
+                    candidates.append((cleaned, 85))
+            
+            # Method 5: Logo image alt text
+            logo_patterns = ['logo', 'brand', 'header-logo', 'main-logo', 'site-logo']
+            for pattern in logo_patterns:
+                # Check by class
+                logo_img = soup.find('img', class_=re.compile(pattern, re.I))
+                if not logo_img:
+                    # Check by id
+                    logo_img = soup.find('img', id=re.compile(pattern, re.I))
+                if not logo_img:
+                    # Check by src containing 'logo'
+                    logo_img = soup.find('img', src=re.compile(r'logo', re.I))
+                
+                if logo_img:
+                    alt_text = logo_img.get('alt', '')
+                    if alt_text and len(alt_text) > 1 and len(alt_text) < 50:
+                        cleaned = clean_brand_name(alt_text)
+                        if cleaned:
+                            candidates.append((cleaned, 75))
+                            break
+            
+            # Method 6: Footer copyright text
+            footer = soup.find('footer') or soup.find(class_=re.compile(r'footer', re.I))
+            if footer:
+                footer_text = footer.get_text()
+                # Look for © patterns like "© 2024 BrandName" or "Copyright BrandName"
+                copyright_patterns = [
+                    r'©\s*\d{4}\s+([A-Za-z][A-Za-z0-9\s&]+?)(?:\s*[,\.|]|$)',
+                    r'copyright\s*(?:©?\s*\d{4})?\s+([A-Za-z][A-Za-z0-9\s&]+?)(?:\s*[,\.|]|$)',
+                    r'([A-Za-z][A-Za-z0-9\s&]+?)\s*©\s*\d{4}',
+                ]
+                for pattern in copyright_patterns:
+                    match = re.search(pattern, footer_text, re.IGNORECASE)
+                    if match:
+                        cleaned = clean_brand_name(match.group(1))
+                        if cleaned and len(cleaned) >= 2:
+                            candidates.append((cleaned, 70))
+                            break
+            
+            # Method 6b: Look for copyright anywhere in email
+            if not footer:
+                full_text = soup.get_text()
+                copyright_match = re.search(r'©\s*\d{4}\s+([A-Za-z][A-Za-z0-9\s&]{2,30}?)(?:\s*[,\.|All]|$)', full_text, re.IGNORECASE)
+                if copyright_match:
+                    cleaned = clean_brand_name(copyright_match.group(1))
+                    if cleaned:
+                        candidates.append((cleaned, 65))
+            
         except Exception:
-            pass  # If HTML parsing fails, continue
+            pass
     
-    return "unknown"
+    # ===== Method 7: Subject line brand detection =====
+    if subject:
+        # Look for common patterns like "BrandName: Subject" or "[BrandName] Subject"
+        subject_patterns = [
+            r'^\[([A-Za-z][A-Za-z0-9\s&]+?)\]',  # [BrandName] Subject
+            r'^([A-Za-z][A-Za-z0-9\s&]+?):\s',   # BrandName: Subject
+            r'^([A-Za-z][A-Za-z0-9\s&]+?)\s*[-|]\s',  # BrandName - Subject or BrandName | Subject
+        ]
+        for pattern in subject_patterns:
+            match = re.match(pattern, subject)
+            if match:
+                cleaned = clean_brand_name(match.group(1))
+                if cleaned and len(cleaned) >= 2 and len(cleaned) <= 30:
+                    candidates.append((cleaned, 50))
+                    break
+    
+    # ===== Select best candidate =====
+    if candidates:
+        # Sort by confidence score (descending)
+        candidates.sort(key=lambda x: x[1], reverse=True)
+        
+        # Check top candidates against brand mapping
+        for brand, score in candidates:
+            brand_lower = brand.lower()
+            for domain, mapped_name in BRAND_MAPPING.items():
+                if domain in brand_lower or brand_lower in domain:
+                    return mapped_name
+        
+        # Return highest confidence candidate
+        return candidates[0][0]
+    
+    return "Unknown"
 
 
 def safe_filename(text):
@@ -718,8 +834,8 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20):
             continue
 
         cleaned_html = clean_html(html)
-        # Extract brand with HTML context for better accuracy
-        brand = extract_brand(sender, cleaned_html)
+        # Extract brand with HTML and subject context for better accuracy
+        brand = extract_brand(sender, html=cleaned_html, subject=subject)
 
         # Simple preview: first 200 visible characters
         soup = BeautifulSoup(cleaned_html, "html.parser")
