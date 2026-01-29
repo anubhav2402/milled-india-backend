@@ -32,9 +32,14 @@ def upsert_emails(db: Session):
         else:
             received_dt = raw_received
 
-        # Auto-detect industry from brand
+        # Auto-detect industry from brand and content
         brand = r["brand"]
-        industry = extract_industry(brand)
+        industry = extract_industry(
+            brand_name=brand,
+            subject=r["subject"],
+            preview=r["preview"],
+            html=r["html"]
+        )
 
         email = Email(
             gmail_id=r["gmail_id"],

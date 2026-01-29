@@ -320,24 +320,152 @@ BRAND_INDUSTRY_MAPPING = {
 }
 
 
-def extract_industry(brand_name):
+# Industry keywords for content-based classification
+INDUSTRY_KEYWORDS = {
+    "Beauty & Personal Care": [
+        "skincare", "makeup", "cosmetic", "lipstick", "mascara", "foundation", 
+        "serum", "moisturizer", "sunscreen", "face wash", "cleanser", "toner",
+        "beauty", "glow", "skin", "haircare", "shampoo", "conditioner", "hair oil",
+        "perfume", "fragrance", "deodorant", "grooming", "salon", "spa",
+        "nail polish", "eye shadow", "blush", "concealer", "primer",
+    ],
+    "Women's Fashion": [
+        "saree", "kurti", "lehenga", "salwar", "dupatta", "ethnic wear",
+        "women's", "ladies", "dress", "gown", "skirt", "blouse", "top",
+        "lingerie", "bra", "panties", "nightwear", "western wear",
+        "handbag", "clutch", "earrings", "necklace", "jewelry", "jewellery",
+        "heels", "sandals", "flats", "women footwear",
+    ],
+    "Men's Fashion": [
+        "men's", "shirt", "trouser", "jeans", "t-shirt", "polo", "blazer",
+        "suit", "formal wear", "casual wear", "men footwear", "sneakers",
+        "wallet", "belt", "tie", "cufflinks", "watch", "sunglasses",
+        "kurta", "sherwani", "ethnic men",
+    ],
+    "Food & Beverages": [
+        "food", "restaurant", "order", "delivery", "hungry", "eat", "meal",
+        "pizza", "burger", "biryani", "curry", "cuisine", "chef",
+        "grocery", "vegetables", "fruits", "fresh", "organic",
+        "coffee", "tea", "juice", "smoothie", "dessert", "cake", "sweet",
+        "meat", "chicken", "fish", "seafood", "mutton",
+        "snacks", "breakfast", "lunch", "dinner", "menu",
+    ],
+    "Travel & Hospitality": [
+        "flight", "hotel", "booking", "travel", "trip", "vacation", "holiday",
+        "destination", "airport", "airline", "boarding", "check-in",
+        "resort", "stay", "accommodation", "room", "suite",
+        "bus", "train", "cab", "taxi", "car rental",
+        "tour", "package", "itinerary", "passport", "visa",
+    ],
+    "Electronics & Gadgets": [
+        "phone", "mobile", "smartphone", "laptop", "computer", "tablet",
+        "earbuds", "headphones", "speaker", "smartwatch", "wearable",
+        "television", "tv", "camera", "appliance", "gadget", "tech",
+        "charger", "cable", "accessory", "electronic",
+        "gaming", "console", "processor", "ram", "storage",
+    ],
+    "Home & Living": [
+        "furniture", "sofa", "bed", "mattress", "pillow", "table", "chair",
+        "decor", "home", "living room", "bedroom", "kitchen", "bathroom",
+        "curtain", "carpet", "rug", "lamp", "lighting",
+        "storage", "organizer", "shelf", "wardrobe", "cupboard",
+        "kitchenware", "cookware", "utensil", "dinnerware",
+    ],
+    "Health & Wellness": [
+        "medicine", "pharmacy", "health", "wellness", "vitamin", "supplement",
+        "doctor", "consultation", "prescription", "tablet", "capsule",
+        "fitness", "gym", "workout", "exercise", "yoga", "meditation",
+        "protein", "nutrition", "diet", "weight loss", "immunity",
+        "ayurveda", "herbal", "natural remedy",
+    ],
+    "Finance & Fintech": [
+        "payment", "transaction", "transfer", "upi", "wallet", "money",
+        "credit card", "debit card", "emi", "loan", "insurance",
+        "invest", "mutual fund", "stock", "trading", "portfolio",
+        "bank", "account", "savings", "fd", "deposit",
+        "bill", "recharge", "cashback", "reward", "offer",
+    ],
+    "Kids & Baby": [
+        "baby", "kids", "child", "toddler", "infant", "newborn",
+        "diaper", "feeding", "stroller", "crib", "toy",
+        "kids wear", "baby clothes", "school", "nursery",
+        "parenting", "mom", "mother", "pregnancy", "maternity",
+    ],
+    "Sports & Fitness": [
+        "sports", "athletic", "running", "jogging", "cycling", "swimming",
+        "football", "cricket", "badminton", "tennis", "gym wear",
+        "sportswear", "activewear", "tracksuit", "sneakers", "sports shoes",
+        "fitness tracker", "equipment", "outdoor", "adventure",
+    ],
+    "Entertainment": [
+        "movie", "film", "cinema", "theatre", "show", "concert", "event",
+        "streaming", "watch", "series", "episode", "season",
+        "music", "song", "playlist", "podcast", "audio",
+        "game", "gaming", "play", "ticket", "booking",
+    ],
+}
+
+
+def extract_industry(brand_name, subject=None, preview=None, html=None):
     """
-    Extract industry from brand name using the mapping.
-    Returns None if brand is not found in mapping.
+    Extract industry using multiple methods:
+    1. Brand name mapping (most accurate)
+    2. Content-based keyword analysis (fallback)
     """
-    if not brand_name:
+    # Method 1: Brand name mapping
+    if brand_name:
+        brand_lower = brand_name.lower().strip()
+        
+        # Direct lookup
+        if brand_lower in BRAND_INDUSTRY_MAPPING:
+            return BRAND_INDUSTRY_MAPPING[brand_lower]
+        
+        # Partial match
+        for key, industry in BRAND_INDUSTRY_MAPPING.items():
+            if key in brand_lower or brand_lower in key:
+                return industry
+    
+    # Method 2: Content-based keyword analysis
+    # Combine all available text
+    text_parts = []
+    if subject:
+        text_parts.append(subject.lower())
+    if preview:
+        text_parts.append(preview.lower())
+    if html:
+        # Extract text from HTML (simple approach - just get visible text)
+        from bs4 import BeautifulSoup
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
+            text_parts.append(soup.get_text(separator=" ").lower()[:5000])  # Limit to first 5000 chars
+        except Exception:
+            pass
+    
+    if not text_parts:
         return None
     
-    brand_lower = brand_name.lower().strip()
+    combined_text = " ".join(text_parts)
     
-    # Direct lookup
-    if brand_lower in BRAND_INDUSTRY_MAPPING:
-        return BRAND_INDUSTRY_MAPPING[brand_lower]
+    # Score each industry based on keyword matches
+    industry_scores = {}
+    for industry, keywords in INDUSTRY_KEYWORDS.items():
+        score = 0
+        for keyword in keywords:
+            if keyword in combined_text:
+                # Weight by keyword position (earlier = more important)
+                score += 1
+                # Bonus if keyword is in subject
+                if subject and keyword in subject.lower():
+                    score += 2
+        if score > 0:
+            industry_scores[industry] = score
     
-    # Partial match - check if any key is contained in brand name
-    for key, industry in BRAND_INDUSTRY_MAPPING.items():
-        if key in brand_lower or brand_lower in key:
-            return industry
+    # Return industry with highest score (if any matches found)
+    if industry_scores:
+        return max(industry_scores, key=industry_scores.get)
     
     return None
 

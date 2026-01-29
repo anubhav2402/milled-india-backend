@@ -175,7 +175,13 @@ def update_industries(db: Session = Depends(get_db)):
     unmatched_brands = set()
     
     for email in emails:
-        industry = extract_industry(email.brand)
+        # Use smart extraction with content analysis
+        industry = extract_industry(
+            brand_name=email.brand,
+            subject=email.subject,
+            preview=email.preview,
+            html=email.html
+        )
         if industry:
             email.industry = industry
             updated += 1
