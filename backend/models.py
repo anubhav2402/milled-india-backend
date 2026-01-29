@@ -1,8 +1,39 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, UniqueConstraint, Index
+from sqlalchemy import Column, Integer, String, Text, DateTime, UniqueConstraint, Index, ForeignKey
+from sqlalchemy.orm import relationship
 
 from .db import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    password_hash = Column(String, nullable=True)  # Null for OAuth-only users
+    name = Column(String, nullable=True)
+    google_id = Column(String, unique=True, nullable=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship to followed brands
+    follows = relationship("UserFollow", back_populates="user", cascade="all, delete-orphan")
+
+
+class UserFollow(Base):
+    __tablename__ = "user_follows"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    brand_name = Column(String, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship back to user
+    user = relationship("User", back_populates="follows")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "brand_name", name="uq_user_brand_follow"),
+    )
 
 
 class Email(Base):

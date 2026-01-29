@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -8,6 +8,14 @@ from sqlalchemy import text
 from . import models, schemas
 from .db import Base, SessionLocal, engine
 from .utils import extract_preview_image_url
+from .auth import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    get_current_user,
+    get_optional_user,
+    verify_google_token,
+)
 
 # Create tables on startup (simple for local dev)
 Base.metadata.create_all(bind=engine)
@@ -71,6 +79,167 @@ def get_db():
 def health():
     return {"status": "ok"}
 
+
+# ============ Authentication Endpoints ============
+
+@app.post("/auth/register", response_model=schemas.TokenResponse)
+def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Register a new user with email and password."""
+    # Check if email already exists
+    existing_user = db.query(models.User).filter(models.User.email == user_data.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    user = models.User(
+        email=user_data.email,
+        password_hash=hash_password(user_data.password),
+        name=user_data.name,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    # Create access token
+    token = create_access_token(user.id, user.email)
+    
+    return schemas.TokenResponse(
+        access_token=token,
+        user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
+    )
+
+
+@app.post("/auth/login", response_model=schemas.TokenResponse)
+def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+    """Login with email and password."""
+    user = db.query(models.User).filter(models.User.email == credentials.email).first()
+    
+    if not user or not user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    if not verify_password(credentials.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    # Create access token
+    token = create_access_token(user.id, user.email)
+    
+    return schemas.TokenResponse(
+        access_token=token,
+        user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
+    )
+
+
+@app.post("/auth/google", response_model=schemas.TokenResponse)
+def google_auth(auth_data: schemas.GoogleAuth, db: Session = Depends(get_db)):
+    """Login or register with Google OAuth."""
+    # Verify Google token
+    google_info = verify_google_token(auth_data.token)
+    if not google_info:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google token"
+        )
+    
+    # Check if user exists by Google ID
+    user = db.query(models.User).filter(models.User.google_id == google_info["google_id"]).first()
+    
+    if not user:
+        # Check if email already exists (maybe registered with password)
+        user = db.query(models.User).filter(models.User.email == google_info["email"]).first()
+        if user:
+            # Link Google account to existing user
+            user.google_id = google_info["google_id"]
+            if not user.name and google_info.get("name"):
+                user.name = google_info["name"]
+        else:
+            # Create new user
+            user = models.User(
+                email=google_info["email"],
+                google_id=google_info["google_id"],
+                name=google_info.get("name"),
+            )
+            db.add(user)
+        
+        db.commit()
+        db.refresh(user)
+    
+    # Create access token
+    token = create_access_token(user.id, user.email)
+    
+    return schemas.TokenResponse(
+        access_token=token,
+        user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
+    )
+
+
+@app.get("/auth/me", response_model=schemas.UserOut)
+def get_me(current_user: models.User = Depends(get_current_user)):
+    """Get current authenticated user info."""
+    return schemas.UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name
+    )
+
+
+# ============ User Follows Endpoints ============
+
+@app.get("/user/follows", response_model=schemas.UserFollowsResponse)
+def get_user_follows(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get list of brands the current user follows."""
+    follows = db.query(models.UserFollow).filter(
+        models.UserFollow.user_id == current_user.id
+    ).all()
+    return schemas.UserFollowsResponse(follows=[f.brand_name for f in follows])
+
+
+@app.post("/user/follows/{brand_name}")
+def follow_brand(brand_name: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Follow a brand."""
+    # Check if already following
+    existing = db.query(models.UserFollow).filter(
+        models.UserFollow.user_id == current_user.id,
+        models.UserFollow.brand_name == brand_name
+    ).first()
+    
+    if existing:
+        return {"message": "Already following this brand"}
+    
+    # Create new follow
+    follow = models.UserFollow(user_id=current_user.id, brand_name=brand_name)
+    db.add(follow)
+    db.commit()
+    
+    return {"message": f"Now following {brand_name}"}
+
+
+@app.delete("/user/follows/{brand_name}")
+def unfollow_brand(brand_name: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Unfollow a brand."""
+    follow = db.query(models.UserFollow).filter(
+        models.UserFollow.user_id == current_user.id,
+        models.UserFollow.brand_name == brand_name
+    ).first()
+    
+    if not follow:
+        raise HTTPException(status_code=404, detail="Not following this brand")
+    
+    db.delete(follow)
+    db.commit()
+    
+    return {"message": f"Unfollowed {brand_name}"}
+
+
+# ============ Email Endpoints ============
 
 @app.get("/emails", response_model=List[schemas.EmailListOut])
 def list_emails(
@@ -429,10 +598,14 @@ def update_campaign_types(db: Session = Depends(get_db)):
 
 
 @app.get("/brands/stats")
-def get_brand_stats(db: Session = Depends(get_db)):
+def get_brand_stats(
+    current_user: Optional[models.User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
     """
     Get statistics for all brands including send frequency.
     Returns email count and average emails per week for each brand.
+    If not authenticated, stats are masked with "xx".
     """
     from sqlalchemy import func
     from datetime import datetime, timedelta
@@ -449,6 +622,8 @@ def get_brand_stats(db: Session = Depends(get_db)):
     ).group_by(models.Email.brand).all()
     
     brand_stats = {}
+    is_authenticated = current_user is not None
+    
     for row in results:
         brand = row.brand
         count = row.email_count
@@ -472,9 +647,16 @@ def get_brand_stats(db: Session = Depends(get_db)):
         else:
             freq = "1x"
         
-        brand_stats[brand] = {
-            "email_count": count,
-            "send_frequency": freq
-        }
+        # Mask stats for non-authenticated users
+        if is_authenticated:
+            brand_stats[brand] = {
+                "email_count": count,
+                "send_frequency": freq
+            }
+        else:
+            brand_stats[brand] = {
+                "email_count": "xx",
+                "send_frequency": "xx"
+            }
     
     return brand_stats
