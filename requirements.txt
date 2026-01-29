@@ -1,4 +1,19 @@
+# Gmail API
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+
+# Web Framework
+fastapi
+uvicorn[standard]
+
+# Database
+sqlalchemy
+psycopg[binary]
+
+# HTML Processing
 beautifulsoup4
+bleach
+
+# Validation
+pydantic
