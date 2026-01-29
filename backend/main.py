@@ -79,9 +79,13 @@ def list_emails(
     industry: Optional[str] = Query(default=None),
     q: Optional[str] = Query(default=None),
     skip: int = 0,
-    limit: int = 50,
+    limit: Optional[int] = Query(default=None),  # No limit by default - returns all
     db: Session = Depends(get_db),
 ):
+    """
+    Get emails, sorted by newest first.
+    If no limit is specified, returns all emails.
+    """
     query = db.query(models.Email).order_by(models.Email.received_at.desc())
 
     if brand:
@@ -96,7 +100,11 @@ def list_emails(
             models.Email.subject.ilike(like) | models.Email.preview.ilike(like)
         )
 
-    emails = query.offset(skip).limit(limit).all()
+    query = query.offset(skip)
+    if limit is not None:
+        query = query.limit(limit)
+    
+    emails = query.all()
     
     # Add preview_image_url to each email
     result = []
