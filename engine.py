@@ -90,9 +90,116 @@ def get_label_id(service, label_name: str = LABEL_NAME):
     raise Exception(f"Label {label_name} not found")
 
 
-def extract_brand(sender):
-    match = re.search(r'@([\w\-]+)\.', sender.lower())
-    return match.group(1) if match else "unknown"
+# Brand mapping for known Indian D2C brands
+BRAND_MAPPING = {
+    # Domain -> Brand Name mappings
+    "nykaa": "Nykaa",
+    "myntra": "Myntra",
+    "zomato": "Zomato",
+    "swiggy": "Swiggy",
+    "meesho": "Meesho",
+    "mamaearth": "Mamaearth",
+    "purplle": "Purplle",
+    "firstcry": "FirstCry",
+    "tatacliq": "Tata CLiQ",
+    "ajio": "AJIO",
+    "flipkart": "Flipkart",
+    "amazon": "Amazon",
+    "snapdeal": "Snapdeal",
+    "paytm": "Paytm",
+    "bigbasket": "BigBasket",
+    "grofers": "Grofers",
+    "croma": "Croma",
+    "reliance": "Reliance",
+    "reliance digital": "Reliance Digital",
+    # Add more mappings as needed
+}
+
+
+def extract_brand(sender, html=None):
+    """
+    Extract brand name from email sender using multiple methods:
+    1. Extract display name from "Brand Name <email@domain.com>" format
+    2. Check brand mapping dictionary
+    3. Extract from domain name
+    4. Try to extract from email HTML (if provided)
+    """
+    if not sender:
+        return "unknown"
+    
+    sender_lower = sender.lower()
+    
+    # Method 1: Extract display name from "Brand Name <email@domain.com>" format
+    # Example: "Nykaa <noreply@nykaa.com>" -> "Nykaa"
+    display_name_match = re.search(r'^([^<]+)<', sender)
+    if display_name_match:
+        display_name = display_name_match.group(1).strip().strip('"').strip("'")
+        # Clean up common prefixes/suffixes
+        display_name = re.sub(r'^(noreply|no-reply|donotreply|donot-reply|mailer|newsletter)\s*[-:]?\s*', '', display_name, flags=re.IGNORECASE)
+        display_name = display_name.strip()
+        # If it looks like a brand name (not just an email), use it
+        if display_name and len(display_name) > 2 and '@' not in display_name:
+            # Check if it matches a known brand
+            for domain, brand_name in BRAND_MAPPING.items():
+                if domain in display_name.lower():
+                    return brand_name
+            return display_name.title()  # Capitalize properly
+    
+    # Method 2: Extract domain and check mapping
+    domain_match = re.search(r'@([\w\-]+(?:\.[\w\-]+)*)\.', sender_lower)
+    if domain_match:
+        domain = domain_match.group(1)
+        # Handle subdomains - take the main domain
+        domain_parts = domain.split('.')
+        main_domain = domain_parts[-1] if len(domain_parts) > 1 else domain
+        
+        # Check brand mapping
+        if main_domain in BRAND_MAPPING:
+            return BRAND_MAPPING[main_domain]
+        
+        # For known patterns, extract brand name
+        if main_domain in ['com', 'in', 'co'] and len(domain_parts) > 1:
+            brand_part = domain_parts[-2]  # e.g., "nykaa.com" -> "nykaa"
+            if brand_part in BRAND_MAPPING:
+                return BRAND_MAPPING[brand_part]
+            return brand_part.title()
+        
+        return main_domain.title()
+    
+    # Method 3: Try to extract from HTML if provided
+    if html:
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, "html.parser")
+            # Look for common brand indicators in HTML
+            # Check title tag
+            title = soup.find('title')
+            if title:
+                title_text = title.get_text().lower()
+                for domain, brand_name in BRAND_MAPPING.items():
+                    if domain in title_text:
+                        return brand_name
+            
+            # Check meta tags
+            meta_brand = soup.find('meta', {'name': re.compile(r'brand|company', re.I)})
+            if meta_brand and meta_brand.get('content'):
+                content = meta_brand.get('content').lower()
+                for domain, brand_name in BRAND_MAPPING.items():
+                    if domain in content:
+                        return brand_name
+            
+            # Check for brand in common class names or IDs
+            brand_elements = soup.find_all(class_=re.compile(r'brand|logo|company', re.I))
+            for elem in brand_elements[:3]:  # Check first 3 matches
+                text = elem.get_text().strip()
+                if text and len(text) < 50:  # Reasonable brand name length
+                    for domain, brand_name in BRAND_MAPPING.items():
+                        if domain in text.lower():
+                            return brand_name
+        except Exception:
+            pass  # If HTML parsing fails, continue
+    
+    return "unknown"
 
 
 def safe_filename(text):
@@ -218,8 +325,9 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20):
             save_processed_id(msg_id)
             continue
 
-        brand = extract_brand(sender)
         cleaned_html = clean_html(html)
+        # Extract brand with HTML context for better accuracy
+        brand = extract_brand(sender, cleaned_html)
 
         # Simple preview: first 200 visible characters
         soup = BeautifulSoup(cleaned_html, "html.parser")
