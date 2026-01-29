@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.db import SessionLocal, engine, Base
 from backend.models import Email
-from engine import fetch_label_emails, extract_industry
+from engine import fetch_label_emails, extract_industry, extract_campaign_type
 
 
 def upsert_emails(db: Session):
@@ -50,6 +50,13 @@ def upsert_emails(db: Session):
             preview=r["preview"],
             html=r["html"]
         )
+        
+        # Auto-detect campaign type
+        campaign_type = extract_campaign_type(
+            subject=r["subject"],
+            preview=r["preview"],
+            html=r["html"]
+        )
 
         email = Email(
             gmail_id=r["gmail_id"],
@@ -57,7 +64,7 @@ def upsert_emails(db: Session):
             sender=r["sender"],
             brand=brand,
             category=None,
-            type=None,
+            type=campaign_type,
             industry=industry,
             received_at=received_dt,
             html=r["html"],

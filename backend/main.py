@@ -389,3 +389,92 @@ def clear_all_emails(db: Session = Depends(get_db)):
         "message": f"Deleted {count} emails. Run the cron job with GMAIL_FETCH_ALL=true to re-ingest.",
         "deleted": count
     }
+
+
+@app.post("/admin/update-campaign-types")
+def update_campaign_types(db: Session = Depends(get_db)):
+    """
+    Backfill campaign types for all existing emails.
+    """
+    import sys
+    sys.path.insert(0, '/opt/render/project/src')
+    try:
+        from engine import extract_campaign_type
+    except ImportError:
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from engine import extract_campaign_type
+    
+    # Get emails without campaign type
+    emails = db.query(models.Email).filter(models.Email.type.is_(None)).all()
+    updated = 0
+    
+    for email in emails:
+        campaign_type = extract_campaign_type(
+            subject=email.subject,
+            preview=email.preview,
+            html=email.html
+        )
+        if campaign_type:
+            email.type = campaign_type
+            updated += 1
+    
+    db.commit()
+    
+    return {
+        "message": f"Updated {updated} emails with campaign types",
+        "total_processed": len(emails),
+        "updated": updated
+    }
+
+
+@app.get("/brands/stats")
+def get_brand_stats(db: Session = Depends(get_db)):
+    """
+    Get statistics for all brands including send frequency.
+    Returns email count and average emails per week for each brand.
+    """
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    # Get email counts per brand
+    results = db.query(
+        models.Email.brand,
+        func.count(models.Email.id).label('email_count'),
+        func.min(models.Email.received_at).label('first_email'),
+        func.max(models.Email.received_at).label('last_email')
+    ).filter(
+        models.Email.brand.isnot(None),
+        models.Email.brand != "Unknown"
+    ).group_by(models.Email.brand).all()
+    
+    brand_stats = {}
+    for row in results:
+        brand = row.brand
+        count = row.email_count
+        first = row.first_email
+        last = row.last_email
+        
+        # Calculate send frequency
+        if first and last and first != last:
+            days = (last - first).days
+            if days > 0:
+                emails_per_week = round((count / days) * 7, 1)
+                if emails_per_week >= 7:
+                    freq = f"{round(emails_per_week/7)}x/day"
+                elif emails_per_week >= 1:
+                    freq = f"{round(emails_per_week)}x/week"
+                else:
+                    emails_per_month = emails_per_week * 4
+                    freq = f"{round(emails_per_month)}x/month"
+            else:
+                freq = "1x"
+        else:
+            freq = "1x"
+        
+        brand_stats[brand] = {
+            "email_count": count,
+            "send_frequency": freq
+        }
+    
+    return brand_stats

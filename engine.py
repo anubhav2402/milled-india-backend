@@ -470,6 +470,108 @@ def extract_industry(brand_name, subject=None, preview=None, html=None):
     return None
 
 
+# Campaign type keywords for classification
+CAMPAIGN_TYPE_KEYWORDS = {
+    "Sale": [
+        "sale", "discount", "% off", "percent off", "offer", "deal", "save", 
+        "clearance", "flash sale", "limited time", "price drop", "markdown",
+        "bogo", "buy one get", "extra off", "special offer", "promo"
+    ],
+    "Welcome": [
+        "welcome", "thanks for signing", "thanks for joining", "thank you for subscribing",
+        "glad you're here", "nice to meet", "get started", "first order",
+        "new member", "welcome aboard", "joined"
+    ],
+    "Abandoned Cart": [
+        "forgot something", "left behind", "still in your cart", "waiting for you",
+        "complete your order", "finish your purchase", "cart reminder", "items waiting",
+        "don't miss out on", "still interested", "your cart"
+    ],
+    "Newsletter": [
+        "newsletter", "weekly update", "monthly update", "digest", "roundup",
+        "this week", "this month", "trending", "what's new", "news from",
+        "latest from", "highlights"
+    ],
+    "New Arrival": [
+        "new arrival", "just landed", "just dropped", "new collection", "new launch",
+        "introducing", "meet the", "fresh", "just in", "new season",
+        "launching", "debut"
+    ],
+    "Re-engagement": [
+        "miss you", "we miss you", "come back", "haven't seen you", "it's been a while",
+        "where have you been", "still there", "reconnect", "checking in"
+    ],
+    "Order Update": [
+        "order confirmed", "shipped", "out for delivery", "delivered", "tracking",
+        "order status", "shipment", "dispatch", "on its way", "delivery update"
+    ],
+    "Festive": [
+        "diwali", "holi", "christmas", "new year", "eid", "rakhi", "pongal",
+        "onam", "navratri", "durga puja", "festival", "festive", "celebration"
+    ],
+    "Loyalty": [
+        "points", "rewards", "loyalty", "member exclusive", "vip", "tier",
+        "cashback", "earn", "redeem", "exclusive access"
+    ],
+    "Feedback": [
+        "review", "feedback", "rate us", "how was", "tell us", "survey",
+        "share your experience", "your opinion", "rate your"
+    ],
+}
+
+
+def extract_campaign_type(subject=None, preview=None, html=None):
+    """
+    Detect the campaign type based on email content.
+    Uses subject line primarily, then preview and HTML content.
+    """
+    # Combine text for analysis
+    text_parts = []
+    
+    # Subject gets highest priority
+    if subject:
+        text_parts.append(("subject", subject.lower()))
+    if preview:
+        text_parts.append(("preview", preview.lower()[:500]))
+    if html:
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html, "html.parser")
+            for script in soup(["script", "style"]):
+                script.decompose()
+            text_parts.append(("html", soup.get_text(separator=" ").lower()[:2000]))
+        except Exception:
+            pass
+    
+    if not text_parts:
+        return None
+    
+    # Score each campaign type
+    type_scores = {}
+    for campaign_type, keywords in CAMPAIGN_TYPE_KEYWORDS.items():
+        score = 0
+        for source, text in text_parts:
+            for keyword in keywords:
+                if keyword in text:
+                    # Weight by source (subject > preview > html)
+                    if source == "subject":
+                        score += 5
+                    elif source == "preview":
+                        score += 2
+                    else:
+                        score += 1
+        if score > 0:
+            type_scores[campaign_type] = score
+    
+    # Return type with highest score (minimum threshold of 3)
+    if type_scores:
+        best_type = max(type_scores, key=type_scores.get)
+        if type_scores[best_type] >= 3:
+            return best_type
+    
+    return None
+
+
 def clean_brand_name(name):
     """
     Clean up a brand name by removing common suffixes/prefixes and formatting properly.
