@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milled India - Home Page Design Options</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+        }
+
+        .option-section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .option-title {
+            font-size: 2em;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #6366f1;
+            padding-bottom: 10px;
+        }
+
+        .option-description {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        /* Option 1: Magazine Style */
+        .magazine-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 60px 40px;
+            color: white;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .magazine-hero h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .magazine-hero p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .brand-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .brand-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .brand-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        /* Option 2: Pinterest Masonry */
+        .masonry-container {
+            columns: 4;
+            column-gap: 20px;
+            margin-top: 30px;
+        }
+
+        .masonry-card {
+            break-inside: avoid;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .masonry-card:hover {
+            transform: scale(1.02);
+        }
+
+        .masonry-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #f9ca24);
+            background-size: 400% 400%;
+            animation: gradient 3s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .masonry-content {
+            padding: 15px;
+        }
+
+        .masonry-brand {
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-bottom: 8px;
+        }
+
+        .masonry-subject {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .masonry-date {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .pill {
+            padding: 8px 20px;
+            border-radius: 25px;
+            background: #e0e7ff;
+            color: #6366f1;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pill:hover, .pill.active {
+            background: #6366f1;
+            color: white;
+        }
+
+        /* Option 3: Dashboard Style */
+        .dashboard-layout {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .dashboard-sidebar {
+            width: 250px;
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .brand-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            cursor: pointer;
+        }
+
+        .brand-checkbox input {
+            margin-right: 10px;
+        }
+
+        .dashboard-main {
+            flex: 1;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            padding: 12px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            text-align: right;
+        }
+
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #6366f1;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .email-list-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s;
+        }
+
+        .email-list-item:hover {
+            border-color: #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+        }
+
+        .email-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .email-content {
+            flex: 1;
+        }
+
+        .email-subject {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .email-preview {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .email-date {
+            color: #999;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+
+        /* Option 4: Story Feed */
+        .brand-carousel {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 0;
+            margin-bottom: 40px;
+            scrollbar-width: none;
+        }
+
+        .brand-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .brand-circle {
+            min-width: 100px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .brand-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .brand-label {
+            font-size: 0.9em;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .feed-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .feed-image {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+        }
+
+        .feed-content {
+            padding: 30px;
+        }
+
+        .feed-brand {
+            color: #6366f1;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .feed-subject {
+            font-size: 2em;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 15px;
+        }
+
+        .feed-preview {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .feed-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #6366f1;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .feed-button:hover {
+            background: #4f46e5;
+        }
+
+        /* Option 5: Editorial */
+        .editorial-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .hero-featured {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 16px;
+            padding: 60px 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-featured::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .hero-featured h2 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-featured p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .trending-brands {
+            background: #f9fafb;
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .trending-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .trending-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: transform 0.3s;
+        }
+
+        .trending-item:hover {
+            transform: translateX(5px);
+        }
+
+        .trending-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .campaigns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .campaign-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .campaign-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .campaign-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .campaign-info {
+            padding: 25px;
+        }
+
+        .campaign-brand {
+            color: #f5576c;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .campaign-subject {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .campaign-date {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .masonry-container {
+                columns: 2;
+            }
+            
+            .dashboard-layout {
+                flex-direction: column;
+            }
+            
+            .dashboard-sidebar {
+                width: 100%;
+            }
+            
+            .editorial-hero {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Milled India - Home Page Design Options</h1>
+
+        <!-- Option 1: Magazine Style -->
+        <div class="option-section">
+            <h2 class="option-title">Option 1: Magazine-Style Hero</h2>
+            <p class="option-description">
+                A modern, magazine-style layout with a prominent hero section featuring the latest campaign, 
+                followed by a colorful grid of brand cards. Perfect for showcasing the diversity of brands.
+            </p>
+            
+            <div class="magazine-hero">
+                <h2>Discover India's Best Brand Campaigns</h2>
+                <p>Curated promotional emails from your favorite Indian brands</p>
+            </div>
+            
+            <div class="brand-grid">
+                <div class="brand-card">
+                    <div class="brand-logo">N</div>
+                    <div class="brand-name">Nicobar</div>
+                </div>
+                <div class="brand-card">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">MM</div>
+                    <div class="brand-name">Manish Malhotra</div>
+                </div>
+                <div class="brand-card">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">E</div>
+                    <div class="brand-name">Em</div>
+                </div>
+                <div class="brand-card">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">M</div>
+                    <div class="brand-name">Mail</div>
+                </div>
+                <div class="brand-card">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">S</div>
+                    <div class="brand-name">Store</div>
+                </div>
+                <div class="brand-card">
+                    <div class="brand-logo" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">H</div>
+                    <div class="brand-name">Hello</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 2: Pinterest Masonry -->
+        <div class="option-section">
+            <h2 class="option-title">Option 2: Pinterest-Style Masonry Grid</h2>
+            <p class="option-description">
+                A dynamic masonry layout with cards of varying heights, perfect for visual browsing. 
+                Each card showcases the email preview with brand badges and key information.
+            </p>
+            
+            <div class="filter-pills">
+                <span class="pill active">All Brands</span>
+                <span class="pill">Nicobar</span>
+                <span class="pill">Manish Malhotra</span>
+                <span class="pill">Em</span>
+                <span class="pill">Mail</span>
+                <span class="pill">Store</span>
+            </div>
+            
+            <div class="masonry-container">
+                <div class="masonry-card">
+                    <div class="masonry-image"></div>
+                    <div class="masonry-content">
+                        <span class="masonry-brand">Nicobar</span>
+                        <div class="masonry-subject">The Nicobar Sale Is Almost Here</div>
+                        <div class="masonry-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="masonry-card">
+                    <div class="masonry-image" style="height: 250px;"></div>
+                    <div class="masonry-content">
+                        <span class="masonry-brand" style="background: #f5576c;">Manish Malhotra</span>
+                        <div class="masonry-subject">The World of Inaya</div>
+                        <div class="masonry-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="masonry-card">
+                    <div class="masonry-image" style="height: 180px;"></div>
+                    <div class="masonry-content">
+                        <span class="masonry-brand" style="background: #4ecdc4;">Em</span>
+                        <div class="masonry-subject">New 24 Hour Kajal Liner</div>
+                        <div class="masonry-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="masonry-card">
+                    <div class="masonry-image" style="height: 300px;"></div>
+                    <div class="masonry-content">
+                        <span class="masonry-brand" style="background: #f9ca24; color: #333;">Mail</span>
+                        <div class="masonry-subject">Trees But Make Them Shoes</div>
+                        <div class="masonry-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="masonry-card">
+                    <div class="masonry-image" style="height: 220px;"></div>
+                    <div class="masonry-content">
+                        <span class="masonry-brand" style="background: #6c5ce7;">Store</span>
+                        <div class="masonry-subject">The 2026 Class Has Arrived</div>
+                        <div class="masonry-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="masonry-card">
+                    <div class="masonry-image" style="height: 190px;"></div>
+                    <div class="masonry-content">
+                        <span class="masonry-brand" style="background: #fd79a8;">Email</span>
+                        <div class="masonry-subject">On Trend Zebra Print</div>
+                        <div class="masonry-date">28 Jan 2026</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 3: Dashboard Style -->
+        <div class="option-section">
+            <h2 class="option-title">Option 3: Dashboard-Style Layout</h2>
+            <p class="option-description">
+                A clean, professional dashboard with sidebar filters and a main content area. 
+                Perfect for users who want quick access to filters and organized email listings.
+            </p>
+            
+            <div class="dashboard-layout">
+                <div class="dashboard-sidebar">
+                    <div class="sidebar-section">
+                        <div class="sidebar-title">Brands</div>
+                        <label class="brand-checkbox">
+                            <input type="checkbox" checked> Nicobar
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox" checked> Manish Malhotra
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox"> Em
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox" checked> Mail
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox"> Store
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox"> Email
+                        </label>
+                    </div>
+                    <div class="sidebar-section">
+                        <div class="sidebar-title">Categories</div>
+                        <label class="brand-checkbox">
+                            <input type="checkbox"> Sales
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox"> New Arrivals
+                        </label>
+                        <label class="brand-checkbox">
+                            <input type="checkbox"> Collections
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="dashboard-main">
+                    <div class="dashboard-header">
+                        <input type="text" class="search-box" placeholder="Search campaigns...">
+                        <div class="stats">
+                            <div class="stat-item">
+                                <div class="stat-number">1,234</div>
+                                <div class="stat-label">Campaigns</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">45</div>
+                                <div class="stat-label">Brands</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="email-list-item">
+                        <div class="email-logo">N</div>
+                        <div class="email-content">
+                            <div class="email-subject">The Nicobar Sale Is Almost Here</div>
+                            <div class="email-preview">Don't miss out on our biggest sale of the year. Shop now and save up to 50%...</div>
+                        </div>
+                        <div class="email-date">28 Jan 2026</div>
+                    </div>
+                    
+                    <div class="email-list-item">
+                        <div class="email-logo" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">MM</div>
+                        <div class="email-content">
+                            <div class="email-subject">The World of Inaya by Manish Malhotra</div>
+                            <div class="email-preview">Explore our latest collection featuring elegant designs and premium fabrics...</div>
+                        </div>
+                        <div class="email-date">28 Jan 2026</div>
+                    </div>
+                    
+                    <div class="email-list-item">
+                        <div class="email-logo" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">E</div>
+                        <div class="email-content">
+                            <div class="email-subject">New 24 Hour Kajal Liner Waterproof</div>
+                            <div class="email-preview">Long-lasting, smudge-proof kajal that stays perfect all day...</div>
+                        </div>
+                        <div class="email-date">28 Jan 2026</div>
+                    </div>
+                    
+                    <div class="email-list-item">
+                        <div class="email-logo" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">M</div>
+                        <div class="email-content">
+                            <div class="email-subject">Trees But Make Them Shoes</div>
+                            <div class="email-preview">Sustainable fashion meets style. Check out our eco-friendly collection...</div>
+                        </div>
+                        <div class="email-date">28 Jan 2026</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 4: Story Feed -->
+        <div class="option-section">
+            <h2 class="option-title">Option 4: Instagram-Story Feed Style</h2>
+            <p class="option-description">
+                A vibrant, image-first design with a horizontal brand carousel and large campaign cards. 
+                Perfect for visual browsing and engaging users with rich imagery.
+            </p>
+            
+            <div class="brand-carousel">
+                <div class="brand-circle">
+                    <div class="brand-avatar">N</div>
+                    <div class="brand-label">Nicobar</div>
+                </div>
+                <div class="brand-circle">
+                    <div class="brand-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">MM</div>
+                    <div class="brand-label">Manish Malhotra</div>
+                </div>
+                <div class="brand-circle">
+                    <div class="brand-avatar" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">E</div>
+                    <div class="brand-label">Em</div>
+                </div>
+                <div class="brand-circle">
+                    <div class="brand-avatar" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">M</div>
+                    <div class="brand-label">Mail</div>
+                </div>
+                <div class="brand-circle">
+                    <div class="brand-avatar" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">S</div>
+                    <div class="brand-label">Store</div>
+                </div>
+                <div class="brand-circle">
+                    <div class="brand-avatar" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333;">H</div>
+                    <div class="brand-label">Hello</div>
+                </div>
+            </div>
+            
+            <div class="feed-card">
+                <div class="feed-image"></div>
+                <div class="feed-content">
+                    <div class="feed-brand">Nicobar</div>
+                    <div class="feed-subject">The Nicobar Sale Is Almost Here</div>
+                    <div class="feed-preview">
+                        Don't miss out on our biggest sale of the year. Shop now and save up to 50% on selected items. 
+                        Limited time offer - ends soon!
+                    </div>
+                    <a href="#" class="feed-button">View Campaign →</a>
+                </div>
+            </div>
+            
+            <div class="feed-card">
+                <div class="feed-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                <div class="feed-content">
+                    <div class="feed-brand">Manish Malhotra</div>
+                    <div class="feed-subject">The World of Inaya</div>
+                    <div class="feed-preview">
+                        Explore our latest collection featuring elegant designs and premium fabrics. 
+                        Discover timeless pieces that define luxury fashion.
+                    </div>
+                    <a href="#" class="feed-button">View Campaign →</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Option 5: Editorial -->
+        <div class="option-section">
+            <h2 class="option-title">Option 5: Editorial/Curated Style</h2>
+            <p class="option-description">
+                A sophisticated, editorial-style layout with a split-screen hero and curated sections. 
+                Perfect for showcasing premium brands with an elegant, refined aesthetic.
+            </p>
+            
+            <div class="editorial-hero">
+                <div class="hero-featured">
+                    <h2>The World of Inaya</h2>
+                    <p>by Manish Malhotra</p>
+                </div>
+                <div class="trending-brands">
+                    <div class="trending-title">Trending Brands</div>
+                    <div class="trending-item">
+                        <div class="trending-logo">N</div>
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Nicobar</div>
+                            <div style="color: #999; font-size: 0.9em;">12 campaigns</div>
+                        </div>
+                    </div>
+                    <div class="trending-item">
+                        <div class="trending-logo" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">MM</div>
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Manish Malhotra</div>
+                            <div style="color: #999; font-size: 0.9em;">8 campaigns</div>
+                        </div>
+                    </div>
+                    <div class="trending-item">
+                        <div class="trending-logo" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">E</div>
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Em</div>
+                            <div style="color: #999; font-size: 0.9em;">15 campaigns</div>
+                        </div>
+                    </div>
+                    <div class="trending-item">
+                        <div class="trending-logo" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">M</div>
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Mail</div>
+                            <div style="color: #999; font-size: 0.9em;">10 campaigns</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 style="font-size: 2em; color: #333; margin-bottom: 30px;">Latest Campaigns</h3>
+            
+            <div class="campaigns-grid">
+                <div class="campaign-card">
+                    <div class="campaign-image"></div>
+                    <div class="campaign-info">
+                        <div class="campaign-brand">Nicobar</div>
+                        <div class="campaign-subject">The Nicobar Sale Is Almost Here</div>
+                        <div class="campaign-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="campaign-card">
+                    <div class="campaign-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                    <div class="campaign-info">
+                        <div class="campaign-brand">Manish Malhotra</div>
+                        <div class="campaign-subject">The World of Inaya</div>
+                        <div class="campaign-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="campaign-card">
+                    <div class="campaign-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                    <div class="campaign-info">
+                        <div class="campaign-brand">Em</div>
+                        <div class="campaign-subject">New 24 Hour Kajal Liner</div>
+                        <div class="campaign-date">28 Jan 2026</div>
+                    </div>
+                </div>
+                <div class="campaign-card">
+                    <div class="campaign-image" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);"></div>
+                    <div class="campaign-info">
+                        <div class="campaign-brand">Mail</div>
+                        <div class="campaign-subject">Trees But Make Them Shoes</div>
+                        <div class="campaign-date">28 Jan 2026</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

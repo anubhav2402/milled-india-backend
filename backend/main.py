@@ -129,6 +129,16 @@ def list_industries(db: Session = Depends(get_db)):
     return sorted([r[0] for r in result if r[0]])
 
 
+@app.get("/brands", response_model=List[str])
+def list_brands(db: Session = Depends(get_db)):
+    """Get list of all unique brands."""
+    result = db.query(models.Email.brand).filter(
+        models.Email.brand.isnot(None),
+        models.Email.brand != "Unknown"
+    ).distinct().all()
+    return sorted([r[0] for r in result if r[0]])
+
+
 @app.get("/emails/{email_id}", response_model=schemas.EmailOut)
 def get_email(email_id: int, db: Session = Depends(get_db)):
     email = db.query(models.Email).filter(models.Email.id == email_id).first()
