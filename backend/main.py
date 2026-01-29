@@ -142,6 +142,15 @@ def get_emails_html(
     return {email.id: email.html for email in emails}
 
 
+@app.get("/emails/{email_id}/html")
+def get_email_html(email_id: int, db: Session = Depends(get_db)):
+    """Get just the HTML content for a single email (for lazy loading preview)."""
+    email = db.query(models.Email).filter(models.Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+    return {"html": email.html}
+
+
 @app.get("/industries", response_model=List[str])
 def list_industries(db: Session = Depends(get_db)):
     """Get list of all industries that have emails."""
