@@ -780,10 +780,15 @@ def extract_body(payload):
 
 
 
-def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20):
+def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20, fetch_all: bool = False):
     """
     Fetch latest emails for a given Gmail label and return
     a list of structured email records suitable for DB insertion.
+
+    Args:
+        label_name: Gmail label to fetch from
+        max_results: Max emails per page (up to 500)
+        fetch_all: If True, paginate through ALL emails in the label
 
     Each record has keys:
     - gmail_id
@@ -800,20 +805,41 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20):
     label_id = get_label_id(service, label_name=label_name)
     processed = load_processed_ids()
 
-    results = service.users().messages().list(
-        userId="me",
-        labelIds=[label_id],
-        maxResults=max_results
-    ).execute()
-
-    print(">>> messages fetched:", len(results.get("messages", [])))
+    # Collect all message IDs (with pagination if fetch_all=True)
+    all_messages = []
+    page_token = None
+    page_count = 0
+    
+    while True:
+        page_count += 1
+        results = service.users().messages().list(
+            userId="me",
+            labelIds=[label_id],
+            maxResults=min(max_results, 500),  # Gmail API max is 500 per page
+            pageToken=page_token
+        ).execute()
+        
+        messages = results.get("messages", [])
+        all_messages.extend(messages)
+        print(f">>> Page {page_count}: fetched {len(messages)} messages (total so far: {len(all_messages)})")
+        
+        # Check if we should continue pagination
+        page_token = results.get("nextPageToken")
+        if not fetch_all or not page_token:
+            break
+    
+    print(f">>> Total messages to process: {len(all_messages)}")
 
     records = []
 
-    for msg in results.get("messages", []):
+    for idx, msg in enumerate(all_messages):
         msg_id = msg["id"]
         if msg_id in processed:
             continue
+
+        # Progress indicator
+        if (idx + 1) % 50 == 0:
+            print(f">>> Processing email {idx + 1}/{len(all_messages)}...")
 
         message = service.users().messages().get(
             userId="me",

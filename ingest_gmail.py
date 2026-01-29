@@ -9,10 +9,17 @@ from engine import fetch_label_emails, extract_industry
 
 
 def upsert_emails(db: Session):
-    # Fetch more emails per run (configurable via env var, default 100)
+    # Fetch emails - configurable via env vars
+    # GMAIL_MAX_RESULTS: emails per page (default 100)
+    # GMAIL_FETCH_ALL: if "true", fetch ALL emails from label (use for initial sync)
     import os
     max_results = int(os.getenv("GMAIL_MAX_RESULTS", "100"))
-    records = fetch_label_emails(max_results=max_results)
+    fetch_all = os.getenv("GMAIL_FETCH_ALL", "").lower() in ("true", "1", "yes")
+    
+    if fetch_all:
+        print(">>> GMAIL_FETCH_ALL is enabled - fetching ALL emails from label...")
+    
+    records = fetch_label_emails(max_results=max_results, fetch_all=fetch_all)
     created = 0
     skipped = 0
 
