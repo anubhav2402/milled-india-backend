@@ -416,6 +416,7 @@ BRAND_INDUSTRY_MAPPING = {
     "skechers": "Sports & Fitness",
     "hrx": "Sports & Fitness",
     "allbirds": "Sports & Fitness",  # Sustainable sneakers
+    "strava": "Sports & Fitness",  # Fitness tracking app
     "new balance": "Sports & Fitness",
     "under armour": "Sports & Fitness",
     "lululemon": "Sports & Fitness",
