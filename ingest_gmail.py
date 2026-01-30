@@ -42,20 +42,23 @@ def upsert_emails(db: Session):
         else:
             received_dt = raw_received
 
-        # Auto-detect industry from brand and content
+        # Auto-detect industry from brand and content (with DB caching)
         brand = r["brand"]
         industry = extract_industry(
             brand_name=brand,
             subject=r["subject"],
             preview=r["preview"],
-            html=r["html"]
+            html=r["html"],
+            db_session=db  # Pass DB session for AI classification caching
         )
         
-        # Auto-detect campaign type
+        # Auto-detect campaign type (with AI fallback)
         campaign_type = extract_campaign_type(
             subject=r["subject"],
             preview=r["preview"],
-            html=r["html"]
+            html=r["html"],
+            brand_name=brand,
+            use_ai=True  # Enable AI classification for uncertain cases
         )
 
         email = Email(

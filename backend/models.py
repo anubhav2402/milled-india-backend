@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, UniqueConstraint, Index, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, UniqueConstraint, Index, ForeignKey, Float
 from sqlalchemy.orm import relationship
 
 from .db import Base
@@ -57,4 +57,20 @@ class Email(Base):
         Index("ix_emails_brand_type", "brand", "type"),
         Index("ix_emails_industry", "industry"),
     )
+
+
+class BrandClassification(Base):
+    """
+    Cache for AI-powered brand classifications.
+    Stores industry classification for each brand to avoid repeated API calls.
+    """
+    __tablename__ = "brand_classifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    brand_name = Column(String, unique=True, nullable=False, index=True)
+    industry = Column(String, nullable=False)
+    confidence = Column(Float, default=1.0)  # 0-1 confidence score from AI
+    classified_by = Column(String, default="ai")  # "ai", "manual", "keyword"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

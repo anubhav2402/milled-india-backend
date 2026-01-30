@@ -406,26 +406,113 @@ INDUSTRY_KEYWORDS = {
 }
 
 
-def extract_industry(brand_name, subject=None, preview=None, html=None):
+def extract_industry(brand_name, subject=None, preview=None, html=None, db_session=None):
     """
-    Extract industry using multiple methods:
-    1. Brand name mapping (most accurate)
-    2. Content-based keyword analysis (fallback)
-    """
-    # Method 1: Brand name mapping
-    if brand_name:
-        brand_lower = brand_name.lower().strip()
-        
-        # Direct lookup
-        if brand_lower in BRAND_INDUSTRY_MAPPING:
-            return BRAND_INDUSTRY_MAPPING[brand_lower]
-        
-        # Partial match
-        for key, industry in BRAND_INDUSTRY_MAPPING.items():
-            if key in brand_lower or brand_lower in key:
-                return industry
+    Extract industry using multiple methods (in priority order):
+    1. Database cache (AI-classified brands)
+    2. Brand name mapping (hardcoded known brands)
+    3. AI classification via OpenAI (most accurate for unknown brands)
+    4. Content-based keyword analysis (fallback if AI unavailable)
     
-    # Method 2: Content-based keyword analysis
+    Args:
+        brand_name: The brand name to classify
+        subject: Email subject line
+        preview: Email preview text
+        html: Full HTML content
+        db_session: SQLAlchemy session for caching (optional)
+    
+    Returns:
+        Industry string or None
+    """
+    if not brand_name or brand_name == "Unknown":
+        return _extract_industry_by_keywords(subject, preview, html)
+    
+    brand_lower = brand_name.lower().strip()
+    
+    # Method 1: Check database cache first
+    if db_session:
+        try:
+            from backend.models import BrandClassification
+            cached = db_session.query(BrandClassification).filter(
+                BrandClassification.brand_name.ilike(brand_name)
+            ).first()
+            if cached:
+                return cached.industry
+        except Exception as e:
+            print(f"DB cache lookup error: {e}")
+    
+    # Method 2: Hardcoded brand mapping (fast, no API call needed)
+    if brand_lower in BRAND_INDUSTRY_MAPPING:
+        industry = BRAND_INDUSTRY_MAPPING[brand_lower]
+        # Cache the hardcoded mapping in DB for consistency
+        if db_session:
+            _cache_brand_classification(db_session, brand_name, industry, "keyword", 1.0)
+        return industry
+    
+    # Partial match in hardcoded mapping
+    for key, industry in BRAND_INDUSTRY_MAPPING.items():
+        if key in brand_lower or brand_lower in key:
+            if db_session:
+                _cache_brand_classification(db_session, brand_name, industry, "keyword", 0.9)
+            return industry
+    
+    # Method 3: AI classification (most accurate for unknown brands)
+    try:
+        from backend.ai_classifier import classify_brand_with_ai, is_ai_available
+        if is_ai_available():
+            result = classify_brand_with_ai(brand_name, subject, preview)
+            industry = result.get("industry")
+            confidence = result.get("confidence", 0.8)
+            
+            # Cache the AI classification
+            if db_session and industry:
+                _cache_brand_classification(db_session, brand_name, industry, "ai", confidence)
+            
+            return industry
+    except Exception as e:
+        print(f"AI classification error: {e}")
+    
+    # Method 4: Fallback to keyword analysis
+    return _extract_industry_by_keywords(subject, preview, html)
+
+
+def _cache_brand_classification(db_session, brand_name: str, industry: str, classified_by: str, confidence: float):
+    """Cache a brand classification in the database."""
+    try:
+        from backend.models import BrandClassification
+        
+        # Check if already exists
+        existing = db_session.query(BrandClassification).filter(
+            BrandClassification.brand_name.ilike(brand_name)
+        ).first()
+        
+        if existing:
+            # Update if AI classification is more confident or if upgrading from keyword
+            if classified_by == "ai" and existing.classified_by != "manual":
+                existing.industry = industry
+                existing.confidence = confidence
+                existing.classified_by = classified_by
+        else:
+            # Create new
+            classification = BrandClassification(
+                brand_name=brand_name,
+                industry=industry,
+                confidence=confidence,
+                classified_by=classified_by,
+            )
+            db_session.add(classification)
+        
+        db_session.commit()
+    except Exception as e:
+        print(f"Failed to cache classification: {e}")
+        db_session.rollback()
+
+
+def _extract_industry_by_keywords(subject=None, preview=None, html=None):
+    """
+    Fallback: Extract industry using keyword analysis.
+    Used when AI is unavailable or brand is unknown.
+    """
     # Combine all available text
     text_parts = []
     if subject:
@@ -520,10 +607,45 @@ CAMPAIGN_TYPE_KEYWORDS = {
 }
 
 
-def extract_campaign_type(subject=None, preview=None, html=None):
+def extract_campaign_type(subject=None, preview=None, html=None, brand_name=None, use_ai=True):
     """
     Detect the campaign type based on email content.
-    Uses subject line primarily, then preview and HTML content.
+    Uses keyword analysis first (fast), falls back to AI if uncertain.
+    
+    Args:
+        subject: Email subject line
+        preview: Email preview text
+        html: Full HTML content
+        brand_name: Brand name (helps AI context)
+        use_ai: Whether to use AI classification if keywords uncertain
+    
+    Returns:
+        Campaign type string or None
+    """
+    # First try keyword-based classification (fast, no API call)
+    keyword_result = _extract_campaign_type_by_keywords(subject, preview, html)
+    
+    # If we got a confident keyword match, use it
+    if keyword_result:
+        return keyword_result
+    
+    # If AI is enabled and we have a subject, try AI classification
+    if use_ai and subject:
+        try:
+            from backend.ai_classifier import classify_campaign_type_with_ai, is_ai_available
+            if is_ai_available():
+                result = classify_campaign_type_with_ai(subject, preview, brand_name)
+                return result.get("campaign_type")
+        except Exception as e:
+            print(f"AI campaign classification error: {e}")
+    
+    return None
+
+
+def _extract_campaign_type_by_keywords(subject=None, preview=None, html=None):
+    """
+    Extract campaign type using keyword analysis.
+    Returns the type only if confident (score >= 3).
     """
     # Combine text for analysis
     text_parts = []
@@ -791,7 +913,7 @@ def clean_html(html):
     # Only remove truly dangerous executable elements
     for tag in soup(["script", "object", "embed"]):
         tag.decompose()
-    
+
     # Remove event handlers from all elements (onclick, onload, etc.)
     for tag in soup.find_all(True):
         attrs_to_remove = [attr for attr in tag.attrs if attr.startswith('on')]
@@ -876,13 +998,13 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20, fetc
     
     while True:
         page_count += 1
-        results = service.users().messages().list(
-            userId="me",
-            labelIds=[label_id],
+    results = service.users().messages().list(
+        userId="me",
+        labelIds=[label_id],
             maxResults=min(max_results, 500),  # Gmail API max is 500 per page
             pageToken=page_token
-        ).execute()
-        
+    ).execute()
+
         messages = results.get("messages", [])
         all_messages.extend(messages)
         print(f">>> Page {page_count}: fetched {len(messages)} messages (total so far: {len(all_messages)})")

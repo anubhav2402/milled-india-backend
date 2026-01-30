@@ -618,6 +618,283 @@ def update_campaign_types(db: Session = Depends(get_db)):
     }
 
 
+# ============ AI Classification Endpoints ============
+
+@app.get("/admin/brand-classifications")
+def get_brand_classifications(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all cached brand classifications.
+    """
+    classifications = db.query(models.BrandClassification).offset(skip).limit(limit).all()
+    
+    return {
+        "total": db.query(models.BrandClassification).count(),
+        "classifications": [
+            {
+                "brand_name": c.brand_name,
+                "industry": c.industry,
+                "confidence": c.confidence,
+                "classified_by": c.classified_by,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+                "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+            }
+            for c in classifications
+        ]
+    }
+
+
+@app.put("/admin/brand-classifications/{brand_name}")
+def update_brand_classification(
+    brand_name: str,
+    industry: str = Query(..., description="New industry classification"),
+    db: Session = Depends(get_db)
+):
+    """
+    Manually override a brand's industry classification.
+    """
+    # Validate industry
+    valid_industries = [
+        "Beauty & Personal Care", "Women's Fashion", "Men's Fashion",
+        "Food & Beverages", "Travel & Hospitality", "Electronics & Gadgets",
+        "Home & Living", "Health & Wellness", "Finance & Fintech",
+        "Kids & Baby", "Sports & Fitness", "Entertainment", "General Retail",
+    ]
+    
+    if industry not in valid_industries:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid industry. Must be one of: {valid_industries}"
+        )
+    
+    # Find or create classification
+    classification = db.query(models.BrandClassification).filter(
+        models.BrandClassification.brand_name.ilike(brand_name)
+    ).first()
+    
+    if classification:
+        classification.industry = industry
+        classification.confidence = 1.0
+        classification.classified_by = "manual"
+    else:
+        classification = models.BrandClassification(
+            brand_name=brand_name,
+            industry=industry,
+            confidence=1.0,
+            classified_by="manual",
+        )
+        db.add(classification)
+    
+    # Also update all emails from this brand
+    updated_emails = db.query(models.Email).filter(
+        models.Email.brand.ilike(brand_name)
+    ).update({"industry": industry}, synchronize_session=False)
+    
+    db.commit()
+    
+    return {
+        "message": f"Updated classification for {brand_name}",
+        "industry": industry,
+        "emails_updated": updated_emails
+    }
+
+
+@app.post("/admin/reclassify-brand/{brand_name}")
+def reclassify_single_brand(
+    brand_name: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Re-classify a single brand using AI.
+    """
+    try:
+        from .ai_classifier import classify_brand_with_ai, is_ai_available
+        
+        if not is_ai_available():
+            raise HTTPException(
+                status_code=503,
+                detail="AI classification not available. Set OPENAI_API_KEY."
+            )
+        
+        # Get sample email for context
+        sample_email = db.query(models.Email).filter(
+            models.Email.brand.ilike(brand_name)
+        ).first()
+        
+        subject = sample_email.subject if sample_email else None
+        preview = sample_email.preview if sample_email else None
+        
+        # Classify with AI
+        result = classify_brand_with_ai(brand_name, subject, preview)
+        industry = result.get("industry", "General Retail")
+        confidence = result.get("confidence", 0.8)
+        
+        # Update or create classification
+        classification = db.query(models.BrandClassification).filter(
+            models.BrandClassification.brand_name.ilike(brand_name)
+        ).first()
+        
+        if classification:
+            classification.industry = industry
+            classification.confidence = confidence
+            classification.classified_by = "ai"
+        else:
+            classification = models.BrandClassification(
+                brand_name=brand_name,
+                industry=industry,
+                confidence=confidence,
+                classified_by="ai",
+            )
+            db.add(classification)
+        
+        # Update all emails from this brand
+        updated_emails = db.query(models.Email).filter(
+            models.Email.brand.ilike(brand_name)
+        ).update({"industry": industry}, synchronize_session=False)
+        
+        db.commit()
+        
+        return {
+            "brand": brand_name,
+            "industry": industry,
+            "confidence": confidence,
+            "emails_updated": updated_emails
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Classification failed: {str(e)}")
+
+
+@app.post("/admin/reclassify-brands")
+def reclassify_all_brands(
+    force: bool = Query(default=False, description="Force reclassify even if already classified"),
+    db: Session = Depends(get_db)
+):
+    """
+    Re-classify all brands using AI.
+    This will update the brand_classifications table and all email industries.
+    
+    Args:
+        force: If True, reclassify all brands. If False, only classify unclassified brands.
+    """
+    try:
+        from .ai_classifier import classify_brand_with_ai, is_ai_available
+        from sqlalchemy import func
+        
+        if not is_ai_available():
+            raise HTTPException(
+                status_code=503,
+                detail="AI classification not available. Set OPENAI_API_KEY."
+            )
+        
+        # Get all unique brands
+        brands = db.query(models.Email.brand).filter(
+            models.Email.brand.isnot(None),
+            models.Email.brand != "Unknown"
+        ).distinct().all()
+        
+        brand_names = [b[0] for b in brands]
+        
+        results = {
+            "total_brands": len(brand_names),
+            "classified": 0,
+            "skipped": 0,
+            "errors": [],
+        }
+        
+        for brand_name in brand_names:
+            try:
+                # Check if already classified
+                existing = db.query(models.BrandClassification).filter(
+                    models.BrandClassification.brand_name.ilike(brand_name)
+                ).first()
+                
+                # Skip if already classified (unless force=True) or if manually set
+                if existing and not force:
+                    results["skipped"] += 1
+                    continue
+                if existing and existing.classified_by == "manual":
+                    results["skipped"] += 1
+                    continue
+                
+                # Get sample email for context
+                sample_email = db.query(models.Email).filter(
+                    models.Email.brand.ilike(brand_name)
+                ).first()
+                
+                subject = sample_email.subject if sample_email else None
+                preview = sample_email.preview if sample_email else None
+                
+                # Classify with AI
+                result = classify_brand_with_ai(brand_name, subject, preview)
+                industry = result.get("industry", "General Retail")
+                confidence = result.get("confidence", 0.8)
+                
+                # Update or create classification
+                if existing:
+                    existing.industry = industry
+                    existing.confidence = confidence
+                    existing.classified_by = "ai"
+                else:
+                    classification = models.BrandClassification(
+                        brand_name=brand_name,
+                        industry=industry,
+                        confidence=confidence,
+                        classified_by="ai",
+                    )
+                    db.add(classification)
+                
+                # Update all emails from this brand
+                db.query(models.Email).filter(
+                    models.Email.brand.ilike(brand_name)
+                ).update({"industry": industry}, synchronize_session=False)
+                
+                results["classified"] += 1
+                
+                # Commit periodically
+                if results["classified"] % 10 == 0:
+                    db.commit()
+                    print(f"Classified {results['classified']} brands...")
+                
+            except Exception as e:
+                results["errors"].append({"brand": brand_name, "error": str(e)})
+        
+        db.commit()
+        
+        return results
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Bulk classification failed: {str(e)}")
+
+
+@app.delete("/admin/brand-classifications/{brand_name}")
+def delete_brand_classification(
+    brand_name: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a brand classification from the cache.
+    The brand will be re-classified on next ingestion.
+    """
+    deleted = db.query(models.BrandClassification).filter(
+        models.BrandClassification.brand_name.ilike(brand_name)
+    ).delete(synchronize_session=False)
+    
+    db.commit()
+    
+    return {
+        "message": f"Deleted classification for {brand_name}" if deleted else f"No classification found for {brand_name}",
+        "deleted": deleted > 0
+    }
+
+
 @app.get("/brands/stats")
 def get_brand_stats(
     current_user: Optional[models.User] = Depends(get_optional_user),

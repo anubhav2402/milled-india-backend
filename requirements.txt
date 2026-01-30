@@ -24,3 +24,6 @@ email-validator
 python-jose[cryptography]
 passlib[bcrypt]
 bcrypt==4.2.1
+
+# AI Classification
+openai
