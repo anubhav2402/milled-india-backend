@@ -143,17 +143,22 @@ The confidence should be between 0.5 and 1.0 based on how certain you are.
         
     except json.JSONDecodeError as e:
         print(f"Failed to parse AI response as JSON: {e}")
+        print(f"Raw response was: {result_text}")
         return {
             "industry": "General Retail",
             "campaign_type": "Newsletter",
-            "confidence": 0.5
+            "confidence": 0.5,
+            "error": f"JSON parse error: {e}"
         }
     except Exception as e:
+        import traceback
         print(f"AI classification error: {e}")
+        print(traceback.format_exc())
         return {
             "industry": "General Retail",
             "campaign_type": "Newsletter", 
-            "confidence": 0.5
+            "confidence": 0.5,
+            "error": str(e)
         }
 
 

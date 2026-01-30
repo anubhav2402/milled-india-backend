@@ -702,6 +702,35 @@ def update_brand_classification(
     }
 
 
+@app.get("/admin/test-ai")
+def test_ai_classification():
+    """
+    Test if AI classification is working. Returns detailed error info.
+    """
+    import os
+    import traceback
+    
+    result = {
+        "openai_key_set": bool(os.getenv("OPENAI_API_KEY")),
+        "openai_key_prefix": os.getenv("OPENAI_API_KEY", "")[:10] + "..." if os.getenv("OPENAI_API_KEY") else None,
+    }
+    
+    try:
+        from .ai_classifier import is_ai_available, classify_brand_with_ai
+        result["is_ai_available"] = is_ai_available()
+        
+        # Try a test classification
+        test_result = classify_brand_with_ai("Nykaa", "50% off on all beauty products", "Shop skincare, makeup and more")
+        result["test_classification"] = test_result
+        result["status"] = "success"
+    except Exception as e:
+        result["status"] = "error"
+        result["error"] = str(e)
+        result["traceback"] = traceback.format_exc()
+    
+    return result
+
+
 @app.post("/admin/reclassify-brand/{brand_name}")
 def reclassify_single_brand(
     brand_name: str,
