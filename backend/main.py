@@ -731,6 +731,71 @@ def test_ai_classification():
     return result
 
 
+@app.post("/admin/reclassify-keywords")
+def reclassify_with_keywords(
+    db: Session = Depends(get_db)
+):
+    """
+    Re-classify all brands using expanded keyword mappings (NO AI).
+    This is free and fast.
+    """
+    import sys
+    sys.path.insert(0, '/opt/render/project/src')
+    
+    from engine import BRAND_INDUSTRY_MAPPING, extract_industry
+    from sqlalchemy import func
+    
+    # Get all unique brands
+    brands = db.query(models.Email.brand).filter(
+        models.Email.brand.isnot(None),
+        models.Email.brand != "Unknown"
+    ).distinct().all()
+    
+    brand_names = [b[0] for b in brands]
+    
+    results = {
+        "total_brands": len(brand_names),
+        "classified": 0,
+        "unclassified": [],
+        "classifications": {}
+    }
+    
+    for brand_name in brand_names:
+        # Get a sample email for keyword context
+        sample_email = db.query(models.Email).filter(
+            models.Email.brand.ilike(brand_name)
+        ).first()
+        
+        subject = sample_email.subject if sample_email else None
+        preview = sample_email.preview if sample_email else None
+        html = sample_email.html if sample_email else None
+        
+        # Classify using keywords only (use_ai=False)
+        industry = extract_industry(
+            brand_name=brand_name,
+            subject=subject,
+            preview=preview,
+            html=html,
+            db_session=db,
+            use_ai=False
+        )
+        
+        if industry:
+            # Update all emails from this brand
+            db.query(models.Email).filter(
+                models.Email.brand.ilike(brand_name)
+            ).update({"industry": industry}, synchronize_session=False)
+            
+            results["classified"] += 1
+            results["classifications"][brand_name] = industry
+        else:
+            results["unclassified"].append(brand_name)
+    
+    db.commit()
+    
+    return results
+
+
 @app.post("/admin/reclassify-brand/{brand_name}")
 def reclassify_single_brand(
     brand_name: str,

@@ -132,9 +132,11 @@ INDUSTRIES = [
     "General Retail",  # Fallback for multi-category retailers
 ]
 
-# Brand to Industry mapping
+# Brand to Industry mapping - COMPREHENSIVE
+# This mapping covers all known brands for accurate classification
 BRAND_INDUSTRY_MAPPING = {
-    # Beauty & Personal Care
+    # ============ Beauty & Personal Care ============
+    # Indian brands
     "nykaa": "Beauty & Personal Care",
     "purplle": "Beauty & Personal Care",
     "mamaearth": "Beauty & Personal Care",
@@ -152,10 +154,41 @@ BRAND_INDUSTRY_MAPPING = {
     "kama ayurveda": "Beauty & Personal Care",
     "lakme": "Beauty & Personal Care",
     "colorbar": "Beauty & Personal Care",
+    "foxtale": "Beauty & Personal Care",
+    # International beauty brands (from your database)
+    "bobbi brown": "Beauty & Personal Care",
+    "bobbi brown cosmetics": "Beauty & Personal Care",
+    "bobbi brown black friday": "Beauty & Personal Care",
+    "kiehl's": "Beauty & Personal Care",
+    "kiehl's since 1851": "Beauty & Personal Care",
+    "nyx": "Beauty & Personal Care",
+    "nyx professional makeup": "Beauty & Personal Care",
+    "urban decay": "Beauty & Personal Care",
+    "mac": "Beauty & Personal Care",
+    "mac cosmetics": "Beauty & Personal Care",
+    "mac lover membership": "Beauty & Personal Care",
+    "sephora": "Beauty & Personal Care",
+    "innisfree": "Beauty & Personal Care",
+    "givenchy": "Beauty & Personal Care",
+    "revlon": "Beauty & Personal Care",
+    "cerave": "Beauty & Personal Care",
+    "estee lauder": "Beauty & Personal Care",
+    "clinique": "Beauty & Personal Care",
+    "l'oreal": "Beauty & Personal Care",
+    "maybelline": "Beauty & Personal Care",
+    "charlotte tilbury": "Beauty & Personal Care",
+    "fenty beauty": "Beauty & Personal Care",
+    "rare beauty": "Beauty & Personal Care",
+    "glossier": "Beauty & Personal Care",
+    "the ordinary": "Beauty & Personal Care",
+    "drunk elephant": "Beauty & Personal Care",
+    "tatcha": "Beauty & Personal Care",
+    "olaplex": "Beauty & Personal Care",
+    "dyson": "Beauty & Personal Care",  # Hair tools
     
-    # Women's Fashion
-    "myntra": "Women's Fashion",
-    "ajio": "Women's Fashion",
+    # ============ Women's Fashion ============
+    # Indian brands
+    "myntra": "General Retail",  # Multi-category
     "westside": "Women's Fashion",
     "w": "Women's Fashion",
     "biba": "Women's Fashion",
@@ -168,20 +201,72 @@ BRAND_INDUSTRY_MAPPING = {
     "stalkbuylove": "Women's Fashion",
     "faballey": "Women's Fashion",
     "libas": "Women's Fashion",
+    "nicobar": "Women's Fashion",
+    "11.11": "Women's Fashion",
+    "11.11 / eleven eleven": "Women's Fashion",
+    "peeli dori": "Women's Fashion",
+    "ogaan": "Women's Fashion",
+    "tilfi": "Women's Fashion",
+    "manish malhotra": "Women's Fashion",
+    "tribe amrapali": "Women's Fashion",
+    "shop lune": "Women's Fashion",
+    "and": "Women's Fashion",
+    "no nasties": "Women's Fashion",
+    "truth be told": "Women's Fashion",
+    "turn black": "Women's Fashion",
+    # International fashion brands
+    "ganni": "Women's Fashion",
+    "reformation": "Women's Fashion",
+    "luisaviaroma": "Women's Fashion",
+    "mytheresa": "Women's Fashion",
+    "anthropologie": "Women's Fashion",
+    "maeve by anthropologie": "Women's Fashion",
+    "zara": "Women's Fashion",
+    "mango": "Women's Fashion",
+    "mango sale": "Women's Fashion",
+    "h&m": "Women's Fashion",
+    "gucci": "Women's Fashion",
+    "balenciaga": "Women's Fashion",
+    "net-a-porter": "Women's Fashion",
+    "farfetch": "Women's Fashion",
+    "revolve": "Women's Fashion",
+    "asos": "Women's Fashion",
+    "free people": "Women's Fashion",
+    "cos": "Women's Fashion",
+    "& other stories": "Women's Fashion",
+    "everlane": "Women's Fashion",
+    "realisation par": "Women's Fashion",
+    "house of cb": "Women's Fashion",
+    "princess polly": "Women's Fashion",
     
-    # Men's Fashion
+    # ============ Men's Fashion ============
     "bewakoof": "Men's Fashion",
     "the souled store": "Men's Fashion",
     "snitch": "Men's Fashion",
     "rare rabbit": "Men's Fashion",
     "jack & jones": "Men's Fashion",
     "levis": "Men's Fashion",
+    "levi's": "Men's Fashion",
     "peter england": "Men's Fashion",
     "van heusen": "Men's Fashion",
     "louis philippe": "Men's Fashion",
     "allen solly": "Men's Fashion",
+    "uniqlo": "Men's Fashion",
+    "gap": "Men's Fashion",
+    "calvin klein": "Men's Fashion",
+    "calvin klein outlet": "Men's Fashion",
+    "bombay shirt company": "Men's Fashion",
+    "march tee": "Men's Fashion",
+    "tommy hilfiger": "Men's Fashion",
+    "ralph lauren": "Men's Fashion",
+    "hugo boss": "Men's Fashion",
+    "massimo dutti": "Men's Fashion",
+    "bonobos": "Men's Fashion",
+    "j.crew": "Men's Fashion",
+    "banana republic": "Men's Fashion",
+    "brooks brothers": "Men's Fashion",
     
-    # Food & Beverages
+    # ============ Food & Beverages ============
     "zomato": "Food & Beverages",
     "swiggy": "Food & Beverages",
     "bigbasket": "Food & Beverages",
@@ -202,8 +287,12 @@ BRAND_INDUSTRY_MAPPING = {
     "licious": "Food & Beverages",
     "freshmeat": "Food & Beverages",
     "country delight": "Food & Beverages",
+    "farmer's dog": "Food & Beverages",
+    "the farmer's dog": "Food & Beverages",
+    "native pet": "Food & Beverages",  # Pet food
+    "matt | the farmer's dog": "Food & Beverages",
     
-    # Travel & Hospitality
+    # ============ Travel & Hospitality ============
     "makemytrip": "Travel & Hospitality",
     "goibibo": "Travel & Hospitality",
     "cleartrip": "Travel & Hospitality",
@@ -218,9 +307,18 @@ BRAND_INDUSTRY_MAPPING = {
     "indigo": "Travel & Hospitality",
     "spicejet": "Travel & Hospitality",
     "airindia": "Travel & Hospitality",
+    "air india": "Travel & Hospitality",
     "vistara": "Travel & Hospitality",
+    "all accor": "Travel & Hospitality",
+    "all - accor live limitless": "Travel & Hospitality",
+    "accor": "Travel & Hospitality",
+    "marriott": "Travel & Hospitality",
+    "hilton": "Travel & Hospitality",
+    "taj": "Travel & Hospitality",
+    "ihg": "Travel & Hospitality",
+    "hyatt": "Travel & Hospitality",
     
-    # Electronics & Gadgets
+    # ============ Electronics & Gadgets ============
     "croma": "Electronics & Gadgets",
     "reliance digital": "Electronics & Gadgets",
     "vijay sales": "Electronics & Gadgets",
@@ -233,8 +331,9 @@ BRAND_INDUSTRY_MAPPING = {
     "noise": "Electronics & Gadgets",
     "fire-boltt": "Electronics & Gadgets",
     "pebble": "Electronics & Gadgets",
+    "fossil": "Electronics & Gadgets",  # Watches/wearables
     
-    # Home & Living
+    # ============ Home & Living ============
     "pepperfry": "Home & Living",
     "urban ladder": "Home & Living",
     "hometown": "Home & Living",
@@ -246,12 +345,24 @@ BRAND_INDUSTRY_MAPPING = {
     "sleepycat": "Home & Living",
     "wakefit": "Home & Living",
     "sunday": "Home & Living",
+    "pottery barn": "Home & Living",
+    "pottery barn black friday": "Home & Living",
+    "pottery barn cyber monday": "Home & Living",
+    "pottery barn design services": "Home & Living",
+    "pottery barn sale": "Home & Living",
+    "west elm": "Home & Living",
+    "williams sonoma": "Home & Living",
+    "crate & barrel": "Home & Living",
+    "cb2": "Home & Living",
+    "house of things": "Home & Living",
     
-    # Health & Wellness
+    # ============ Health & Wellness ============
     "pharmeasy": "Health & Wellness",
     "netmeds": "Health & Wellness",
     "1mg": "Health & Wellness",
     "apollo pharmacy": "Health & Wellness",
+    "apollo 24|7": "Health & Wellness",
+    "apollo24|7": "Health & Wellness",
     "healthkart": "Health & Wellness",
     "cult.fit": "Health & Wellness",
     "cure.fit": "Health & Wellness",
@@ -260,8 +371,13 @@ BRAND_INDUSTRY_MAPPING = {
     "truweight": "Health & Wellness",
     "oziva": "Health & Wellness",
     "kapiva": "Health & Wellness",
+    "ultrahuman": "Health & Wellness",
+    "ultrahuman cyborg": "Health & Wellness",
+    "whoop": "Health & Wellness",
+    "oura": "Health & Wellness",
+    "fitbit": "Health & Wellness",
     
-    # Finance & Fintech
+    # ============ Finance & Fintech ============
     "paytm": "Finance & Fintech",
     "phonepe": "Finance & Fintech",
     "gpay": "Finance & Fintech",
@@ -276,8 +392,12 @@ BRAND_INDUSTRY_MAPPING = {
     "policybazaar": "Finance & Fintech",
     "acko": "Finance & Fintech",
     "digit": "Finance & Fintech",
+    "scapia": "Finance & Fintech",  # Credit card
+    "onecard": "Finance & Fintech",
+    "niyo": "Finance & Fintech",
+    "uni": "Finance & Fintech",
     
-    # Kids & Baby
+    # ============ Kids & Baby ============
     "firstcry": "Kids & Baby",
     "hopscotch": "Kids & Baby",
     "babyhug": "Kids & Baby",
@@ -286,7 +406,7 @@ BRAND_INDUSTRY_MAPPING = {
     "mothercare": "Kids & Baby",
     "the moms co": "Kids & Baby",
     
-    # Sports & Fitness
+    # ============ Sports & Fitness ============
     "decathlon": "Sports & Fitness",
     "puma": "Sports & Fitness",
     "nike": "Sports & Fitness",
@@ -295,8 +415,23 @@ BRAND_INDUSTRY_MAPPING = {
     "asics": "Sports & Fitness",
     "skechers": "Sports & Fitness",
     "hrx": "Sports & Fitness",
+    "allbirds": "Sports & Fitness",  # Sustainable sneakers
+    "new balance": "Sports & Fitness",
+    "under armour": "Sports & Fitness",
+    "lululemon": "Sports & Fitness",
+    "gymshark": "Sports & Fitness",
+    "alo yoga": "Sports & Fitness",
     
-    # Entertainment
+    # ============ Jewelry & Accessories ============
+    "caratlane": "Women's Fashion",  # Jewelry
+    "tanishq": "Women's Fashion",
+    "bluestone": "Women's Fashion",
+    "melorra": "Women's Fashion",
+    "candere": "Women's Fashion",
+    "kalyan jewellers": "Women's Fashion",
+    "malabar gold": "Women's Fashion",
+    
+    # ============ Entertainment ============
     "bookmyshow": "Entertainment",
     "netflix": "Entertainment",
     "amazon prime": "Entertainment",
@@ -309,14 +444,17 @@ BRAND_INDUSTRY_MAPPING = {
     "gaana": "Entertainment",
     "wynk": "Entertainment",
     
-    # General Retail (multi-category)
+    # ============ General Retail (multi-category) ============
     "flipkart": "General Retail",
     "amazon": "General Retail",
     "snapdeal": "General Retail",
     "meesho": "General Retail",
     "tatacliq": "General Retail",
+    "tata cliq": "General Retail",
     "reliance": "General Retail",
     "jiomart": "General Retail",
+    "ajio": "General Retail",
+    "anubhav barsaiyan": "General Retail",  # Likely test/personal
 }
 
 
@@ -406,13 +544,14 @@ INDUSTRY_KEYWORDS = {
 }
 
 
-def extract_industry(brand_name, subject=None, preview=None, html=None, db_session=None):
+def extract_industry(brand_name, subject=None, preview=None, html=None, db_session=None, use_ai=False):
     """
-    Extract industry using multiple methods (in priority order):
-    1. Database cache (AI-classified brands)
-    2. Brand name mapping (hardcoded known brands)
-    3. AI classification via OpenAI (most accurate for unknown brands)
-    4. Content-based keyword analysis (fallback if AI unavailable)
+    Extract industry using keyword-based classification (no AI by default).
+    
+    Priority order:
+    1. Exact brand name match in mapping
+    2. Partial/fuzzy brand name match
+    3. Content-based keyword analysis
     
     Args:
         brand_name: The brand name to classify
@@ -420,6 +559,7 @@ def extract_industry(brand_name, subject=None, preview=None, html=None, db_sessi
         preview: Email preview text
         html: Full HTML content
         db_session: SQLAlchemy session for caching (optional)
+        use_ai: Whether to use AI classification (default False)
     
     Returns:
         Industry string or None
@@ -427,50 +567,71 @@ def extract_industry(brand_name, subject=None, preview=None, html=None, db_sessi
     if not brand_name or brand_name == "Unknown":
         return _extract_industry_by_keywords(subject, preview, html)
     
+    # Normalize brand name for matching
     brand_lower = brand_name.lower().strip()
+    # Also create a version without special chars for fuzzy matching
+    brand_normalized = re.sub(r'[^a-z0-9\s]', '', brand_lower)
     
-    # Method 1: Check database cache first
-    if db_session:
-        try:
-            from backend.models import BrandClassification
-            cached = db_session.query(BrandClassification).filter(
-                BrandClassification.brand_name.ilike(brand_name)
-            ).first()
-            if cached:
-                return cached.industry
-        except Exception as e:
-            print(f"DB cache lookup error: {e}")
-    
-    # Method 2: Hardcoded brand mapping (fast, no API call needed)
+    # Method 1: Exact match in mapping
     if brand_lower in BRAND_INDUSTRY_MAPPING:
         industry = BRAND_INDUSTRY_MAPPING[brand_lower]
-        # Cache the hardcoded mapping in DB for consistency
         if db_session:
             _cache_brand_classification(db_session, brand_name, industry, "keyword", 1.0)
         return industry
     
-    # Partial match in hardcoded mapping
-    for key, industry in BRAND_INDUSTRY_MAPPING.items():
-        if key in brand_lower or brand_lower in key:
-            if db_session:
-                _cache_brand_classification(db_session, brand_name, industry, "keyword", 0.9)
-            return industry
+    # Method 2: Partial/fuzzy match in mapping
+    # Check if any mapping key is contained in brand name or vice versa
+    best_match = None
+    best_match_len = 0
     
-    # Method 3: AI classification (most accurate for unknown brands)
-    try:
-        from backend.ai_classifier import classify_brand_with_ai, is_ai_available
-        if is_ai_available():
-            result = classify_brand_with_ai(brand_name, subject, preview)
-            industry = result.get("industry")
-            confidence = result.get("confidence", 0.8)
-            
-            # Cache the AI classification
-            if db_session and industry:
-                _cache_brand_classification(db_session, brand_name, industry, "ai", confidence)
-            
-            return industry
-    except Exception as e:
-        print(f"AI classification error: {e}")
+    for key, industry in BRAND_INDUSTRY_MAPPING.items():
+        key_normalized = re.sub(r'[^a-z0-9\s]', '', key)
+        
+        # Exact normalized match
+        if key_normalized == brand_normalized:
+            best_match = industry
+            best_match_len = len(key)
+            break
+        
+        # Key is substring of brand (e.g., "bobbi brown" in "bobbi brown cosmetics")
+        if key_normalized in brand_normalized and len(key) > best_match_len:
+            best_match = industry
+            best_match_len = len(key)
+        
+        # Brand is substring of key
+        elif brand_normalized in key_normalized and len(brand_normalized) > 3:
+            if len(key) > best_match_len:
+                best_match = industry
+                best_match_len = len(key)
+        
+        # Word-level match (e.g., "kiehl" matches "kiehl's since 1851")
+        brand_words = brand_normalized.split()
+        key_words = key_normalized.split()
+        if any(w in key_words for w in brand_words if len(w) > 3):
+            if len(key) > best_match_len:
+                best_match = industry
+                best_match_len = len(key)
+    
+    if best_match:
+        if db_session:
+            _cache_brand_classification(db_session, brand_name, best_match, "keyword", 0.9)
+        return best_match
+    
+    # Method 3: AI classification (only if explicitly enabled)
+    if use_ai:
+        try:
+            from backend.ai_classifier import classify_brand_with_ai, is_ai_available
+            if is_ai_available():
+                result = classify_brand_with_ai(brand_name, subject, preview)
+                industry = result.get("industry")
+                confidence = result.get("confidence", 0.8)
+                
+                if db_session and industry:
+                    _cache_brand_classification(db_session, brand_name, industry, "ai", confidence)
+                
+                return industry
+        except Exception as e:
+            print(f"AI classification error: {e}")
     
     # Method 4: Fallback to keyword analysis
     return _extract_industry_by_keywords(subject, preview, html)
