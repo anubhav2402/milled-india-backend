@@ -998,12 +998,12 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20, fetc
     
     while True:
         page_count += 1
-    results = service.users().messages().list(
-        userId="me",
-        labelIds=[label_id],
+        results = service.users().messages().list(
+            userId="me",
+            labelIds=[label_id],
             maxResults=min(max_results, 500),  # Gmail API max is 500 per page
             pageToken=page_token
-    ).execute()
+        ).execute()
 
         messages = results.get("messages", [])
         all_messages.extend(messages)
