@@ -796,6 +796,56 @@ def reclassify_with_keywords(
     return results
 
 
+@app.post("/admin/reclassify-campaign-types")
+def reclassify_campaign_types_endpoint(
+    db: Session = Depends(get_db)
+):
+    """
+    Re-classify campaign types for all emails using expanded keyword matching.
+    This is free and fast (no AI).
+    """
+    import sys
+    sys.path.insert(0, '/opt/render/project/src')
+    
+    from engine import extract_campaign_type
+    from collections import Counter
+    
+    # Get all emails
+    emails = db.query(models.Email).all()
+    
+    results = {
+        "total_emails": len(emails),
+        "classified": 0,
+        "unclassified": 0,
+        "distribution": Counter()
+    }
+    
+    for email in emails:
+        # Classify using keywords only (use_ai=False)
+        campaign_type = extract_campaign_type(
+            subject=email.subject,
+            preview=email.preview,
+            html=email.html,
+            brand_name=email.brand,
+            use_ai=False
+        )
+        
+        if campaign_type:
+            email.type = campaign_type
+            results["classified"] += 1
+            results["distribution"][campaign_type] += 1
+        else:
+            results["unclassified"] += 1
+            results["distribution"]["Unclassified"] += 1
+    
+    db.commit()
+    
+    # Convert Counter to dict for JSON serialization
+    results["distribution"] = dict(results["distribution"])
+    
+    return results
+
+
 @app.post("/admin/reclassify-brand/{brand_name}")
 def reclassify_single_brand(
     brand_name: str,

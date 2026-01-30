@@ -720,51 +720,109 @@ def _extract_industry_by_keywords(subject=None, preview=None, html=None):
 
 
 # Campaign type keywords for classification
+# Priority order matters - more specific types should be checked first
 CAMPAIGN_TYPE_KEYWORDS = {
+    # High-priority specific types (check first)
     "Sale": [
-        "sale", "discount", "% off", "percent off", "offer", "deal", "save", 
+        "sale", "discount", "% off", "percent off", "off your", "offer", "deal", "save",
         "clearance", "flash sale", "limited time", "price drop", "markdown",
-        "bogo", "buy one get", "extra off", "special offer", "promo"
+        "bogo", "buy one get", "extra off", "special offer", "promo", "promotion",
+        "50% off", "40% off", "30% off", "20% off", "60% off", "70% off",
+        "half off", "up to off", "flat off", "get off", "take off",
+        "lowest price", "best price", "reduced", "savings", "bargain",
+        "black friday", "cyber monday", "end of season", "final sale",
+        "last chance", "ending soon", "hurry", "don't miss", "act now",
+        "exclusive offer", "member offer", "special deal", "hot deal",
     ],
     "Welcome": [
         "welcome", "thanks for signing", "thanks for joining", "thank you for subscribing",
         "glad you're here", "nice to meet", "get started", "first order",
-        "new member", "welcome aboard", "joined"
+        "new member", "welcome aboard", "joined", "you're in", "you are in",
+        "welcome to the", "happy to have you", "great to have you",
     ],
     "Abandoned Cart": [
         "forgot something", "left behind", "still in your cart", "waiting for you",
         "complete your order", "finish your purchase", "cart reminder", "items waiting",
-        "don't miss out on", "still interested", "your cart"
+        "don't miss out on", "still interested", "your cart", "in your bag",
+        "complete checkout", "left in cart", "abandoned", "come back to",
+    ],
+    "Order Update": [
+        "order confirmed", "shipped", "out for delivery", "delivered", "tracking",
+        "order status", "shipment", "dispatch", "on its way", "delivery update",
+        "your order", "order #", "order number", "shipping update", "package",
+        "estimated delivery", "arriving", "in transit", "picked up",
+    ],
+    "Back in Stock": [
+        "back in stock", "restocked", "available again", "they're back",
+        "it's back", "now available", "restock", "selling fast", "limited stock",
+        "almost gone", "low stock", "few left", "last few", "going fast",
+    ],
+    "New Arrival": [
+        "new arrival", "just landed", "just dropped", "new collection", "new launch",
+        "introducing", "meet the", "fresh drop", "just in", "new season",
+        "launching", "debut", "brand new", "first look", "sneak peek",
+        "preview", "coming soon", "new in", "newly added", "fresh arrival",
+        "latest collection", "spring collection", "summer collection",
+        "fall collection", "winter collection", "ss24", "aw24", "fw24",
+    ],
+    "Re-engagement": [
+        "miss you", "we miss you", "come back", "haven't seen you", "it's been a while",
+        "where have you been", "still there", "reconnect", "checking in",
+        "been a while", "long time", "remember us", "we noticed",
+    ],
+    "Festive": [
+        "diwali", "holi", "christmas", "new year", "eid", "rakhi", "pongal",
+        "onam", "navratri", "durga puja", "festival", "festive", "celebration",
+        "valentine", "valentine's", "be mine", "mother's day", "father's day",
+        "thanksgiving", "independence day", "republic day", "easter",
+        "gifting", "gift guide", "holiday", "seasonal", "raksha bandhan",
+    ],
+    "Loyalty": [
+        "points", "rewards", "loyalty", "member exclusive", "vip", "tier",
+        "cashback", "earn", "redeem", "exclusive access", "insider",
+        "members only", "member benefits", "loyalty program", "rewards program",
+    ],
+    "Confirmation": [
+        "confirm your", "confirm subscription", "verify your", "verification",
+        "double opt", "confirm you want", "please confirm", "activate your",
+        "complete your registration", "verify email", "confirm email",
+    ],
+    "Feedback": [
+        "review", "feedback", "rate us", "how was", "tell us", "survey",
+        "share your experience", "your opinion", "rate your", "write a review",
+        "leave a review", "your feedback", "quick survey", "take our survey",
+    ],
+    "Educational": [
+        "tips", "how to", "guide", "tutorial", "learn", "discover",
+        "skincare routine", "styling tips", "beauty tips", "did you know",
+        "pro tip", "expert advice", "the secret", "secrets of", "masterclass",
+        "101", "basics", "essentials", "everything you need to know",
     ],
     "Newsletter": [
         "newsletter", "weekly update", "monthly update", "digest", "roundup",
         "this week", "this month", "trending", "what's new", "news from",
-        "latest from", "highlights"
+        "latest from", "highlights", "weekly picks", "editor's picks",
+        "curated for you", "hand-picked", "top stories", "in the news",
     ],
-    "New Arrival": [
-        "new arrival", "just landed", "just dropped", "new collection", "new launch",
-        "introducing", "meet the", "fresh", "just in", "new season",
-        "launching", "debut"
+    # Lower priority - catch-all for promotional content
+    "Product Showcase": [
+        "shop now", "shop the", "explore", "discover", "check out",
+        "featured", "spotlight", "collection", "lookbook", "look book",
+        "style", "outfit", "wear", "perfect for", "made for",
+        "designed for", "crafted", "artisan", "handmade", "luxury",
+        "premium", "exclusive", "limited edition", "must-have", "essential",
+        "favorite", "favourite", "bestseller", "best seller", "popular",
+        "trending now", "top picks", "editor's choice", "staff picks",
+        "the new", "all new", "iconic", "classic", "timeless",
     ],
-    "Re-engagement": [
-        "miss you", "we miss you", "come back", "haven't seen you", "it's been a while",
-        "where have you been", "still there", "reconnect", "checking in"
-    ],
-    "Order Update": [
-        "order confirmed", "shipped", "out for delivery", "delivered", "tracking",
-        "order status", "shipment", "dispatch", "on its way", "delivery update"
-    ],
-    "Festive": [
-        "diwali", "holi", "christmas", "new year", "eid", "rakhi", "pongal",
-        "onam", "navratri", "durga puja", "festival", "festive", "celebration"
-    ],
-    "Loyalty": [
-        "points", "rewards", "loyalty", "member exclusive", "vip", "tier",
-        "cashback", "earn", "redeem", "exclusive access"
-    ],
-    "Feedback": [
-        "review", "feedback", "rate us", "how was", "tell us", "survey",
-        "share your experience", "your opinion", "rate your"
+    "Promotional": [
+        # This is the catch-all for general marketing emails
+        "shop", "buy", "order", "get yours", "available now",
+        "free shipping", "free delivery", "complimentary", "gift with purchase",
+        "bundle", "set", "kit", "value pack", "combo",
+        "upgrade", "enhance", "elevate", "transform", "refresh",
+        "your", "you'll love", "just for you", "made for you",
+        "attention", "detail", "quality", "craftsmanship",
     ],
 }
 
@@ -806,8 +864,8 @@ def extract_campaign_type(subject=None, preview=None, html=None, brand_name=None
 
 def _extract_campaign_type_by_keywords(subject=None, preview=None, html=None):
     """
-    Extract campaign type using keyword analysis.
-    Returns the type only if confident (score >= 3).
+    Extract campaign type using keyword analysis with improved matching.
+    Uses regex patterns for percentages and prioritized scoring.
     """
     # Combine text for analysis
     text_parts = []
@@ -827,33 +885,98 @@ def _extract_campaign_type_by_keywords(subject=None, preview=None, html=None):
         except Exception:
             pass
     
+    # Early check for percentage patterns in subject (strong Sale indicator)
+    if subject:
+        subject_lower = subject.lower()
+        # Match patterns like "50%", "up to 70%", "flat 30% off"
+        if re.search(r'\d+\s*%', subject_lower):
+            # Check it's not a review percentage or similar
+            if any(word in subject_lower for word in ['off', 'save', 'discount', 'sale', 'deal']):
+                return "Sale"
+            # Even without explicit sale words, percentage in subject is usually a sale
+            if not any(word in subject_lower for word in ['review', 'rating', 'score', 'complete']):
+                return "Sale"
+    
     if not text_parts:
         return None
+    
+    # Priority order for campaign types (more specific first)
+    # Lower priority types only win if they have significantly higher scores
+    priority_types = [
+        "Confirmation",      # Very specific - email confirmations
+        "Order Update",      # Very specific - transactional
+        "Abandoned Cart",    # Very specific - cart reminders
+        "Welcome",           # Very specific - onboarding
+        "Feedback",          # Very specific - surveys/reviews
+        "Back in Stock",     # Specific - inventory
+        "Re-engagement",     # Specific - win-back
+        "Sale",              # Common but specific intent
+        "Festive",           # Seasonal/holiday
+        "Loyalty",           # Rewards/points
+        "New Arrival",       # Product launches
+        "Educational",       # Tips/guides
+        "Newsletter",        # Regular updates
+        "Product Showcase",  # Product features
+        "Promotional",       # Catch-all marketing
+    ]
     
     # Score each campaign type
     type_scores = {}
     for campaign_type, keywords in CAMPAIGN_TYPE_KEYWORDS.items():
         score = 0
+        matched_keywords = []
         for source, text in text_parts:
             for keyword in keywords:
                 if keyword in text:
                     # Weight by source (subject > preview > html)
                     if source == "subject":
                         score += 5
+                        matched_keywords.append(f"{keyword}(subj)")
                     elif source == "preview":
                         score += 2
+                        matched_keywords.append(f"{keyword}(prev)")
                     else:
                         score += 1
         if score > 0:
             type_scores[campaign_type] = score
     
-    # Return type with highest score (minimum threshold of 3)
-    if type_scores:
-        best_type = max(type_scores, key=type_scores.get)
-        if type_scores[best_type] >= 3:
-            return best_type
+    if not type_scores:
+        return None
     
-    return None
+    # Find the best type considering both score and priority
+    best_type = None
+    best_score = 0
+    
+    for campaign_type in priority_types:
+        if campaign_type in type_scores:
+            score = type_scores[campaign_type]
+            # High-priority types need lower threshold
+            if campaign_type in ["Confirmation", "Order Update", "Abandoned Cart", "Welcome", "Feedback"]:
+                threshold = 2  # Lower threshold for specific types
+            elif campaign_type in ["Sale", "Back in Stock", "Re-engagement", "Festive"]:
+                threshold = 3
+            elif campaign_type in ["Promotional", "Product Showcase"]:
+                threshold = 5  # Higher threshold for catch-all types
+            else:
+                threshold = 3
+            
+            # Take this type if it meets threshold and is higher priority than current best
+            if score >= threshold:
+                if best_type is None:
+                    best_type = campaign_type
+                    best_score = score
+                # If current best is a low-priority type, prefer higher-priority even with lower score
+                elif priority_types.index(campaign_type) < priority_types.index(best_type):
+                    # But only if score is at least half of best score
+                    if score >= best_score * 0.5:
+                        best_type = campaign_type
+                        best_score = score
+                # If same priority tier, take higher score
+                elif score > best_score:
+                    best_type = campaign_type
+                    best_score = score
+    
+    return best_type
 
 
 def clean_brand_name(name):
