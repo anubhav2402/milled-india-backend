@@ -95,31 +95,42 @@ def create_tables():
 @app.post("/auth/register", response_model=schemas.TokenResponse)
 def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register a new user with email and password."""
-    # Check if email already exists
-    existing_user = db.query(models.User).filter(models.User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+    try:
+        # Check if email already exists
+        existing_user = db.query(models.User).filter(models.User.email == user_data.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        
+        # Create new user
+        user = models.User(
+            email=user_data.email,
+            password_hash=hash_password(user_data.password),
+            name=user_data.name,
         )
-    
-    # Create new user
-    user = models.User(
-        email=user_data.email,
-        password_hash=hash_password(user_data.password),
-        name=user_data.name,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    
-    # Create access token
-    token = create_access_token(user.id, user.email)
-    
-    return schemas.TokenResponse(
-        access_token=token,
-        user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
-    )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+        # Create access token
+        token = create_access_token(user.id, user.email)
+        
+        return schemas.TokenResponse(
+            access_token=token,
+            user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"Registration error: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
 
 
 @app.post("/auth/login", response_model=schemas.TokenResponse)
