@@ -80,6 +80,16 @@ def health():
     return {"status": "ok"}
 
 
+@app.post("/admin/create-tables")
+def create_tables():
+    """Create all database tables. Use this to ensure user tables exist."""
+    try:
+        Base.metadata.create_all(bind=engine)
+        return {"message": "Tables created successfully", "tables": list(Base.metadata.tables.keys())}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create tables: {str(e)}")
+
+
 # ============ Authentication Endpoints ============
 
 @app.post("/auth/register", response_model=schemas.TokenResponse)
