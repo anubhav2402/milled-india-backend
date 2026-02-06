@@ -1303,6 +1303,7 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20, fetc
 
     records = []
 
+    errors_count = 0
     for idx, msg in enumerate(all_messages):
         msg_id = msg["id"]
         if msg_id in processed:
@@ -1312,11 +1313,21 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20, fetc
         if (idx + 1) % 50 == 0:
             print(f">>> Processing email {idx + 1}/{len(all_messages)}...")
 
-        message = service.users().messages().get(
-            userId="me",
-            id=msg_id,
-            format="full"
-        ).execute()
+        try:
+            message = service.users().messages().get(
+                userId="me",
+                id=msg_id,
+                format="full"
+            ).execute()
+        except Exception as e:
+            errors_count += 1
+            print(f">>> Warning: Failed to fetch message {msg_id}: {e}")
+            # Mark as processed to skip it next time
+            save_processed_id(msg_id)
+            if errors_count > 10:
+                print(f">>> Too many errors ({errors_count}), stopping early")
+                break
+            continue
 
         headers = {h["name"]: h["value"]
                    for h in message["payload"]["headers"]}
@@ -1351,6 +1362,9 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20, fetc
 
         save_processed_id(msg_id)
 
+    if errors_count > 0:
+        print(f">>> Completed with {errors_count} errors (skipped)")
+    
     return records
 
 
