@@ -1,252 +1,910 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Indian Brand Email Feed</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #fafafa;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            margin-bottom: 20px;
-        }
-        .row {
-            display: grid;
-            grid-template-columns: 140px 1fr 120px;
-            gap: 16px;
-            padding: 12px 16px;
-            background: #fff;
-            border-bottom: 1px solid #eee;
-            align-items: center;
-        }
-        .row:hover {
-            background: #f5f7ff;
-        }
-        .brand {
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-        .subject a {
-            color: #1a0dab;
-            text-decoration: none;
-        }
-        .subject a:hover {
-            text-decoration: underline;
-        }
-        .date {
-            color: #666;
-            font-size: 14px;
-            text-align: right;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mail Muse — Email marketing intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --cream:      #FAF9F7;
+      --sand:       #F0E9E1;
+      --tan:        #DDD6CC;
+      --charcoal:   #1C1917;
+      --stone:      #6B6560;
+      --terracotta: #C2714A;
+      --white:      #FFFFFF;
+      --radius:     6px;
+      --serif:      'DM Serif Display', Georgia, serif;
+      --sans:       'Inter', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--white);
+      border-bottom: 1px solid var(--tan);
+      padding: 0 24px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .logo {
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      color: var(--charcoal);
+      white-space: nowrap;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .logo em { font-style: italic; color: var(--terracotta); }
+
+    .search-wrap {
+      flex: 1;
+      max-width: 400px;
+      position: relative;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--stone);
+      pointer-events: none;
+    }
+    #search {
+      width: 100%;
+      padding: 8px 12px 8px 34px;
+      border: 1px solid var(--tan);
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 0.875rem;
+      background: var(--cream);
+      color: var(--charcoal);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    #search::placeholder { color: var(--stone); }
+    #search:focus { border-color: var(--terracotta); background: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+
+    .btn-ghost {
+      font-family: var(--sans);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 4px;
+      transition: color 0.15s;
+    }
+    .btn-ghost:hover { color: var(--charcoal); }
+
+    .btn-primary {
+      font-family: var(--sans);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--white);
+      background: var(--terracotta);
+      border: none;
+      border-radius: var(--radius);
+      padding: 7px 16px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
+    .user-chip {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--stone);
+      background: var(--sand);
+      border-radius: 20px;
+      padding: 5px 12px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+    .user-chip.visible { display: flex; }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      background: var(--white);
+      border-bottom: 1px solid var(--tan);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      height: 48px;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .pill {
+      flex-shrink: 0;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--stone);
+      background: none;
+      border: 1px solid var(--tan);
+      border-radius: 20px;
+      padding: 4px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .pill:hover { border-color: var(--terracotta); color: var(--terracotta); }
+    .pill.active {
+      background: var(--terracotta);
+      border-color: var(--terracotta);
+      color: var(--white);
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--tan);
+      flex-shrink: 0;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+    .stat-num {
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      color: var(--charcoal);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--stone);
+    }
+
+    .results-label {
+      font-size: 0.8rem;
+      color: var(--stone);
+      margin-left: auto;
+    }
+
+    /* ── Email list ── */
+    .email-list {
+      padding: 0 24px 40px;
+    }
+
+    .email-row {
+      display: grid;
+      grid-template-columns: 40px 160px 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 13px 16px;
+      background: var(--white);
+      border: 1px solid var(--tan);
+      border-radius: var(--radius);
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .email-row:hover {
+      border-color: var(--terracotta);
+      box-shadow: 0 2px 8px rgba(194, 113, 74, 0.08);
+    }
+
+    .brand-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 1rem;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+
+    .brand-col {
+      min-width: 0;
+    }
+    .brand-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-meta {
+      font-size: 0.75rem;
+      color: var(--stone);
+      margin-top: 1px;
+    }
+
+    .subject-col {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .subject-text {
+      font-size: 0.9rem;
+      color: var(--charcoal);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tag {
+      flex-shrink: 0;
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--sand);
+      color: var(--stone);
+      white-space: nowrap;
+    }
+    .tag.type { background: #EEF0FB; color: #5B5FCF; }
+
+    .date-col {
+      font-size: 0.8rem;
+      color: var(--stone);
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    /* ── Empty / loading / error states ── */
+    .state-box {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--stone);
+    }
+    .state-box p { font-size: 0.95rem; margin-top: 8px; }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--tan);
+      border-top-color: var(--terracotta);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Preview drawer ── */
+    .drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 25, 23, 0.4);
+      z-index: 200;
+    }
+    .drawer-overlay.open { display: block; }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -700px;
+      width: min(700px, 100vw);
+      height: 100vh;
+      background: var(--white);
+      z-index: 201;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.25s ease;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+    }
+    .drawer.open { right: 0; }
+
+    .drawer-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--tan);
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .drawer-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--stone);
+      padding: 2px;
+      margin-left: auto;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+    .drawer-close:hover { color: var(--charcoal); }
+
+    .drawer-brand { font-size: 0.75rem; font-weight: 600; color: var(--terracotta); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .drawer-subject { font-family: var(--serif); font-size: 1.25rem; color: var(--charcoal); line-height: 1.3; }
+    .drawer-date { font-size: 0.8rem; color: var(--stone); margin-top: 4px; }
+
+    .drawer-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+    .drawer-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .drawer-body iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .drawer-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--cream);
+    }
+
+    /* ── Auth modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 25, 23, 0.5);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 36px 32px;
+      width: min(420px, 90vw);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    }
+    .modal h2 {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      color: var(--charcoal);
+      margin-bottom: 6px;
+    }
+    .modal p {
+      font-size: 0.875rem;
+      color: var(--stone);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--tan);
+      border-radius: var(--radius);
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      color: var(--charcoal);
+      background: var(--cream);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus { border-color: var(--terracotta); background: var(--white); }
+
+    .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+    .btn-full { width: 100%; padding: 11px; font-size: 0.95rem; border-radius: var(--radius); }
+
+    .modal-switch {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--stone);
+      margin-top: 16px;
+    }
+    .modal-switch a { color: var(--terracotta); text-decoration: none; cursor: pointer; font-weight: 500; }
+    .modal-switch a:hover { text-decoration: underline; }
+
+    .modal-close-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--stone);
+      transition: color 0.15s;
+    }
+    .modal-close-btn:hover { color: var(--charcoal); }
+
+    .error-msg {
+      font-size: 0.8rem;
+      color: #c0392b;
+      background: #fef0ef;
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin-top: -8px;
+      margin-bottom: 8px;
+      display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      nav { padding: 0 14px; gap: 12px; }
+      .email-list { padding: 0 12px 40px; }
+      .stats-bar { padding: 12px 14px; }
+      .filter-bar { padding: 0 14px; }
+      .email-row {
+        grid-template-columns: 36px 1fr auto;
+        gap: 10px;
+      }
+      .brand-col { display: none; }
+      .date-col { font-size: 0.72rem; }
+    }
+  </style>
 </head>
 <body>
-    <h1>📬 Indian Brand Email Feed</h1>
-    <p>20 campaigns captured</p>
-    
-        <div class="row">
-            <div class="brand">Mail</div>
-            <div class="subject">
-                <a href="emails/mail/2026-01-28_trees-but-make-them-shoes.html" target="_blank">
-                    Trees But Make Them Shoes
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Mail</div>
-            <div class="subject">
-                <a href="emails/mail/2026-01-28_the-new-improved-rare-earth-clay-mask-is-here.html" target="_blank">
-                    The New Improved Rare Earth Clay Mask Is Here
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Mail</div>
-            <div class="subject">
-                <a href="emails/mail/2026-01-28_ends-tonight-last-chance-for-buy-1-get-1-free.html" target="_blank">
-                    Ends Tonight Last Chance For Buy 1 Get 1 Free
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Nicobar</div>
-            <div class="subject">
-                <a href="emails/nicobar/2026-01-28_the-nicobar-sale-is-almost-here.html" target="_blank">
-                    The Nicobar Sale Is Almost Here
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Emails</div>
-            <div class="subject">
-                <a href="emails/emails/2026-01-28_style-guide-winter-must-haves.html" target="_blank">
-                    Style Guide Winter Must Haves
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Emails</div>
-            <div class="subject">
-                <a href="emails/emails/2026-01-28_complete-your-look.html" target="_blank">
-                    Complete Your Look
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Em</div>
-            <div class="subject">
-                <a href="emails/em/2026-01-28_gift-them-limited-edition-underwear-for-valentine-s-day.html" target="_blank">
-                    Gift Them Limited Edition Underwear For Valentine S Day
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Em</div>
-            <div class="subject">
-                <a href="emails/em/2026-01-28_new-24-hour-kajal-liner-waterproof.html" target="_blank">
-                    New 24 Hour Kajal Liner Waterproof
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Em</div>
-            <div class="subject">
-                <a href="emails/em/2026-01-28_new-extra-lip-tinted-balm.html" target="_blank">
-                    New Extra Lip Tinted Balm
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Reply</div>
-            <div class="subject">
-                <a href="emails/reply/2026-01-28_versace-zimmermann-and-more-from-the-vacation-shop.html" target="_blank">
-                    Versace Zimmermann And More From The Vacation Shop
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Hello</div>
-            <div class="subject">
-                <a href="emails/hello/2026-01-28_sale-ends-tonight.html" target="_blank">
-                    Sale Ends Tonight
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">154414822</div>
-            <div class="subject">
-                <a href="emails/154414822/2026-01-28_the-world-of-inaya-by-manish-malhotra.html" target="_blank">
-                    The World Of Inaya By Manish Malhotra
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Email</div>
-            <div class="subject">
-                <a href="emails/email/2026-01-28_sale-prices-activated.html" target="_blank">
-                    Sale Prices Activated
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Email</div>
-            <div class="subject">
-                <a href="emails/email/2026-01-28_you-re-the-first-to-see-new-arrivals.html" target="_blank">
-                    You Re The First To See New Arrivals
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Email</div>
-            <div class="subject">
-                <a href="emails/email/2026-01-28_top-five-fan-favorites.html" target="_blank">
-                    Top Five Fan Favorites
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Email</div>
-            <div class="subject">
-                <a href="emails/email/2026-01-28_on-trend-zebra-print.html" target="_blank">
-                    On Trend Zebra Print
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Email</div>
-            <div class="subject">
-                <a href="emails/email/2026-01-28_new-jeans-fresh-fits.html" target="_blank">
-                    New Jeans Fresh Fits
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">E</div>
-            <div class="subject">
-                <a href="emails/e/2026-01-28_for-your-wild-side.html" target="_blank">
-                    For Your Wild Side
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">E</div>
-            <div class="subject">
-                <a href="emails/e/2026-01-28_a-new-denim-story-starring-daisy-duck.html" target="_blank">
-                    A New Denim Story Starring Daisy Duck
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
-        <div class="row">
-            <div class="brand">Store</div>
-            <div class="subject">
-                <a href="emails/store/2026-01-28_seen-these-yet-the-2026-class-has-arrived.html" target="_blank">
-                    Seen These Yet The 2026 Class Has Arrived
-                </a>
-            </div>
-            <div class="date">28 Jan 2026</div>
-        </div>
-        
+
+<!-- ── Nav ── -->
+<nav>
+  <a class="logo" href="/">Mail <em>Muse</em></a>
+
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+      <circle cx="6.5" cy="6.5" r="5.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
+    </svg>
+    <input id="search" type="search" placeholder="Search campaigns…" autocomplete="off" />
+  </div>
+
+  <div class="nav-right">
+    <span class="user-chip" id="user-chip">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      <span id="user-name">–</span>
+    </span>
+    <button class="btn-ghost" id="btn-logout" style="display:none" onclick="logout()">Sign out</button>
+    <button class="btn-primary" id="btn-login" onclick="openModal('login')">Sign in</button>
+  </div>
+</nav>
+
+<!-- ── Filter bar ── -->
+<div class="filter-bar" id="filter-bar">
+  <button class="pill active" data-filter="industry" data-value="">All industries</button>
+  <div class="filter-divider"></div>
+  <!-- industry pills injected by JS -->
+</div>
+
+<!-- ── Stats bar ── -->
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-num" id="stat-campaigns">–</span>
+    <span class="stat-label">campaigns</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" id="stat-brands">–</span>
+    <span class="stat-label">brands</span>
+  </div>
+  <span class="results-label" id="results-label"></span>
+</div>
+
+<!-- ── Email list ── -->
+<div class="email-list" id="email-list">
+  <div class="state-box"><div class="spinner"></div><p>Loading campaigns…</p></div>
+</div>
+
+<!-- ── Preview drawer ── -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div style="min-width:0;flex:1">
+      <div class="drawer-brand" id="d-brand"></div>
+      <div class="drawer-subject" id="d-subject"></div>
+      <div class="drawer-date" id="d-date"></div>
+      <div class="drawer-tags" id="d-tags"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()" title="Close">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+        <line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/>
+      </svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-loading" id="drawer-loading"><div class="spinner"></div></div>
+    <iframe id="drawer-iframe" title="Email preview" sandbox="allow-same-origin"></iframe>
+  </div>
+</div>
+
+<!-- ── Auth modal ── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-close-row">
+      <button class="modal-close-btn" onclick="closeModal()">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Login view -->
+    <div id="view-login">
+      <h2>Welcome back</h2>
+      <p>Sign in to unlock send frequencies, analytics, and subject-line data.</p>
+      <div class="error-msg" id="login-error"></div>
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary btn-full" onclick="doLogin()">Sign in</button>
+      </div>
+      <p class="modal-switch">No account? <a onclick="openModal('register')">Create one</a></p>
+    </div>
+
+    <!-- Register view -->
+    <div id="view-register" style="display:none">
+      <h2>Create account</h2>
+      <p>Join Mail Muse to access full analytics and intelligence features.</p>
+      <div class="error-msg" id="register-error"></div>
+      <div class="form-group">
+        <label for="reg-name">Name</label>
+        <input id="reg-name" type="text" placeholder="Your name" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email</label>
+        <input id="reg-email" type="email" placeholder="you@example.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password</label>
+        <input id="reg-password" type="password" placeholder="At least 8 characters" autocomplete="new-password" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary btn-full" onclick="doRegister()">Create account</button>
+      </div>
+      <p class="modal-switch">Already have an account? <a onclick="openModal('login')">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── Config ── */
+  const API = 'https://milled-india-api.onrender.com';
+
+  /* ── State ── */
+  let allEmails = [];
+  let filtered  = [];
+  let activeIndustry = '';
+  let searchQuery    = '';
+  let token = localStorage.getItem('mm_token') || null;
+  let currentUser = null;
+
+  /* ── Avatar color palette (warm, on-brand) ── */
+  const AVATAR_COLORS = [
+    '#C2714A','#8A6E5A','#6B7C6A','#4A7C8A','#7A6A8A',
+    '#8A7A4A','#5A6E7A','#8A4A6A','#6A8A5A','#7A4A4A',
+  ];
+  function avatarColor(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return AVATAR_COLORS[h % AVATAR_COLORS.length];
+  }
+  function initials(brand) {
+    return brand.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  /* ── Date formatting ── */
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  /* ── Auth ── */
+  async function authFetch(url, opts = {}) {
+    if (token) {
+      opts.headers = { ...(opts.headers || {}), Authorization: `Bearer ${token}` };
+    }
+    return fetch(url, opts);
+  }
+
+  async function loadMe() {
+    if (!token) return;
+    try {
+      const r = await authFetch(`${API}/auth/me`);
+      if (r.ok) {
+        currentUser = await r.json();
+        document.getElementById('user-name').textContent = currentUser.name || currentUser.email;
+        document.getElementById('user-chip').classList.add('visible');
+        document.getElementById('btn-login').style.display = 'none';
+        document.getElementById('btn-logout').style.display = 'inline';
+      } else {
+        logout(true);
+      }
+    } catch {}
+  }
+
+  function logout(silent = false) {
+    token = null;
+    currentUser = null;
+    localStorage.removeItem('mm_token');
+    document.getElementById('user-chip').classList.remove('visible');
+    document.getElementById('btn-logout').style.display = 'none';
+    document.getElementById('btn-login').style.display = 'inline';
+    if (!silent) location.reload();
+  }
+
+  /* ── Modal ── */
+  function openModal(view) {
+    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('view-login').style.display    = view === 'login'    ? '' : 'none';
+    document.getElementById('view-register').style.display = view === 'register' ? '' : 'none';
+    document.getElementById('login-error').classList.remove('visible');
+    document.getElementById('register-error').classList.remove('visible');
+  }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeModal();
+  });
+
+  async function doLogin() {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl    = document.getElementById('login-error');
+    errEl.classList.remove('visible');
+    try {
+      const r = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await r.json();
+      if (!r.ok) { errEl.textContent = data.detail || 'Login failed'; errEl.classList.add('visible'); return; }
+      token = data.access_token;
+      localStorage.setItem('mm_token', token);
+      closeModal();
+      await loadMe();
+      fetchEmails();
+    } catch { errEl.textContent = 'Network error — try again'; errEl.classList.add('visible'); }
+  }
+
+  async function doRegister() {
+    const name     = document.getElementById('reg-name').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const errEl    = document.getElementById('register-error');
+    errEl.classList.remove('visible');
+    try {
+      const r = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await r.json();
+      if (!r.ok) { errEl.textContent = data.detail || 'Registration failed'; errEl.classList.add('visible'); return; }
+      token = data.access_token;
+      localStorage.setItem('mm_token', token);
+      closeModal();
+      await loadMe();
+      fetchEmails();
+    } catch { errEl.textContent = 'Network error — try again'; errEl.classList.add('visible'); }
+  }
+
+  /* ── Industries filter ── */
+  async function loadIndustries() {
+    try {
+      const r = await fetch(`${API}/industries`);
+      if (!r.ok) return;
+      const industries = await r.json();
+      const bar = document.getElementById('filter-bar');
+      industries.forEach(ind => {
+        const btn = document.createElement('button');
+        btn.className = 'pill';
+        btn.dataset.filter = 'industry';
+        btn.dataset.value = ind;
+        btn.textContent = ind;
+        btn.addEventListener('click', () => setIndustry(ind));
+        bar.appendChild(btn);
+      });
+    } catch {}
+  }
+
+  function setIndustry(value) {
+    activeIndustry = value;
+    document.querySelectorAll('.pill[data-filter="industry"]').forEach(p => {
+      p.classList.toggle('active', p.dataset.value === value);
+    });
+    applyFilters();
+  }
+
+  /* ── Fetch emails ── */
+  async function fetchEmails() {
+    document.getElementById('email-list').innerHTML =
+      '<div class="state-box"><div class="spinner"></div><p>Loading campaigns…</p></div>';
+    try {
+      const r = await authFetch(`${API}/emails`);
+      if (!r.ok) throw new Error('API error');
+      allEmails = await r.json();
+      applyFilters();
+      updateStats();
+    } catch {
+      document.getElementById('email-list').innerHTML =
+        '<div class="state-box"><p style="color:#c0392b">Could not load campaigns. Is the backend online?</p></div>';
+    }
+  }
+
+  /* ── Stats ── */
+  async function updateStats() {
+    document.getElementById('stat-campaigns').textContent = allEmails.length.toLocaleString();
+    try {
+      const r = await fetch(`${API}/brands`);
+      if (r.ok) {
+        const brands = await r.json();
+        document.getElementById('stat-brands').textContent = brands.length.toLocaleString();
+      }
+    } catch {}
+  }
+
+  /* ── Filtering ── */
+  function applyFilters() {
+    const q = searchQuery.toLowerCase();
+    filtered = allEmails.filter(e => {
+      if (activeIndustry && e.industry !== activeIndustry) return false;
+      if (q) {
+        const hay = `${e.subject} ${e.brand} ${e.preview || ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    renderList();
+  }
+
+  /* ── Render list ── */
+  function renderList() {
+    const container = document.getElementById('email-list');
+    const label = document.getElementById('results-label');
+    label.textContent = filtered.length === allEmails.length
+      ? '' : `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
+
+    if (filtered.length === 0) {
+      container.innerHTML =
+        '<div class="state-box"><p>No campaigns match your search.</p></div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(e => {
+      const brand = e.brand || 'Unknown';
+      const bg    = avatarColor(brand);
+      const init  = initials(brand);
+      const tags  = [
+        e.industry ? `<span class="tag">${e.industry}</span>` : '',
+        e.type     ? `<span class="tag type">${e.type}</span>` : '',
+      ].join('');
+
+      return `
+        <div class="email-row" onclick="openDrawer(${e.id})">
+          <div class="brand-avatar" style="background:${bg}">${init}</div>
+          <div class="brand-col">
+            <div class="brand-name">${escHtml(brand)}</div>
+            <div class="brand-meta">${fmtDate(e.received_at)}</div>
+          </div>
+          <div class="subject-col">
+            <span class="subject-text">${escHtml(e.subject || '(no subject)')}</span>
+            ${tags}
+          </div>
+          <div class="date-col">${fmtDate(e.received_at)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Drawer ── */
+  async function openDrawer(id) {
+    const email = allEmails.find(e => e.id === id);
+    if (!email) return;
+
+    const brand = email.brand || 'Unknown';
+    document.getElementById('d-brand').textContent   = brand;
+    document.getElementById('d-subject').textContent = email.subject || '(no subject)';
+    document.getElementById('d-date').textContent    = fmtDate(email.received_at);
+    document.getElementById('d-tags').innerHTML = [
+      email.industry ? `<span class="tag">${escHtml(email.industry)}</span>` : '',
+      email.type     ? `<span class="tag type">${escHtml(email.type)}</span>` : '',
+    ].join('');
+
+    const iframe  = document.getElementById('drawer-iframe');
+    const loading = document.getElementById('drawer-loading');
+    iframe.srcdoc = '';
+    loading.style.display = 'flex';
+
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const r = await fetch(`${API}/emails/${id}/html`);
+      if (r.ok) {
+        const data = await r.json();
+        iframe.srcdoc = data.html || '<p style="padding:20px;color:#666">No HTML content.</p>';
+      }
+    } catch {
+      iframe.srcdoc = '<p style="padding:20px;color:#c0392b">Could not load email preview.</p>';
+    } finally {
+      loading.style.display = 'none';
+    }
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+    document.body.style.overflow = '';
+    setTimeout(() => {
+      document.getElementById('drawer-iframe').srcdoc = '';
+    }, 300);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeDrawer(); closeModal(); }
+  });
+
+  /* ── Search ── */
+  let searchTimer;
+  document.getElementById('search').addEventListener('input', e => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      searchQuery = e.target.value.trim();
+      applyFilters();
+    }, 220);
+  });
+
+  /* ── Boot ── */
+  (async () => {
+    await loadMe();
+    await Promise.all([loadIndustries(), fetchEmails()]);
+  })();
+</script>
 </body>
 </html>
