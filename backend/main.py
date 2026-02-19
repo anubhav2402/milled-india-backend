@@ -262,6 +262,86 @@ def unfollow_brand(brand_name: str, current_user: models.User = Depends(get_curr
     return {"message": f"Unfollowed {brand_name}"}
 
 
+# ============ User Bookmarks Endpoints ============
+
+@app.get("/user/bookmarks/ids")
+def get_bookmark_ids(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get list of bookmarked email IDs for the current user."""
+    bookmarks = db.query(models.UserBookmark.email_id).filter(
+        models.UserBookmark.user_id == current_user.id
+    ).all()
+    return {"ids": [b.email_id for b in bookmarks]}
+
+
+@app.get("/user/bookmarks")
+def get_bookmarks(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get all bookmarked emails with full data."""
+    bookmarks = db.query(models.UserBookmark).filter(
+        models.UserBookmark.user_id == current_user.id
+    ).order_by(models.UserBookmark.created_at.desc()).all()
+
+    results = []
+    for bm in bookmarks:
+        email = bm.email
+        if email:
+            results.append({
+                "id": email.id,
+                "subject": email.subject,
+                "brand": email.brand,
+                "industry": email.industry,
+                "type": email.type,
+                "preview": email.preview,
+                "received_at": email.received_at.isoformat() if email.received_at else None,
+                "bookmarked_at": bm.created_at.isoformat() if bm.created_at else None,
+            })
+    return {"bookmarks": results}
+
+
+@app.post("/user/bookmarks")
+def add_bookmark(data: dict, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Bookmark an email."""
+    email_id = data.get("email_id")
+    if not email_id:
+        raise HTTPException(status_code=400, detail="email_id is required")
+
+    # Check email exists
+    email = db.query(models.Email).filter(models.Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    # Check if already bookmarked
+    existing = db.query(models.UserBookmark).filter(
+        models.UserBookmark.user_id == current_user.id,
+        models.UserBookmark.email_id == email_id
+    ).first()
+
+    if existing:
+        return {"message": "Already bookmarked"}
+
+    bookmark = models.UserBookmark(user_id=current_user.id, email_id=email_id)
+    db.add(bookmark)
+    db.commit()
+
+    return {"message": "Bookmarked"}
+
+
+@app.delete("/user/bookmarks/{email_id}")
+def remove_bookmark(email_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Remove a bookmark."""
+    bookmark = db.query(models.UserBookmark).filter(
+        models.UserBookmark.user_id == current_user.id,
+        models.UserBookmark.email_id == email_id
+    ).first()
+
+    if not bookmark:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+
+    db.delete(bookmark)
+    db.commit()
+
+    return {"message": "Bookmark removed"}
+
+
 # ============ Email Endpoints ============
 
 @app.get("/emails", response_model=List[schemas.EmailListOut])

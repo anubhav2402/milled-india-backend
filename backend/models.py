@@ -59,6 +59,22 @@ class Email(Base):
     )
 
 
+class UserBookmark(Base):
+    __tablename__ = "user_bookmarks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    email_id = Column(Integer, ForeignKey("emails.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", backref="bookmarks")
+    email = relationship("Email")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "email_id", name="uq_user_email_bookmark"),
+    )
+
+
 class BrandClassification(Base):
     """
     Cache for AI-powered brand classifications.
