@@ -57,10 +57,12 @@ app.add_middleware(
         "http://localhost:3000",
         "https://mailmuse.vercel.app",
         "https://milled-india-frontend.vercel.app",
+        "https://mailmuse.in",
+        "https://www.mailmuse.in",
         # Allow any Vercel preview deployments
         "https://*.vercel.app",
     ],
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"https://.*\.vercel\.app|https://(www\.)?mailmuse\.in",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
