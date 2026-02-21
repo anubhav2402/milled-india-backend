@@ -432,6 +432,13 @@ def list_industries(db: Session = Depends(get_db)):
     return sorted([r[0] for r in result if r[0]])
 
 
+@app.get("/emails/count")
+def count_emails(db: Session = Depends(get_db)):
+    """Get total number of emails in the database."""
+    total = db.query(models.Email).count()
+    return {"total": total}
+
+
 @app.get("/brands", response_model=List[str])
 def list_brands(db: Session = Depends(get_db)):
     """Get list of all unique brands."""
