@@ -1,7 +1,7 @@
 """Authentication utilities for JWT and password handling."""
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -135,6 +135,18 @@ def get_pro_user(
             detail="Pro subscription required",
         )
     return current_user
+
+
+def get_or_create_daily_usage(db: Session, user_id: int) -> models.UserDailyUsage:
+    """Get or create today's usage record for a user."""
+    today = date.today()
+    usage = db.query(models.UserDailyUsage).filter_by(user_id=user_id, usage_date=today).first()
+    if not usage:
+        usage = models.UserDailyUsage(user_id=user_id, usage_date=today)
+        db.add(usage)
+        db.commit()
+        db.refresh(usage)
+    return usage
 
 
 def verify_google_token(token: str) -> Optional[dict]:

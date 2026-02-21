@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +16,7 @@ from .auth import (
     get_current_user,
     get_optional_user,
     get_pro_user,
+    get_or_create_daily_usage,
     verify_google_token,
 )
 from .payments import (
@@ -69,6 +71,35 @@ def run_migrations():
                 print(f"Migration: Added '{col_name}' column to users table")
             except Exception:
                 pass  # Column likely already exists
+
+        # Create user_daily_usage table if it doesn't exist
+        try:
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS user_daily_usage ("
+                "id SERIAL PRIMARY KEY, "
+                "user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+                "usage_date DATE NOT NULL, "
+                "html_views INTEGER DEFAULT 0, "
+                "brand_views INTEGER DEFAULT 0, "
+                "UNIQUE(user_id, usage_date))"
+            ))
+            conn.commit()
+            print("Migration: Ensured user_daily_usage table exists")
+        except Exception as e:
+            print(f"Migration user_daily_usage (trying SQLite): {e}")
+            try:
+                conn.execute(text(
+                    "CREATE TABLE IF NOT EXISTS user_daily_usage ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    "user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+                    "usage_date DATE NOT NULL, "
+                    "html_views INTEGER DEFAULT 0, "
+                    "brand_views INTEGER DEFAULT 0, "
+                    "UNIQUE(user_id, usage_date))"
+                ))
+                conn.commit()
+            except Exception:
+                pass
 
 run_migrations()
 
@@ -396,21 +427,29 @@ def get_user_follows(current_user: models.User = Depends(get_current_user), db: 
 
 @app.post("/user/follows/{brand_name}")
 def follow_brand(brand_name: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Follow a brand."""
+    """Follow a brand. Free users limited to 3 follows."""
     # Check if already following
     existing = db.query(models.UserFollow).filter(
         models.UserFollow.user_id == current_user.id,
         models.UserFollow.brand_name == brand_name
     ).first()
-    
+
     if existing:
         return {"message": "Already following this brand"}
-    
+
+    # Free tier: max 3 follows
+    if not current_user.is_pro:
+        follow_count = db.query(models.UserFollow).filter(
+            models.UserFollow.user_id == current_user.id
+        ).count()
+        if follow_count >= 3:
+            raise HTTPException(status_code=403, detail="Free plan allows up to 3 brand follows. Upgrade to Pro for unlimited.")
+
     # Create new follow
     follow = models.UserFollow(user_id=current_user.id, brand_name=brand_name)
     db.add(follow)
     db.commit()
-    
+
     return {"message": f"Now following {brand_name}"}
 
 
@@ -468,7 +507,7 @@ def get_bookmarks(current_user: models.User = Depends(get_current_user), db: Ses
 
 @app.post("/user/bookmarks")
 def add_bookmark(data: dict, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Bookmark an email."""
+    """Bookmark an email. Free users limited to 10 bookmarks."""
     email_id = data.get("email_id")
     if not email_id:
         raise HTTPException(status_code=400, detail="email_id is required")
@@ -486,6 +525,14 @@ def add_bookmark(data: dict, current_user: models.User = Depends(get_current_use
 
     if existing:
         return {"message": "Already bookmarked"}
+
+    # Free tier: max 10 bookmarks
+    if not current_user.is_pro:
+        bookmark_count = db.query(models.UserBookmark).filter(
+            models.UserBookmark.user_id == current_user.id
+        ).count()
+        if bookmark_count >= 10:
+            raise HTTPException(status_code=403, detail="Free plan allows up to 10 bookmarks. Upgrade to Pro for unlimited.")
 
     bookmark = models.UserBookmark(user_id=current_user.id, email_id=email_id)
     db.add(bookmark)
@@ -521,13 +568,19 @@ def list_emails(
     q: Optional[str] = Query(default=None),
     skip: int = 0,
     limit: Optional[int] = Query(default=None),  # No limit by default - returns all
+    current_user: Optional[models.User] = Depends(get_optional_user),
     db: Session = Depends(get_db),
 ):
     """
     Get emails (lightweight - no HTML), sorted by newest first.
-    If no limit is specified, returns all emails.
+    Free users and unauthenticated users see only last 30 days.
     """
     query = db.query(models.Email).order_by(models.Email.received_at.desc())
+
+    # Free tier / unauthenticated: limit to last 30 days
+    if not current_user or not current_user.is_pro:
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        query = query.filter(models.Email.received_at >= thirty_days_ago)
 
     if brand:
         query = query.filter(models.Email.brand == brand)
@@ -570,22 +623,49 @@ def list_emails(
 @app.post("/emails/html")
 def get_emails_html(
     ids: List[int],
+    current_user: Optional[models.User] = Depends(get_optional_user),
     db: Session = Depends(get_db),
 ):
     """
     Get HTML content for specific email IDs (for lazy loading previews).
-    Returns a dict mapping email_id -> html content.
+    Free users limited to 10 HTML views/day. Requires login.
     """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Login required to view email content")
+
     if len(ids) > 50:
-        ids = ids[:50]  # Limit to 50 at a time
-    
+        ids = ids[:50]
+
+    if not current_user.is_pro:
+        usage = get_or_create_daily_usage(db, current_user.id)
+        remaining = 10 - usage.html_views
+        if remaining <= 0:
+            raise HTTPException(status_code=403, detail="Daily HTML view limit reached (10/day). Upgrade to Pro for unlimited access.")
+        ids = ids[:remaining]
+        usage.html_views += len(ids)
+        db.commit()
+
     emails = db.query(models.Email).filter(models.Email.id.in_(ids)).all()
     return {email.id: email.html for email in emails}
 
 
 @app.get("/emails/{email_id}/html")
-def get_email_html(email_id: int, db: Session = Depends(get_db)):
-    """Get just the HTML content for a single email (for lazy loading preview)."""
+def get_email_html(
+    email_id: int,
+    current_user: Optional[models.User] = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    """Get just the HTML content for a single email. Free users limited to 10/day."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Login required to view email content")
+
+    if not current_user.is_pro:
+        usage = get_or_create_daily_usage(db, current_user.id)
+        if usage.html_views >= 10:
+            raise HTTPException(status_code=403, detail="Daily HTML view limit reached (10/day). Upgrade to Pro for unlimited access.")
+        usage.html_views += 1
+        db.commit()
+
     email = db.query(models.Email).filter(models.Email.id == email_id).first()
     if not email:
         raise HTTPException(status_code=404, detail="Email not found")
@@ -628,11 +708,29 @@ def list_brands(db: Session = Depends(get_db)):
 
 
 @app.get("/emails/{email_id}", response_model=schemas.EmailOut)
-def get_email(email_id: int, db: Session = Depends(get_db)):
+def get_email(
+    email_id: int,
+    current_user: Optional[models.User] = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
     email = db.query(models.Email).filter(models.Email.id == email_id).first()
     if not email:
         raise HTTPException(status_code=404, detail="Email not found")
-    
+
+    html_content = email.html
+
+    # Enforce 10/day HTML view limit for free users
+    if current_user and not current_user.is_pro:
+        usage = get_or_create_daily_usage(db, current_user.id)
+        if usage.html_views >= 10:
+            html_content = "<div style='text-align:center;padding:60px 20px;font-family:sans-serif;'><h2>Daily limit reached</h2><p>You've viewed 10 emails today. Upgrade to Pro for unlimited access.</p><a href='/pricing' style='color:#c45a3c;font-weight:600;'>View Plans</a></div>"
+        else:
+            usage.html_views += 1
+            db.commit()
+    elif not current_user:
+        # Unauthenticated: allow viewing but don't track
+        pass
+
     # Add preview_image_url
     email_dict = {
         "id": email.id,
@@ -645,7 +743,7 @@ def get_email(email_id: int, db: Session = Depends(get_db)):
         "industry": email.industry,
         "received_at": email.received_at,
         "preview": email.preview,
-        "html": email.html,
+        "html": html_content,
         "preview_image_url": extract_preview_image_url(email.html),
     }
     return schemas.EmailOut(**email_dict)
@@ -1427,8 +1525,16 @@ def get_brand_analytics(
     from sqlalchemy import func
     from collections import Counter
     import re
-    
+
     is_authenticated = current_user is not None
+
+    # Free tier: 5 brand analytics views per day
+    if current_user and not current_user.is_pro:
+        usage = get_or_create_daily_usage(db, current_user.id)
+        if usage.brand_views >= 5:
+            raise HTTPException(status_code=403, detail="Daily brand analytics limit reached (5/day). Upgrade to Pro for unlimited access.")
+        usage.brand_views += 1
+        db.commit()
     
     # Get all emails for this brand
     emails = db.query(models.Email).filter(
@@ -1536,7 +1642,11 @@ def get_industry_analytics(
     from collections import Counter
     
     is_authenticated = current_user is not None
-    
+
+    # Free users get 403 — pro-only endpoint
+    if current_user and not current_user.is_pro:
+        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+
     # Get all emails for this industry
     emails = db.query(models.Email).filter(
         models.Email.industry.ilike(industry)
@@ -1608,7 +1718,11 @@ def compare_brands(
     from collections import Counter
     
     is_authenticated = current_user is not None
-    
+
+    # Free users get 403 — pro-only endpoint
+    if current_user and not current_user.is_pro:
+        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+
     brand_list = [b.strip() for b in brands.split(",") if b.strip()]
     
     if len(brand_list) < 2:
@@ -1692,7 +1806,11 @@ def get_subject_lines(
     Useful for swipe file / inspiration.
     """
     is_authenticated = current_user is not None
-    
+
+    # Free users get 403 — pro-only endpoint
+    if current_user and not current_user.is_pro:
+        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+
     if not is_authenticated:
         return {
             "message": "Login required to access subject line database",
@@ -1748,7 +1866,11 @@ def get_brand_calendar(
     from collections import defaultdict
     
     is_authenticated = current_user is not None
-    
+
+    # Free users get 403 — pro-only endpoint
+    if current_user and not current_user.is_pro:
+        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+
     # Calculate date range
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=months * 30)
@@ -1820,7 +1942,11 @@ def get_analytics_overview(
     from collections import Counter
     
     is_authenticated = current_user is not None
-    
+
+    # Free users get 403 — pro-only endpoint
+    if current_user and not current_user.is_pro:
+        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+
     # Total counts
     total_emails = db.query(models.Email).count()
     total_brands = db.query(models.Email.brand).filter(

@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, date
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, UniqueConstraint, Index, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, Date, UniqueConstraint, Index, ForeignKey, Float
 from sqlalchemy.orm import relationship
 
 from .db import Base
@@ -86,6 +86,20 @@ class UserBookmark(Base):
 
     __table_args__ = (
         UniqueConstraint("user_id", "email_id", name="uq_user_email_bookmark"),
+    )
+
+
+class UserDailyUsage(Base):
+    __tablename__ = "user_daily_usage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    usage_date = Column(Date, nullable=False)
+    html_views = Column(Integer, default=0)
+    brand_views = Column(Integer, default=0)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "usage_date", name="uq_user_daily_usage"),
     )
 
 
