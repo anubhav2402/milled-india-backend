@@ -16,8 +16,22 @@ class User(Base):
     google_id = Column(String, unique=True, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Subscription fields
+    subscription_tier = Column(String, default="free")  # "free" or "pro"
+    subscription_expires_at = Column(DateTime, nullable=True)
+    razorpay_customer_id = Column(String, nullable=True)
+    razorpay_subscription_id = Column(String, nullable=True)
+
     # Relationship to followed brands
     follows = relationship("UserFollow", back_populates="user", cascade="all, delete-orphan")
+
+    @property
+    def is_pro(self):
+        if self.subscription_tier != "pro":
+            return False
+        if self.subscription_expires_at and self.subscription_expires_at < datetime.utcnow():
+            return False
+        return True
 
 
 class UserFollow(Base):

@@ -25,6 +25,8 @@ class UserOut(BaseModel):
     id: int
     email: str
     name: Optional[str] = None
+    subscription_tier: str = "free"
+    is_pro: bool = False
 
     class Config:
         from_attributes = True

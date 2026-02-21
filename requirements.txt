@@ -14,9 +14,7 @@ psycopg[binary]
 
 # HTML Processing
 beautifulsoup4
-bleach
-
-# Validation
+bleach# Validation
 pydantic
 email-validator
 
@@ -24,6 +22,9 @@ email-validator
 python-jose[cryptography]
 passlib[bcrypt]
 bcrypt==4.2.1
+
+# Payments
+razorpay
 
 # AI Classification
 openai

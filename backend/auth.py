@@ -125,6 +125,18 @@ def get_optional_user(
     return db.query(models.User).filter(models.User.id == int(user_id)).first()
 
 
+def get_pro_user(
+    current_user: models.User = Depends(get_current_user),
+) -> models.User:
+    """Get the current user and require Pro subscription."""
+    if not current_user.is_pro:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Pro subscription required",
+        )
+    return current_user
+
+
 def verify_google_token(token: str) -> Optional[dict]:
     """Verify a Google ID token and return user info."""
     try:

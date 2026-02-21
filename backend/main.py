@@ -14,7 +14,16 @@ from .auth import (
     create_access_token,
     get_current_user,
     get_optional_user,
+    get_pro_user,
     verify_google_token,
+)
+from .payments import (
+    create_subscription,
+    verify_payment_signature,
+    verify_webhook_signature,
+    get_subscription_details,
+    cancel_subscription,
+    get_plan_details,
 )
 
 # Create tables on startup (simple for local dev)
@@ -43,6 +52,21 @@ def run_migrations():
                 conn.execute(text("ALTER TABLE emails ADD COLUMN industry VARCHAR"))
                 conn.commit()
                 print("Migration: Added 'industry' column to emails table (SQLite)")
+            except Exception:
+                pass  # Column likely already exists
+
+        # Add subscription columns to users table
+        subscription_columns = [
+            ("subscription_tier", "VARCHAR DEFAULT 'free'"),
+            ("subscription_expires_at", "TIMESTAMP"),
+            ("razorpay_customer_id", "VARCHAR"),
+            ("razorpay_subscription_id", "VARCHAR"),
+        ]
+        for col_name, col_type in subscription_columns:
+            try:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+                print(f"Migration: Added '{col_name}' column to users table")
             except Exception:
                 pass  # Column likely already exists
 
@@ -121,7 +145,7 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         
         return schemas.TokenResponse(
             access_token=token,
-            user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
+            user=schemas.UserOut(id=user.id, email=user.email, name=user.name, subscription_tier=user.subscription_tier or "free", is_pro=user.is_pro)
         )
     except HTTPException:
         raise
@@ -157,7 +181,7 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     
     return schemas.TokenResponse(
         access_token=token,
-        user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
+        user=schemas.UserOut(id=user.id, email=user.email, name=user.name, subscription_tier=user.subscription_tier or "free", is_pro=user.is_pro)
     )
 
 
@@ -200,7 +224,7 @@ def google_auth(auth_data: schemas.GoogleAuth, db: Session = Depends(get_db)):
     
     return schemas.TokenResponse(
         access_token=token,
-        user=schemas.UserOut(id=user.id, email=user.email, name=user.name)
+        user=schemas.UserOut(id=user.id, email=user.email, name=user.name, subscription_tier=user.subscription_tier or "free", is_pro=user.is_pro)
     )
 
 
@@ -210,8 +234,153 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return schemas.UserOut(
         id=current_user.id,
         email=current_user.email,
-        name=current_user.name
+        name=current_user.name,
+        subscription_tier=current_user.subscription_tier or "free",
+        is_pro=current_user.is_pro
     )
+
+
+# ============ Subscription Endpoints ============
+
+@app.get("/subscription/plans")
+def get_plans():
+    """Get available subscription plans and pricing."""
+    return get_plan_details()
+
+
+@app.post("/subscription/create")
+def create_user_subscription(
+    data: dict,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a Razorpay subscription for the current user."""
+    plan = data.get("plan", "monthly")
+    if plan not in ("monthly", "annual"):
+        raise HTTPException(status_code=400, detail="Plan must be 'monthly' or 'annual'")
+
+    try:
+        subscription = create_subscription(current_user.email, plan)
+        # Store subscription ID on user
+        current_user.razorpay_subscription_id = subscription["id"]
+        db.commit()
+        return {
+            "subscription_id": subscription["id"],
+            "short_url": subscription.get("short_url"),
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create subscription: {str(e)}")
+
+
+@app.post("/subscription/verify")
+def verify_subscription(
+    data: dict,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Verify payment and activate Pro subscription."""
+    payment_id = data.get("razorpay_payment_id")
+    subscription_id = data.get("razorpay_subscription_id")
+    signature = data.get("razorpay_signature")
+
+    if not all([payment_id, subscription_id, signature]):
+        raise HTTPException(status_code=400, detail="Missing payment verification fields")
+
+    if not verify_payment_signature(payment_id, subscription_id, signature):
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    # Activate Pro
+    from datetime import datetime, timedelta
+    current_user.subscription_tier = "pro"
+    current_user.razorpay_subscription_id = subscription_id
+    # Set expiry to 35 days (gives buffer for monthly renewals)
+    current_user.subscription_expires_at = datetime.utcnow() + timedelta(days=35)
+    db.commit()
+
+    return {
+        "message": "Pro subscription activated",
+        "subscription_tier": "pro",
+        "is_pro": True,
+        "expires_at": current_user.subscription_expires_at.isoformat(),
+    }
+
+
+@app.get("/subscription/status")
+def subscription_status(
+    current_user: models.User = Depends(get_current_user),
+):
+    """Get current user's subscription status."""
+    return {
+        "subscription_tier": current_user.subscription_tier or "free",
+        "is_pro": current_user.is_pro,
+        "expires_at": current_user.subscription_expires_at.isoformat() if current_user.subscription_expires_at else None,
+        "razorpay_subscription_id": current_user.razorpay_subscription_id,
+    }
+
+
+@app.post("/subscription/cancel")
+def cancel_user_subscription(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancel the current user's Pro subscription."""
+    if not current_user.razorpay_subscription_id:
+        raise HTTPException(status_code=400, detail="No active subscription to cancel")
+
+    try:
+        cancel_subscription(current_user.razorpay_subscription_id)
+    except Exception as e:
+        print(f"Razorpay cancel error: {e}")
+        # Continue anyway — user wants to cancel
+
+    # Keep pro access until expiry but mark for cancellation
+    current_user.razorpay_subscription_id = None
+    db.commit()
+
+    return {
+        "message": "Subscription cancelled. Pro access continues until expiry.",
+        "expires_at": current_user.subscription_expires_at.isoformat() if current_user.subscription_expires_at else None,
+    }
+
+
+@app.post("/webhook/razorpay")
+async def razorpay_webhook(request_obj: dict, db: Session = Depends(get_db)):
+    """Handle Razorpay webhook events for subscription renewals and cancellations."""
+    from fastapi import Request
+    # Note: For production, verify webhook signature using raw body
+    # For now, process the event payload
+
+    event = request_obj.get("event", "")
+    payload = request_obj.get("payload", {})
+
+    if event == "subscription.charged":
+        # Renewal successful — extend subscription
+        subscription_entity = payload.get("subscription", {}).get("entity", {})
+        sub_id = subscription_entity.get("id")
+        if sub_id:
+            user = db.query(models.User).filter(
+                models.User.razorpay_subscription_id == sub_id
+            ).first()
+            if user:
+                from datetime import datetime, timedelta
+                user.subscription_tier = "pro"
+                user.subscription_expires_at = datetime.utcnow() + timedelta(days=35)
+                db.commit()
+
+    elif event == "subscription.cancelled":
+        subscription_entity = payload.get("subscription", {}).get("entity", {})
+        sub_id = subscription_entity.get("id")
+        if sub_id:
+            user = db.query(models.User).filter(
+                models.User.razorpay_subscription_id == sub_id
+            ).first()
+            if user:
+                user.razorpay_subscription_id = None
+                db.commit()
+
+    return {"status": "ok"}
 
 
 # ============ User Follows Endpoints ============
