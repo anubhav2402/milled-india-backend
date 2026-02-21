@@ -439,6 +439,15 @@ def count_emails(db: Session = Depends(get_db)):
     return {"total": total}
 
 
+@app.get("/emails/ids")
+def list_email_ids(db: Session = Depends(get_db)):
+    """Get all email IDs and last modified dates for sitemap generation."""
+    results = db.query(models.Email.id, models.Email.received_at).order_by(
+        models.Email.received_at.desc()
+    ).all()
+    return [{"id": r[0], "received_at": r[1].isoformat() if r[1] else None} for r in results]
+
+
 @app.get("/brands", response_model=List[str])
 def list_brands(db: Session = Depends(get_db)):
     """Get list of all unique brands."""
