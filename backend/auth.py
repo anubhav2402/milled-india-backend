@@ -1,6 +1,7 @@
 """Authentication utilities for JWT and password handling."""
 
 import os
+import sys
 from datetime import datetime, timedelta, date
 from typing import Optional
 
@@ -17,6 +18,18 @@ from .db import SessionLocal
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-key-change-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
+
+# Fail loudly if running in production with the default secret
+if os.getenv("RENDER") and JWT_SECRET == "dev-secret-key-change-in-production":
+    print("FATAL: JWT_SECRET is not set. Set it in Render environment variables.")
+    sys.exit(1)
+
+# Admin emails (comma-separated env var)
+ADMIN_EMAILS = {
+    e.strip().lower()
+    for e in os.getenv("ADMIN_EMAILS", "").split(",")
+    if e.strip()
+}
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -147,6 +160,23 @@ def get_or_create_daily_usage(db: Session, user_id: int) -> models.UserDailyUsag
         db.commit()
         db.refresh(usage)
     return usage
+
+
+def get_admin_user(
+    current_user: models.User = Depends(get_current_user),
+) -> models.User:
+    """Require the current user to be an admin (email in ADMIN_EMAILS)."""
+    if not ADMIN_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access not configured. Set ADMIN_EMAILS env var.",
+        )
+    if current_user.email.lower() not in ADMIN_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user
 
 
 def verify_google_token(token: str) -> Optional[dict]:

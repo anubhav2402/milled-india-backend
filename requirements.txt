@@ -30,3 +30,6 @@ razorpay
 
 # AI Classification
 openai
+
+# Rate Limiting
+slowapi

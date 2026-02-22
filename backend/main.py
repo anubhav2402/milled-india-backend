@@ -1,8 +1,11 @@
 from typing import List, Optional
 from datetime import datetime, timedelta
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -16,6 +19,7 @@ from .auth import (
     get_current_user,
     get_optional_user,
     get_pro_user,
+    get_admin_user,
     get_or_create_daily_usage,
     verify_google_token,
 )
@@ -105,6 +109,11 @@ run_migrations()
 
 app = FastAPI(title="Milled India API", version="0.1.0")
 
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS middleware - allow frontend to make requests
 app.add_middleware(
     CORSMiddleware,
@@ -138,7 +147,7 @@ def health():
 
 
 @app.post("/admin/create-tables")
-def create_tables():
+def create_tables(current_user: models.User = Depends(get_admin_user)):
     """Create all database tables. Use this to ensure user tables exist."""
     try:
         Base.metadata.create_all(bind=engine)
@@ -150,7 +159,8 @@ def create_tables():
 # ============ Authentication Endpoints ============
 
 @app.post("/auth/register", response_model=schemas.TokenResponse)
-def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register a new user with email and password."""
     try:
         # Check if email already exists
@@ -191,7 +201,8 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/auth/login", response_model=schemas.TokenResponse)
-def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     """Login with email and password."""
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
     
@@ -217,7 +228,8 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 
 
 @app.post("/auth/google", response_model=schemas.TokenResponse)
-def google_auth(auth_data: schemas.GoogleAuth, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def google_auth(request: Request, auth_data: schemas.GoogleAuth, db: Session = Depends(get_db)):
     """Login or register with Google OAuth."""
     # Verify Google token
     google_info = verify_google_token(auth_data.token)
@@ -561,7 +573,9 @@ def remove_bookmark(email_id: int, current_user: models.User = Depends(get_curre
 # ============ Email Endpoints ============
 
 @app.get("/emails", response_model=List[schemas.EmailListOut])
+@limiter.limit("30/minute")
 def list_emails(
+    request: Request,
     brand: Optional[str] = Query(default=None),
     type: Optional[str] = Query(default=None),
     industry: Optional[str] = Query(default=None),
@@ -621,7 +635,9 @@ def list_emails(
 
 
 @app.post("/emails/html")
+@limiter.limit("20/minute")
 def get_emails_html(
+    request: Request,
     ids: List[int],
     current_user: Optional[models.User] = Depends(get_optional_user),
     db: Session = Depends(get_db),
@@ -650,7 +666,9 @@ def get_emails_html(
 
 
 @app.get("/emails/{email_id}/html")
+@limiter.limit("30/minute")
 def get_email_html(
+    request: Request,
     email_id: int,
     current_user: Optional[models.User] = Depends(get_optional_user),
     db: Session = Depends(get_db),
@@ -750,7 +768,7 @@ def get_email(
 
 
 @app.post("/admin/update-industries")
-def update_industries(db: Session = Depends(get_db)):
+def update_industries(current_user: models.User = Depends(get_admin_user), db: Session = Depends(get_db)):
     """
     Update industry field for all existing emails based on brand name.
     This is an admin endpoint to backfill industry data.
@@ -796,7 +814,7 @@ def update_industries(db: Session = Depends(get_db)):
 
 
 @app.get("/admin/brands-without-industry")
-def get_brands_without_industry(db: Session = Depends(get_db)):
+def get_brands_without_industry(current_user: models.User = Depends(get_admin_user), db: Session = Depends(get_db)):
     """
     Get list of all unique brands that don't have an industry assigned.
     """
@@ -813,7 +831,7 @@ def get_brands_without_industry(db: Session = Depends(get_db)):
 
 
 @app.post("/admin/update-brands")
-def update_brands(db: Session = Depends(get_db)):
+def update_brands(current_user: models.User = Depends(get_admin_user), db: Session = Depends(get_db)):
     """
     Re-extract brand names for all emails using the improved extraction logic.
     Uses sender, HTML content, and subject line for smart brand detection.
@@ -876,7 +894,7 @@ def update_brands(db: Session = Depends(get_db)):
 
 
 @app.post("/admin/reprocess-all")
-def reprocess_all(db: Session = Depends(get_db)):
+def reprocess_all(current_user: models.User = Depends(get_admin_user), db: Session = Depends(get_db)):
     """
     Reprocess ALL emails - re-extract both brand and industry for every email.
     Use this for a full refresh of the classification.
@@ -930,7 +948,7 @@ def reprocess_all(db: Session = Depends(get_db)):
 
 
 @app.delete("/admin/clear-all-emails")
-def clear_all_emails(db: Session = Depends(get_db)):
+def clear_all_emails(current_user: models.User = Depends(get_admin_user), db: Session = Depends(get_db)):
     """
     Delete ALL emails from the database.
     Use this before re-ingesting to get fresh HTML with updated cleaning.
@@ -947,7 +965,7 @@ def clear_all_emails(db: Session = Depends(get_db)):
 
 
 @app.post("/admin/update-campaign-types")
-def update_campaign_types(db: Session = Depends(get_db)):
+def update_campaign_types(current_user: models.User = Depends(get_admin_user), db: Session = Depends(get_db)):
     """
     Backfill campaign types for all existing emails.
     """
@@ -989,6 +1007,7 @@ def update_campaign_types(db: Session = Depends(get_db)):
 def get_brand_classifications(
     skip: int = 0,
     limit: int = 100,
+    current_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -1016,6 +1035,7 @@ def get_brand_classifications(
 def update_brand_classification(
     brand_name: str,
     industry: str = Query(..., description="New industry classification"),
+    current_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -1068,7 +1088,7 @@ def update_brand_classification(
 
 
 @app.get("/admin/test-ai")
-def test_ai_classification():
+def test_ai_classification(current_user: models.User = Depends(get_admin_user)):
     """
     Test if AI classification is working. Returns detailed error info.
     """
@@ -1098,6 +1118,7 @@ def test_ai_classification():
 
 @app.post("/admin/reclassify-keywords")
 def reclassify_with_keywords(
+    current_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -1163,6 +1184,7 @@ def reclassify_with_keywords(
 
 @app.post("/admin/reclassify-campaign-types")
 def reclassify_campaign_types_endpoint(
+    current_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -1214,6 +1236,7 @@ def reclassify_campaign_types_endpoint(
 @app.post("/admin/reclassify-brand/{brand_name}")
 def reclassify_single_brand(
     brand_name: str,
+    current_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -1282,6 +1305,7 @@ def reclassify_single_brand(
 @app.post("/admin/reclassify-brands")
 def reclassify_all_brands(
     force: bool = Query(default=False, description="Force reclassify even if already classified"),
+    current_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -1386,6 +1410,7 @@ def reclassify_all_brands(
 @app.delete("/admin/brand-classifications/{brand_name}")
 def delete_brand_classification(
     brand_name: str,
+    current_user: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
     """
