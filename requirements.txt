@@ -14,7 +14,9 @@ psycopg[binary]
 
 # HTML Processing
 beautifulsoup4
-bleach# Validation
+bleach
+
+# Validation
 pydantic
 email-validator
 
