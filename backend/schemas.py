@@ -50,6 +50,12 @@ class UserFollowsResponse(BaseModel):
     follows: List[str]  # List of brand names
 
 
+# ============ Newsletter Schemas ============
+
+class NewsletterSubscribeRequest(BaseModel):
+    email: EmailStr
+
+
 # ============ Email Schemas ============
 
 class EmailBase(BaseModel):

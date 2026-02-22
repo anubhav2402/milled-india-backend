@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 from datetime import datetime, timedelta
 
@@ -281,6 +282,22 @@ def get_me(current_user: models.User = Depends(get_current_user)):
         subscription_tier=current_user.subscription_tier or "free",
         is_pro=current_user.is_pro
     )
+
+
+# ============ Newsletter Endpoints ============
+
+@app.post("/newsletter/subscribe")
+@limiter.limit("5/minute")
+def newsletter_subscribe(request: Request, payload: schemas.NewsletterSubscribeRequest, db: Session = Depends(get_db)):
+    """Subscribe an email to the newsletter."""
+    email = payload.email.strip().lower()
+    existing = db.query(models.NewsletterSubscriber).filter_by(email=email).first()
+    if existing:
+        return {"message": "Already subscribed"}
+    subscriber = models.NewsletterSubscriber(email=email)
+    db.add(subscriber)
+    db.commit()
+    return {"message": "Subscribed successfully"}
 
 
 # ============ Subscription Endpoints ============
@@ -1537,6 +1554,10 @@ def _get_time_bucket(hour: int) -> str:
         return "Late Night (11pm-5am)"
 
 
+# Sample brand that returns full analytics without auth (for ungated demo page)
+SAMPLE_BRAND = os.getenv("SAMPLE_BRAND", "Nykaa").strip().lower()
+
+
 @app.get("/analytics/brand/{brand_name}")
 def get_brand_analytics(
     brand_name: str,
@@ -1552,6 +1573,7 @@ def get_brand_analytics(
     import re
 
     is_authenticated = current_user is not None
+    is_sample = brand_name.strip().lower() == SAMPLE_BRAND
 
     # Free tier: 5 brand analytics views per day
     if current_user and not current_user.is_pro:
@@ -1621,7 +1643,7 @@ def get_brand_analytics(
         emails_per_week = total_emails
     
     # Build response
-    if is_authenticated:
+    if is_authenticated or is_sample:
         return {
             "brand": brand_name,
             "total_emails": total_emails,

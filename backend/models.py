@@ -103,6 +103,14 @@ class UserDailyUsage(Base):
     )
 
 
+class NewsletterSubscriber(Base):
+    __tablename__ = "newsletter_subscribers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class BrandClassification(Base):
     """
     Cache for AI-powered brand classifications.
