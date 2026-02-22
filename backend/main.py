@@ -691,10 +691,7 @@ def get_email_html(
     db: Session = Depends(get_db),
 ):
     """Get just the HTML content for a single email. Free users limited to 10/day."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Login required to view email content")
-
-    if not current_user.is_pro:
+    if current_user and not current_user.is_pro:
         usage = get_or_create_daily_usage(db, current_user.id)
         if usage.html_views >= 10:
             raise HTTPException(status_code=403, detail="Daily HTML view limit reached (10/day). Upgrade to Pro for unlimited access.")
