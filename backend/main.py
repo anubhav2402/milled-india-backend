@@ -1508,6 +1508,69 @@ def get_brand_stats(
     return brand_stats
 
 
+@app.get("/brands/by-industry/{industry}", response_model=List[str])
+def get_brands_by_industry(industry: str, db: Session = Depends(get_db)):
+    """Get all brand names in a specific industry."""
+    from sqlalchemy import func
+    result = db.query(models.Email.brand).filter(
+        models.Email.industry.ilike(industry),
+        models.Email.brand.isnot(None),
+        models.Email.brand != "Unknown"
+    ).distinct().all()
+    return sorted([r[0] for r in result if r[0]])
+
+
+@app.get("/industries/{industry}/seo")
+def get_industry_seo_data(industry: str, db: Session = Depends(get_db)):
+    """Public, ungated data for industry SEO pages."""
+    from sqlalchemy import func
+
+    # Get brands in this industry
+    brand_rows = db.query(models.Email.brand).filter(
+        models.Email.industry.ilike(industry),
+        models.Email.brand.isnot(None),
+        models.Email.brand != "Unknown"
+    ).distinct().all()
+    brands = sorted([r[0] for r in brand_rows if r[0]])
+
+    if not brands:
+        raise HTTPException(status_code=404, detail="Industry not found")
+
+    # Total emails
+    total_emails = db.query(func.count(models.Email.id)).filter(
+        models.Email.industry.ilike(industry)
+    ).scalar() or 0
+
+    # Campaign type distribution (names only, no exact counts for SEO)
+    campaign_rows = db.query(
+        models.Email.type,
+        func.count(models.Email.id)
+    ).filter(
+        models.Email.industry.ilike(industry),
+        models.Email.type.isnot(None)
+    ).group_by(models.Email.type).order_by(func.count(models.Email.id).desc()).all()
+    top_campaign_types = [r[0] for r in campaign_rows[:5]]
+
+    # Top brands by email count
+    top_brand_rows = db.query(
+        models.Email.brand,
+        func.count(models.Email.id).label("count")
+    ).filter(
+        models.Email.industry.ilike(industry),
+        models.Email.brand.isnot(None)
+    ).group_by(models.Email.brand).order_by(func.count(models.Email.id).desc()).limit(5).all()
+    top_brands = [{"brand": r[0], "email_count": r[1]} for r in top_brand_rows]
+
+    return {
+        "industry": industry,
+        "total_brands": len(brands),
+        "total_emails": total_emails,
+        "brands": brands,
+        "top_brands": top_brands,
+        "top_campaign_types": top_campaign_types,
+    }
+
+
 # ============ Analytics Endpoints ============
 
 def _extract_emojis(text: str) -> list:
