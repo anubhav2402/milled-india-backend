@@ -2108,3 +2108,744 @@ def get_analytics_overview(
             "campaign_types": {k: "xx" for k in campaign_types},
             "top_brands": [{"brand": b["brand"], "count": "xx"} for b in top_brands]
         }
+
+
+# ============ SEO Endpoints (Public, Ungated) ============
+
+# Type slug mapping
+TYPE_SLUG_MAP = {
+    "sale-emails": "Sale",
+    "welcome-emails": "Welcome",
+    "abandoned-cart-emails": "Abandoned Cart",
+    "newsletter-emails": "Newsletter",
+    "new-arrival-emails": "New Arrival",
+    "re-engagement-emails": "Re-engagement",
+    "order-update-emails": "Order Update",
+    "festive-emails": "Festive",
+    "loyalty-emails": "Loyalty",
+    "feedback-emails": "Feedback",
+    "back-in-stock-emails": "Back in Stock",
+    "educational-emails": "Educational",
+    "product-showcase-emails": "Product Showcase",
+    "promotional-emails": "Promotional",
+    "confirmation-emails": "Confirmation",
+}
+TYPE_NAME_TO_SLUG = {v: k for k, v in TYPE_SLUG_MAP.items()}
+
+# Festival date ranges for campaign pages
+INDIAN_FESTIVALS = {
+    "diwali": {
+        "name": "Diwali",
+        "keywords": ["diwali", "deepavali", "festival of lights"],
+        "date_ranges": {
+            2024: ("2024-10-15", "2024-11-10"),
+            2025: ("2025-10-10", "2025-11-05"),
+        },
+    },
+    "holi": {
+        "name": "Holi",
+        "keywords": ["holi", "festival of colors", "colour"],
+        "date_ranges": {
+            2024: ("2024-03-15", "2024-03-30"),
+            2025: ("2025-03-05", "2025-03-20"),
+        },
+    },
+    "navratri": {
+        "name": "Navratri",
+        "keywords": ["navratri", "navaratri", "durga puja", "dandiya", "garba"],
+        "date_ranges": {
+            2024: ("2024-10-03", "2024-10-15"),
+            2025: ("2025-09-22", "2025-10-03"),
+        },
+    },
+    "republic-day-sale": {
+        "name": "Republic Day Sale",
+        "keywords": ["republic day", "26 january", "26th january", "26jan"],
+        "date_ranges": {
+            2024: ("2024-01-20", "2024-01-31"),
+            2025: ("2025-01-20", "2025-01-31"),
+            2026: ("2026-01-20", "2026-01-31"),
+        },
+    },
+    "independence-day-sale": {
+        "name": "Independence Day Sale",
+        "keywords": ["independence day", "15 august", "15th august", "freedom sale"],
+        "date_ranges": {
+            2024: ("2024-08-10", "2024-08-20"),
+            2025: ("2025-08-10", "2025-08-20"),
+        },
+    },
+    "eoss": {
+        "name": "End of Season Sale (EOSS)",
+        "keywords": ["eoss", "end of season", "season sale", "clearance"],
+        "date_ranges": {
+            2024: ("2024-06-15", "2024-07-15"),
+            2025: ("2025-01-01", "2025-01-31"),
+        },
+    },
+    "new-year": {
+        "name": "New Year",
+        "keywords": ["new year", "happy new year", "nye", "new years"],
+        "date_ranges": {
+            2024: ("2023-12-25", "2024-01-05"),
+            2025: ("2024-12-25", "2025-01-05"),
+            2026: ("2025-12-25", "2026-01-05"),
+        },
+    },
+    "valentines-day": {
+        "name": "Valentine's Day",
+        "keywords": ["valentine", "valentines", "love", "cupid"],
+        "date_ranges": {
+            2024: ("2024-02-07", "2024-02-16"),
+            2025: ("2025-02-07", "2025-02-16"),
+            2026: ("2026-02-07", "2026-02-16"),
+        },
+    },
+    "rakhi": {
+        "name": "Raksha Bandhan",
+        "keywords": ["rakhi", "raksha bandhan", "rakshabandhan"],
+        "date_ranges": {
+            2024: ("2024-08-15", "2024-08-22"),
+            2025: ("2025-08-05", "2025-08-12"),
+        },
+    },
+    "christmas": {
+        "name": "Christmas",
+        "keywords": ["christmas", "xmas", "merry christmas", "santa"],
+        "date_ranges": {
+            2024: ("2024-12-15", "2024-12-31"),
+            2025: ("2025-12-15", "2025-12-31"),
+        },
+    },
+    "womens-day": {
+        "name": "Women's Day",
+        "keywords": ["women's day", "womens day", "international women"],
+        "date_ranges": {
+            2024: ("2024-03-01", "2024-03-10"),
+            2025: ("2025-03-01", "2025-03-10"),
+            2026: ("2026-03-01", "2026-03-10"),
+        },
+    },
+    "mothers-day": {
+        "name": "Mother's Day",
+        "keywords": ["mother's day", "mothers day", "mom"],
+        "date_ranges": {
+            2024: ("2024-05-06", "2024-05-14"),
+            2025: ("2025-05-05", "2025-05-13"),
+        },
+    },
+    "fathers-day": {
+        "name": "Father's Day",
+        "keywords": ["father's day", "fathers day", "dad"],
+        "date_ranges": {
+            2024: ("2024-06-10", "2024-06-18"),
+            2025: ("2025-06-09", "2025-06-17"),
+        },
+    },
+}
+
+
+def _get_brand_seo_data(brand_name: str, db: Session) -> dict:
+    """Shared helper to compute brand SEO data (used by brand and compare endpoints)."""
+    from collections import Counter
+    import re
+
+    emails = db.query(models.Email).filter(
+        models.Email.brand.ilike(brand_name)
+    ).all()
+
+    if not emails:
+        return None
+
+    total_emails = len(emails)
+
+    # Industry
+    industries = Counter(e.industry for e in emails if e.industry)
+    primary_industry = industries.most_common(1)[0][0] if industries else None
+
+    # Campaign breakdown
+    campaign_types = Counter(e.type for e in emails if e.type)
+    campaign_breakdown = {k: v for k, v in campaign_types.most_common()}
+
+    # Send day + time distribution
+    day_distribution = Counter()
+    time_distribution = Counter()
+    for email in emails:
+        if email.received_at:
+            day_distribution[_get_day_name(email.received_at.weekday())] += 1
+            time_distribution[_get_time_bucket(email.received_at.hour)] += 1
+
+    # Subject line analysis
+    subjects = [e.subject for e in emails if e.subject]
+    avg_subject_length = round(sum(len(s) for s in subjects) / len(subjects), 1) if subjects else 0
+    emails_with_emoji = sum(1 for s in subjects if _extract_emojis(s))
+    emoji_rate = round((emails_with_emoji / len(subjects)) * 100, 1) if subjects else 0
+
+    stop_words = {'the', 'a', 'an', 'is', 'are', 'and', 'or', 'to', 'for', 'of', 'in', 'on', 'at', 'your', 'you', 'we', 'our', 'this', 'that', 'it', 'with'}
+    all_words = []
+    for s in subjects:
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', s.lower())
+        all_words.extend(w for w in words if w not in stop_words)
+    top_words = [word for word, _ in Counter(all_words).most_common(10)]
+
+    # Sample subjects (5 most recent unique)
+    sample_subjects = []
+    seen = set()
+    for e in sorted(emails, key=lambda x: x.received_at or datetime.min, reverse=True):
+        if e.subject and e.subject not in seen:
+            sample_subjects.append(e.subject)
+            seen.add(e.subject)
+        if len(sample_subjects) >= 5:
+            break
+
+    # Date range + frequency
+    dates = [e.received_at for e in emails if e.received_at]
+    first_email = min(dates) if dates else None
+    last_email = max(dates) if dates else None
+    if first_email and last_email and first_email != last_email:
+        days = (last_email - first_email).days
+        emails_per_week = round((total_emails / days) * 7, 1) if days > 0 else total_emails
+    else:
+        emails_per_week = total_emails
+
+    # Recent emails (10, lightweight)
+    recent = sorted(emails, key=lambda x: x.received_at or datetime.min, reverse=True)[:10]
+    recent_emails = [
+        {"id": e.id, "subject": e.subject, "type": e.type, "received_at": e.received_at.isoformat() if e.received_at else None}
+        for e in recent
+    ]
+
+    # Festive campaigns
+    festive_campaigns = []
+    for fest_slug, fest_data in INDIAN_FESTIVALS.items():
+        for year, (start_str, end_str) in fest_data["date_ranges"].items():
+            start = datetime.fromisoformat(start_str)
+            end = datetime.fromisoformat(end_str)
+            count = sum(
+                1 for e in emails
+                if e.received_at and start <= e.received_at <= end
+                and (
+                    (e.type and e.type.lower() in ("festive", "sale"))
+                    or any(kw in (e.subject or "").lower() for kw in fest_data["keywords"])
+                )
+            )
+            if count > 0:
+                festive_campaigns.append({"festival": fest_data["name"], "count": count, "year": year})
+
+    # Related brands (same industry)
+    related_brands = []
+    if primary_industry:
+        from sqlalchemy import func
+        related_rows = db.query(models.Email.brand).filter(
+            models.Email.industry.ilike(primary_industry),
+            models.Email.brand.isnot(None),
+            models.Email.brand != "Unknown",
+            ~models.Email.brand.ilike(brand_name)
+        ).distinct().all()
+        related_brands = sorted([r[0] for r in related_rows if r[0]])[:12]
+
+    return {
+        "brand": brand_name,
+        "industry": primary_industry,
+        "total_emails": total_emails,
+        "emails_per_week": emails_per_week,
+        "first_email": first_email.isoformat() if first_email else None,
+        "last_email": last_email.isoformat() if last_email else None,
+        "campaign_breakdown": campaign_breakdown,
+        "send_day_distribution": dict(day_distribution),
+        "send_time_distribution": dict(time_distribution),
+        "subject_line_stats": {
+            "avg_length": avg_subject_length,
+            "emoji_usage_rate": emoji_rate,
+            "top_words": top_words,
+            "sample_subjects": sample_subjects,
+        },
+        "recent_emails": recent_emails,
+        "festive_campaigns": festive_campaigns,
+        "related_brands": related_brands,
+    }
+
+
+@app.get("/seo/brand/{brand_name}")
+def seo_brand(brand_name: str, db: Session = Depends(get_db)):
+    """Public, ungated brand data for SEO pages. No auth required."""
+    data = _get_brand_seo_data(brand_name, db)
+    if not data:
+        raise HTTPException(status_code=404, detail=f"No emails found for brand: {brand_name}")
+    return data
+
+
+@app.get("/seo/industry/{industry}")
+def seo_industry(industry: str, db: Session = Depends(get_db)):
+    """Public, ungated industry data for SEO pages. Superset of /industries/{industry}/seo."""
+    from sqlalchemy import func
+    from collections import Counter
+
+    emails = db.query(models.Email).filter(
+        models.Email.industry.ilike(industry)
+    ).all()
+
+    if not emails:
+        raise HTTPException(status_code=404, detail=f"No emails found for industry: {industry}")
+
+    total_emails = len(emails)
+
+    # Brand breakdown
+    brand_counts = Counter(e.brand for e in emails if e.brand and e.brand != "Unknown")
+    brands = sorted(brand_counts.keys())
+    total_brands = len(brand_counts)
+    top_brands = [
+        {"brand": b, "email_count": c, "emails_per_week": 0}
+        for b, c in brand_counts.most_common(10)
+    ]
+    # Compute per-week for top brands
+    for tb in top_brands:
+        brand_emails = [e for e in emails if e.brand == tb["brand"]]
+        dates = [e.received_at for e in brand_emails if e.received_at]
+        if len(dates) >= 2:
+            days = (max(dates) - min(dates)).days
+            if days > 0:
+                tb["emails_per_week"] = round((len(brand_emails) / days) * 7, 1)
+
+    # Campaign type breakdown
+    campaign_types = Counter(e.type for e in emails if e.type)
+    top_campaign_types = [
+        {"type": t, "count": c, "percentage": round((c / total_emails) * 100, 1)}
+        for t, c in campaign_types.most_common()
+    ]
+
+    # Recent emails
+    sorted_emails = sorted(emails, key=lambda x: x.received_at or datetime.min, reverse=True)
+    recent_emails = [
+        {"id": e.id, "subject": e.subject, "brand": e.brand, "type": e.type, "received_at": e.received_at.isoformat() if e.received_at else None}
+        for e in sorted_emails[:15]
+    ]
+
+    # Subject + send stats
+    subjects = [e.subject for e in emails if e.subject]
+    avg_subject_length = round(sum(len(s) for s in subjects) / len(subjects), 1) if subjects else 0
+    emoji_count = sum(1 for s in subjects if _extract_emojis(s))
+    emoji_usage_rate = round((emoji_count / len(subjects)) * 100, 1) if subjects else 0
+
+    day_distribution = Counter()
+    time_distribution = Counter()
+    for e in emails:
+        if e.received_at:
+            day_distribution[_get_day_name(e.received_at.weekday())] += 1
+            time_distribution[_get_time_bucket(e.received_at.hour)] += 1
+
+    peak_send_day = day_distribution.most_common(1)[0][0] if day_distribution else None
+    peak_send_time = time_distribution.most_common(1)[0][0] if time_distribution else None
+
+    # Per-brand frequency average
+    brand_email_counts = list(brand_counts.values())
+    # Calculate average emails per brand per week across the industry
+    all_dates = [e.received_at for e in emails if e.received_at]
+    if all_dates and len(all_dates) >= 2:
+        total_days = (max(all_dates) - min(all_dates)).days
+        if total_days > 0 and total_brands > 0:
+            avg_emails_per_brand_per_week = round(((total_emails / total_brands) / total_days) * 7, 1)
+        else:
+            avg_emails_per_brand_per_week = 0
+    else:
+        avg_emails_per_brand_per_week = 0
+
+    # Seasonal activity (last 12 months)
+    seasonal_activity = Counter()
+    for e in emails:
+        if e.received_at:
+            seasonal_activity[e.received_at.strftime("%Y-%m")] += 1
+    seasonal_list = [{"month": m, "count": c} for m, c in sorted(seasonal_activity.items())[-12:]]
+
+    return {
+        "industry": industry,
+        "total_brands": total_brands,
+        "total_emails": total_emails,
+        "brands": brands,
+        "top_brands": top_brands,
+        "top_campaign_types": top_campaign_types,
+        "recent_emails": recent_emails,
+        "avg_emails_per_brand_per_week": avg_emails_per_brand_per_week,
+        "avg_subject_length": avg_subject_length,
+        "emoji_usage_rate": emoji_usage_rate,
+        "peak_send_day": peak_send_day,
+        "peak_send_time": peak_send_time,
+        "seasonal_activity": seasonal_list,
+    }
+
+
+@app.get("/seo/types")
+def seo_types_list(db: Session = Depends(get_db)):
+    """List all email types with slugs and counts."""
+    from sqlalchemy import func
+
+    type_counts = db.query(
+        models.Email.type,
+        func.count(models.Email.id)
+    ).filter(
+        models.Email.type.isnot(None)
+    ).group_by(models.Email.type).all()
+
+    results = []
+    for type_name, count in type_counts:
+        slug = TYPE_NAME_TO_SLUG.get(type_name)
+        if slug:
+            results.append({"type": type_name, "slug": slug, "count": count})
+    return sorted(results, key=lambda x: x["count"], reverse=True)
+
+
+@app.get("/seo/types/{type_slug}")
+def seo_type_detail(type_slug: str, db: Session = Depends(get_db)):
+    """Public data for email type SEO pages."""
+    from sqlalchemy import func
+    from collections import Counter
+    import re
+
+    type_name = TYPE_SLUG_MAP.get(type_slug)
+    if not type_name:
+        raise HTTPException(status_code=404, detail=f"Unknown type slug: {type_slug}")
+
+    emails = db.query(models.Email).filter(
+        models.Email.type.ilike(type_name)
+    ).all()
+
+    if not emails:
+        raise HTTPException(status_code=404, detail=f"No emails found for type: {type_name}")
+
+    total_emails = len(emails)
+
+    # Brands
+    brand_counts = Counter(e.brand for e in emails if e.brand and e.brand != "Unknown")
+    total_brands = len(brand_counts)
+    top_brands = [{"brand": b, "count": c} for b, c in brand_counts.most_common(10)]
+
+    # Industry breakdown
+    industry_counts = Counter(e.industry for e in emails if e.industry)
+    industry_breakdown = [
+        {"industry": ind, "count": c, "percentage": round((c / total_emails) * 100, 1)}
+        for ind, c in industry_counts.most_common()
+    ]
+
+    # Example emails (15, brand-diverse: max 2 per brand)
+    sorted_emails = sorted(emails, key=lambda x: x.received_at or datetime.min, reverse=True)
+    example_emails = []
+    brand_seen = Counter()
+    for e in sorted_emails:
+        if brand_seen[e.brand] < 2:
+            example_emails.append({
+                "id": e.id, "subject": e.subject, "brand": e.brand,
+                "industry": e.industry,
+                "received_at": e.received_at.isoformat() if e.received_at else None,
+            })
+            brand_seen[e.brand] += 1
+        if len(example_emails) >= 15:
+            break
+
+    # Subject stats
+    subjects = [e.subject for e in emails if e.subject]
+    avg_subject_length = round(sum(len(s) for s in subjects) / len(subjects), 1) if subjects else 0
+    emoji_count = sum(1 for s in subjects if _extract_emojis(s))
+    emoji_usage_rate = round((emoji_count / len(subjects)) * 100, 1) if subjects else 0
+
+    stop_words = {'the', 'a', 'an', 'is', 'are', 'and', 'or', 'to', 'for', 'of', 'in', 'on', 'at', 'your', 'you', 'we', 'our', 'this', 'that', 'it', 'with'}
+    all_words = []
+    for s in subjects:
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', s.lower())
+        all_words.extend(w for w in words if w not in stop_words)
+    top_subject_words = [word for word, _ in Counter(all_words).most_common(10)]
+
+    sample_subjects = list({e.subject for e in sorted_emails if e.subject})[:10]
+
+    # Peak send day
+    day_dist = Counter()
+    for e in emails:
+        if e.received_at:
+            day_dist[_get_day_name(e.received_at.weekday())] += 1
+    peak_send_day = day_dist.most_common(1)[0][0] if day_dist else None
+
+    # Related types (exclude self, pick types that co-occur with same brands)
+    related_types = [slug for slug in TYPE_SLUG_MAP if slug != type_slug][:5]
+
+    return {
+        "type": type_name,
+        "slug": type_slug,
+        "total_emails": total_emails,
+        "total_brands": total_brands,
+        "example_emails": example_emails,
+        "top_brands": top_brands,
+        "industry_breakdown": industry_breakdown,
+        "avg_subject_length": avg_subject_length,
+        "emoji_usage_rate": emoji_usage_rate,
+        "top_subject_words": top_subject_words,
+        "sample_subjects": sample_subjects,
+        "peak_send_day": peak_send_day,
+        "related_types": related_types,
+    }
+
+
+@app.get("/seo/email/{email_id}")
+def seo_email(email_id: int, db: Session = Depends(get_db)):
+    """Public email data for SEO pages. No HTML (loaded client-side)."""
+    email = db.query(models.Email).filter(models.Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    # Subject analysis
+    subject = email.subject or ""
+    import re
+    emoji_pattern = re.compile(
+        "[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF\U0001F1E0-\U0001F1FF\U00002702-\U000027B0\U000024C2-\U0001F251]+",
+        flags=re.UNICODE
+    )
+    urgency_words = {"limited", "hurry", "last chance", "ending", "expires", "final", "only", "rush", "midnight", "tonight", "today only"}
+    subject_lower = subject.lower()
+
+    analysis = {
+        "char_count": len(subject),
+        "word_count": len(subject.split()),
+        "has_emoji": bool(emoji_pattern.search(subject)),
+        "has_question": "?" in subject,
+        "has_number": bool(re.search(r'\d', subject)),
+        "has_personalization": any(tok in subject_lower for tok in ["{first_name}", "{name}", "{{name}}", "hi ,", "hey ,"]),
+        "has_urgency": any(w in subject_lower for w in urgency_words),
+    }
+
+    # More from brand (5)
+    more_from_brand = []
+    if email.brand:
+        related = db.query(models.Email).filter(
+            models.Email.brand.ilike(email.brand),
+            models.Email.id != email_id,
+        ).order_by(models.Email.received_at.desc()).limit(5).all()
+        more_from_brand = [
+            {"id": e.id, "subject": e.subject, "type": e.type, "received_at": e.received_at.isoformat() if e.received_at else None}
+            for e in related
+        ]
+
+    # Similar emails (same type + industry, 5)
+    similar_emails = []
+    if email.type and email.industry:
+        similar = db.query(models.Email).filter(
+            models.Email.type == email.type,
+            models.Email.industry == email.industry,
+            models.Email.id != email_id,
+        ).order_by(models.Email.received_at.desc()).limit(5).all()
+        similar_emails = [
+            {"id": e.id, "subject": e.subject, "brand": e.brand, "type": e.type, "received_at": e.received_at.isoformat() if e.received_at else None}
+            for e in similar
+        ]
+
+    return {
+        "id": email.id,
+        "subject": email.subject,
+        "brand": email.brand,
+        "sender": email.sender,
+        "type": email.type,
+        "industry": email.industry,
+        "received_at": email.received_at.isoformat() if email.received_at else None,
+        "preview": email.preview,
+        "analysis": analysis,
+        "more_from_brand": more_from_brand,
+        "similar_emails": similar_emails,
+    }
+
+
+@app.get("/seo/compare/pairs")
+def seo_compare_pairs(db: Session = Depends(get_db)):
+    """Get all brand comparison pairs for sitemap/static generation.
+    Top 5 brands per industry, all C(5,2) = 10 pairs per industry."""
+    from sqlalchemy import func
+    from itertools import combinations
+
+    # Get top 5 brands per industry by email count
+    industries = db.query(models.Email.industry).filter(
+        models.Email.industry.isnot(None)
+    ).distinct().all()
+
+    pairs = []
+    for (industry,) in industries:
+        top_brands = db.query(
+            models.Email.brand,
+            func.count(models.Email.id).label("cnt")
+        ).filter(
+            models.Email.industry.ilike(industry),
+            models.Email.brand.isnot(None),
+            models.Email.brand != "Unknown",
+        ).group_by(models.Email.brand).order_by(func.count(models.Email.id).desc()).limit(5).all()
+
+        brand_names = [b[0] for b in top_brands if b[1] >= 20]  # Min 20 emails
+        for a, b in combinations(brand_names, 2):
+            sorted_pair = sorted([a, b])
+            pairs.append({"brand_a": sorted_pair[0], "brand_b": sorted_pair[1], "industry": industry})
+
+    return pairs
+
+
+@app.get("/seo/compare/{brand_a}/{brand_b}")
+def seo_compare(brand_a: str, brand_b: str, db: Session = Depends(get_db)):
+    """Public comparison data for two brands."""
+    data_a = _get_brand_seo_data(brand_a, db)
+    data_b = _get_brand_seo_data(brand_b, db)
+
+    if not data_a:
+        raise HTTPException(status_code=404, detail=f"No emails found for brand: {brand_a}")
+    if not data_b:
+        raise HTTPException(status_code=404, detail=f"No emails found for brand: {brand_b}")
+
+    # Build comparison summary
+    summary = {}
+    summary["more_active"] = data_a["brand"] if data_a["emails_per_week"] >= data_b["emails_per_week"] else data_b["brand"]
+
+    a_len = data_a["subject_line_stats"]["avg_length"]
+    b_len = data_b["subject_line_stats"]["avg_length"]
+    summary["longer_subjects"] = data_a["brand"] if a_len >= b_len else data_b["brand"]
+
+    a_emoji = data_a["subject_line_stats"]["emoji_usage_rate"]
+    b_emoji = data_b["subject_line_stats"]["emoji_usage_rate"]
+    summary["more_emoji"] = data_a["brand"] if a_emoji >= b_emoji else data_b["brand"]
+
+    shared_industry = None
+    if data_a["industry"] and data_b["industry"] and data_a["industry"].lower() == data_b["industry"].lower():
+        shared_industry = data_a["industry"]
+
+    return {
+        "brand_a": data_a,
+        "brand_b": data_b,
+        "shared_industry": shared_industry,
+        "comparison_summary": summary,
+    }
+
+
+@app.get("/seo/campaigns")
+def seo_campaigns_list(db: Session = Depends(get_db)):
+    """List all available festival campaign pages with email counts."""
+    results = []
+    for fest_slug, fest_data in INDIAN_FESTIVALS.items():
+        for year, (start_str, end_str) in fest_data["date_ranges"].items():
+            start = datetime.fromisoformat(start_str)
+            end = datetime.fromisoformat(end_str)
+            count = db.query(models.Email).filter(
+                models.Email.received_at >= start,
+                models.Email.received_at <= end,
+            ).count()
+            if count >= 5:  # Only include if at least 5 emails
+                results.append({
+                    "festival": fest_data["name"],
+                    "slug": fest_slug,
+                    "year": year,
+                    "count": count,
+                })
+    return sorted(results, key=lambda x: (x["year"], x["festival"]), reverse=True)
+
+
+@app.get("/seo/campaigns/{festival_slug}/{year}")
+def seo_campaign_detail(festival_slug: str, year: int, db: Session = Depends(get_db)):
+    """Public data for festival/seasonal campaign SEO pages."""
+    from collections import Counter
+
+    fest_data = INDIAN_FESTIVALS.get(festival_slug)
+    if not fest_data:
+        raise HTTPException(status_code=404, detail=f"Unknown festival: {festival_slug}")
+
+    date_range = fest_data["date_ranges"].get(year)
+    if not date_range:
+        raise HTTPException(status_code=404, detail=f"No data for {fest_data['name']} {year}")
+
+    start = datetime.fromisoformat(date_range[0])
+    end = datetime.fromisoformat(date_range[1])
+
+    # Get emails in the date range that are relevant to this festival
+    all_in_range = db.query(models.Email).filter(
+        models.Email.received_at >= start,
+        models.Email.received_at <= end,
+    ).all()
+
+    # Filter to festive/sale types or emails with festival keywords in subject
+    keywords = fest_data["keywords"]
+    emails = [
+        e for e in all_in_range
+        if (e.type and e.type.lower() in ("festive", "sale"))
+        or any(kw in (e.subject or "").lower() for kw in keywords)
+    ]
+
+    # If keyword filter is too aggressive, fall back to all emails in range
+    if len(emails) < 5:
+        emails = all_in_range
+
+    if not emails:
+        raise HTTPException(status_code=404, detail=f"No campaign data for {fest_data['name']} {year}")
+
+    total_emails = len(emails)
+
+    # Industry breakdown
+    industry_counts = Counter(e.industry for e in emails if e.industry)
+    industry_breakdown = [
+        {"industry": ind, "count": c, "percentage": round((c / total_emails) * 100, 1)}
+        for ind, c in industry_counts.most_common()
+    ]
+
+    # Top brands
+    brand_counts = Counter(e.brand for e in emails if e.brand and e.brand != "Unknown")
+    total_brands = len(brand_counts)
+    top_brands = [{"brand": b, "count": c} for b, c in brand_counts.most_common(10)]
+
+    # Campaign type breakdown
+    type_counts = Counter(e.type for e in emails if e.type)
+    campaign_types = [{"type": t, "count": c} for t, c in type_counts.most_common()]
+
+    # Best subject lines (15, diverse brands)
+    sorted_emails = sorted(emails, key=lambda x: x.received_at or datetime.min, reverse=True)
+    best_subject_lines = []
+    brand_seen = Counter()
+    for e in sorted_emails:
+        if e.subject and brand_seen[e.brand] < 2:
+            best_subject_lines.append({"subject": e.subject, "brand": e.brand, "id": e.id})
+            brand_seen[e.brand] += 1
+        if len(best_subject_lines) >= 15:
+            break
+
+    # Best emails (10)
+    best_emails = [
+        {"id": e.id, "subject": e.subject, "brand": e.brand, "type": e.type, "received_at": e.received_at.isoformat() if e.received_at else None}
+        for e in sorted_emails[:10]
+    ]
+
+    # Insights
+    subjects = [e.subject for e in emails if e.subject]
+    avg_subject_length = round(sum(len(s) for s in subjects) / len(subjects), 1) if subjects else 0
+    emoji_count = sum(1 for s in subjects if _extract_emojis(s))
+    emoji_usage_rate = round((emoji_count / len(subjects)) * 100, 1) if subjects else 0
+
+    day_dist = Counter()
+    for e in emails:
+        if e.received_at:
+            day_dist[_get_day_name(e.received_at.weekday())] += 1
+    peak_send_day = day_dist.most_common(1)[0][0] if day_dist else None
+
+    import re
+    stop_words = {'the', 'a', 'an', 'is', 'are', 'and', 'or', 'to', 'for', 'of', 'in', 'on', 'at', 'your', 'you', 'we', 'our', 'this', 'that', 'it', 'with'}
+    all_words = []
+    for s in subjects:
+        words = re.findall(r'\b[a-zA-Z]{3,}\b', s.lower())
+        all_words.extend(w for w in words if w not in stop_words)
+    top_subject_words = [word for word, _ in Counter(all_words).most_common(10)]
+
+    return {
+        "festival": fest_data["name"],
+        "slug": festival_slug,
+        "year": year,
+        "date_range": {"start": date_range[0], "end": date_range[1]},
+        "total_emails": total_emails,
+        "total_brands": total_brands,
+        "industry_breakdown": industry_breakdown,
+        "top_brands": top_brands,
+        "campaign_types": campaign_types,
+        "best_subject_lines": best_subject_lines,
+        "best_emails": best_emails,
+        "insights": {
+            "avg_subject_length": avg_subject_length,
+            "emoji_usage_rate": emoji_usage_rate,
+            "peak_send_day": peak_send_day,
+            "top_subject_words": top_subject_words,
+        },
+    }
