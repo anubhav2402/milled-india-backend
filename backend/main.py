@@ -1618,7 +1618,7 @@ def _get_time_bucket(hour: int) -> str:
 SAMPLE_BRAND = os.getenv("SAMPLE_BRAND", "Nykaa").strip().lower()
 
 
-@app.get("/analytics/brand/{brand_name}")
+@app.get("/analytics/brand/{brand_name:path}")
 def get_brand_analytics(
     brand_name: str,
     current_user: Optional[models.User] = Depends(get_optional_user),
@@ -1958,7 +1958,7 @@ def get_subject_lines(
     }
 
 
-@app.get("/analytics/calendar/{brand_name}")
+@app.get("/analytics/calendar/{brand_name:path}")
 def get_brand_calendar(
     brand_name: str,
     months: int = Query(default=3, le=12, description="Number of months to show"),
@@ -2366,7 +2366,7 @@ def _get_brand_seo_data(brand_name: str, db: Session) -> dict:
     }
 
 
-@app.get("/seo/brand/{brand_name}")
+@app.get("/seo/brand/{brand_name:path}")
 def seo_brand(brand_name: str, db: Session = Depends(get_db)):
     """Public, ungated brand data for SEO pages. No auth required."""
     data = _get_brand_seo_data(brand_name, db)
