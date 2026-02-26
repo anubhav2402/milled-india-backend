@@ -26,7 +26,43 @@ class UserOut(BaseModel):
     email: str
     name: Optional[str] = None
     subscription_tier: str = "free"
+    effective_plan: str = "free"
     is_pro: bool = False
+    is_on_trial: bool = False
+    trial_ends_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ContactSalesRequest(BaseModel):
+    name: str
+    email: EmailStr
+    company: Optional[str] = None
+    message: Optional[str] = None
+
+
+class UsageResponse(BaseModel):
+    plan: str
+    is_on_trial: bool
+    trial_ends_at: Optional[datetime] = None
+    email_views: dict  # {"used": int, "limit": int|None, "remaining": int|None}
+    brand_views: dict
+    html_exports: dict
+    collections: dict
+    follows: dict
+    bookmarks: dict
+
+
+class CollectionCreate(BaseModel):
+    name: str
+
+
+class CollectionOut(BaseModel):
+    id: int
+    name: str
+    email_count: int = 0
+    created_at: datetime
 
     class Config:
         from_attributes = True

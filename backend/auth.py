@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .db import SessionLocal
+from .plans import get_effective_plan, plan_rank, PLAN_HIERARCHY
 
 # JWT Configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-key-change-in-production")
@@ -141,13 +142,30 @@ def get_optional_user(
 def get_pro_user(
     current_user: models.User = Depends(get_current_user),
 ) -> models.User:
-    """Get the current user and require Pro subscription."""
+    """Get the current user and require Pro subscription (backward compat)."""
     if not current_user.is_pro:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Pro subscription required",
         )
     return current_user
+
+
+def require_plan(min_tier: str):
+    """Dependency factory: require user to be on at least `min_tier` plan."""
+    min_rank = plan_rank(min_tier)
+
+    def dependency(current_user: models.User = Depends(get_current_user)) -> models.User:
+        effective = get_effective_plan(current_user)
+        if plan_rank(effective) < min_rank:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"{min_tier.title()} plan or higher required",
+                headers={"X-Required-Plan": min_tier},
+            )
+        return current_user
+
+    return dependency
 
 
 def get_or_create_daily_usage(db: Session, user_id: int) -> models.UserDailyUsage:
@@ -159,6 +177,14 @@ def get_or_create_daily_usage(db: Session, user_id: int) -> models.UserDailyUsag
         db.add(usage)
         db.commit()
         db.refresh(usage)
+
+    # Reset monthly export counter if needed
+    if usage.exports_reset_at and usage.exports_reset_at <= datetime.utcnow():
+        usage.html_exports = 0
+        usage.exports_reset_at = None
+        db.commit()
+        db.refresh(usage)
+
     return usage
 
 

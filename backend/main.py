@@ -23,7 +23,9 @@ from .auth import (
     get_admin_user,
     get_or_create_daily_usage,
     verify_google_token,
+    require_plan,
 )
+from .plans import get_effective_plan, PLAN_LIMITS, check_numeric_limit, get_limit
 from .payments import (
     create_subscription,
     verify_payment_signature,
@@ -106,7 +108,124 @@ def run_migrations():
             except Exception:
                 pass
 
+        # --- 4-tier pricing migrations ---
+
+        # New columns on users table
+        tier_user_columns = [
+            ("billing_cycle", "VARCHAR"),
+            ("trial_ends_at", "TIMESTAMP"),
+            ("trial_emails_sent", "VARCHAR"),
+        ]
+        for col_name, col_type in tier_user_columns:
+            try:
+                conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+                print(f"Migration: Added '{col_name}' column to users table")
+            except Exception:
+                pass  # Column likely already exists
+
+        # New columns on user_daily_usage table
+        usage_columns = [
+            ("html_exports", "INTEGER DEFAULT 0"),
+            ("exports_reset_at", "TIMESTAMP"),
+        ]
+        for col_name, col_type in usage_columns:
+            try:
+                conn.execute(text(f"ALTER TABLE user_daily_usage ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+                print(f"Migration: Added '{col_name}' column to user_daily_usage table")
+            except Exception:
+                pass
+
+        # Create collections table
+        try:
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS collections ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, "
+                "name VARCHAR NOT NULL, "
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            ))
+            conn.commit()
+            print("Migration: Ensured collections table exists")
+        except Exception:
+            pass
+
+        # Create collection_emails table
+        try:
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS collection_emails ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE, "
+                "email_id INTEGER NOT NULL REFERENCES emails(id) ON DELETE CASCADE, "
+                "added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                "UNIQUE(collection_id, email_id))"
+            ))
+            conn.commit()
+            print("Migration: Ensured collection_emails table exists")
+        except Exception:
+            pass
+
+        # Create contact_sales table
+        try:
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS contact_sales ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "name VARCHAR NOT NULL, "
+                "email VARCHAR NOT NULL, "
+                "company VARCHAR, "
+                "message TEXT, "
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            ))
+            conn.commit()
+            print("Migration: Ensured contact_sales table exists")
+        except Exception:
+            pass
+
+        # Create newsletter_subscribers table if missing
+        try:
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS newsletter_subscribers ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "email VARCHAR NOT NULL UNIQUE, "
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            ))
+            conn.commit()
+        except Exception:
+            pass
+
+        # Create brand_classifications table if missing
+        try:
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS brand_classifications ("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "brand_name VARCHAR NOT NULL UNIQUE, "
+                "industry VARCHAR NOT NULL, "
+                "confidence REAL DEFAULT 1.0, "
+                "classified_by VARCHAR DEFAULT 'ai', "
+                "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                "updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+            ))
+            conn.commit()
+        except Exception:
+            pass
+
 run_migrations()
+
+
+def _user_out(user: models.User) -> schemas.UserOut:
+    """Build a UserOut response from a User model, including trial/plan fields."""
+    return schemas.UserOut(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        subscription_tier=user.subscription_tier or "free",
+        effective_plan=user.effective_plan,
+        is_pro=user.is_pro,
+        is_on_trial=user.is_on_trial,
+        trial_ends_at=user.trial_ends_at,
+    )
+
 
 app = FastAPI(title="Milled India API", version="0.1.0")
 
@@ -157,6 +276,59 @@ def create_tables(current_user: models.User = Depends(get_admin_user)):
         raise HTTPException(status_code=500, detail=f"Failed to create tables: {str(e)}")
 
 
+@app.get("/admin/users")
+def list_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """List all registered users."""
+    users = db.query(models.User).order_by(models.User.created_at.desc()).offset(skip).limit(limit).all()
+    total = db.query(models.User).count()
+
+    return {
+        "total": total,
+        "users": [
+            {
+                "id": u.id,
+                "email": u.email,
+                "name": u.name,
+                "subscription_tier": u.subscription_tier,
+                "effective_plan": u.effective_plan,
+                "is_pro": u.is_pro,
+                "is_on_trial": u.is_on_trial,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in users
+        ],
+    }
+
+
+@app.get("/admin/newsletter-subscribers")
+def list_newsletter_subscribers(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """List all newsletter subscribers."""
+    subs = db.query(models.NewsletterSubscriber).order_by(models.NewsletterSubscriber.created_at.desc()).offset(skip).limit(limit).all()
+    total = db.query(models.NewsletterSubscriber).count()
+
+    return {
+        "total": total,
+        "subscribers": [
+            {
+                "id": s.id,
+                "email": s.email,
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in subs
+        ],
+    }
+
+
 # ============ Authentication Endpoints ============
 
 @app.post("/auth/register", response_model=schemas.TokenResponse)
@@ -172,22 +344,23 @@ def register(request: Request, user_data: schemas.UserCreate, db: Session = Depe
                 detail="Email already registered"
             )
         
-        # Create new user
+        # Create new user with 14-day Pro trial
         user = models.User(
             email=user_data.email,
             password_hash=hash_password(user_data.password),
             name=user_data.name,
+            trial_ends_at=datetime.utcnow() + timedelta(days=14),
         )
         db.add(user)
         db.commit()
         db.refresh(user)
-        
+
         # Create access token
         token = create_access_token(user.id, user.email)
-        
+
         return schemas.TokenResponse(
             access_token=token,
-            user=schemas.UserOut(id=user.id, email=user.email, name=user.name, subscription_tier=user.subscription_tier or "free", is_pro=user.is_pro)
+            user=_user_out(user)
         )
     except HTTPException:
         raise
@@ -224,7 +397,7 @@ def login(request: Request, credentials: schemas.UserLogin, db: Session = Depend
     
     return schemas.TokenResponse(
         access_token=token,
-        user=schemas.UserOut(id=user.id, email=user.email, name=user.name, subscription_tier=user.subscription_tier or "free", is_pro=user.is_pro)
+        user=_user_out(user)
     )
 
 
@@ -252,11 +425,12 @@ def google_auth(request: Request, auth_data: schemas.GoogleAuth, db: Session = D
             if not user.name and google_info.get("name"):
                 user.name = google_info["name"]
         else:
-            # Create new user
+            # Create new user with 14-day Pro trial
             user = models.User(
                 email=google_info["email"],
                 google_id=google_info["google_id"],
                 name=google_info.get("name"),
+                trial_ends_at=datetime.utcnow() + timedelta(days=14),
             )
             db.add(user)
         
@@ -268,20 +442,14 @@ def google_auth(request: Request, auth_data: schemas.GoogleAuth, db: Session = D
     
     return schemas.TokenResponse(
         access_token=token,
-        user=schemas.UserOut(id=user.id, email=user.email, name=user.name, subscription_tier=user.subscription_tier or "free", is_pro=user.is_pro)
+        user=_user_out(user)
     )
 
 
 @app.get("/auth/me", response_model=schemas.UserOut)
 def get_me(current_user: models.User = Depends(get_current_user)):
     """Get current authenticated user info."""
-    return schemas.UserOut(
-        id=current_user.id,
-        email=current_user.email,
-        name=current_user.name,
-        subscription_tier=current_user.subscription_tier or "free",
-        is_pro=current_user.is_pro
-    )
+    return _user_out(current_user)
 
 
 # ============ Newsletter Endpoints ============
@@ -315,12 +483,15 @@ def create_user_subscription(
     db: Session = Depends(get_db),
 ):
     """Create a Razorpay subscription for the current user."""
-    plan = data.get("plan", "monthly")
-    if plan not in ("monthly", "annual"):
+    billing = data.get("plan", "monthly")
+    if billing not in ("monthly", "annual"):
         raise HTTPException(status_code=400, detail="Plan must be 'monthly' or 'annual'")
+    tier = data.get("tier", "pro")
+    if tier not in ("starter", "pro"):
+        raise HTTPException(status_code=400, detail="Tier must be 'starter' or 'pro'")
 
     try:
-        subscription = create_subscription(current_user.email, plan)
+        subscription = create_subscription(current_user.email, billing, tier)
         # Store subscription ID on user
         current_user.razorpay_subscription_id = subscription["id"]
         db.commit()
@@ -351,18 +522,25 @@ def verify_subscription(
     if not verify_payment_signature(payment_id, subscription_id, signature):
         raise HTTPException(status_code=400, detail="Invalid payment signature")
 
-    # Activate Pro
-    from datetime import datetime, timedelta
-    current_user.subscription_tier = "pro"
+    # Activate subscription — tier comes from the plan the user selected
+    tier = data.get("tier", "pro")
+    if tier not in ("starter", "pro"):
+        tier = "pro"
+    billing = data.get("billing_cycle", "monthly")
+
+    current_user.subscription_tier = tier
+    current_user.billing_cycle = billing
     current_user.razorpay_subscription_id = subscription_id
-    # Set expiry to 35 days (gives buffer for monthly renewals)
-    current_user.subscription_expires_at = datetime.utcnow() + timedelta(days=35)
+    # Set expiry: 35 days for monthly, 370 days for annual (buffer for renewals)
+    days = 370 if billing == "annual" else 35
+    current_user.subscription_expires_at = datetime.utcnow() + timedelta(days=days)
     db.commit()
 
     return {
-        "message": "Pro subscription activated",
-        "subscription_tier": "pro",
-        "is_pro": True,
+        "message": f"{tier.title()} subscription activated",
+        "subscription_tier": tier,
+        "effective_plan": current_user.effective_plan,
+        "is_pro": current_user.is_pro,
         "expires_at": current_user.subscription_expires_at.isoformat(),
     }
 
@@ -374,7 +552,10 @@ def subscription_status(
     """Get current user's subscription status."""
     return {
         "subscription_tier": current_user.subscription_tier or "free",
+        "effective_plan": current_user.effective_plan,
         "is_pro": current_user.is_pro,
+        "is_on_trial": current_user.is_on_trial,
+        "trial_ends_at": current_user.trial_ends_at.isoformat() if current_user.trial_ends_at else None,
         "expires_at": current_user.subscription_expires_at.isoformat() if current_user.subscription_expires_at else None,
         "razorpay_subscription_id": current_user.razorpay_subscription_id,
     }
@@ -424,9 +605,9 @@ async def razorpay_webhook(request_obj: dict, db: Session = Depends(get_db)):
                 models.User.razorpay_subscription_id == sub_id
             ).first()
             if user:
-                from datetime import datetime, timedelta
-                user.subscription_tier = "pro"
-                user.subscription_expires_at = datetime.utcnow() + timedelta(days=35)
+                # Extend subscription — keep user's existing tier
+                days = 370 if user.billing_cycle == "annual" else 35
+                user.subscription_expires_at = datetime.utcnow() + timedelta(days=days)
                 db.commit()
 
     elif event == "subscription.cancelled":
@@ -466,13 +647,19 @@ def follow_brand(brand_name: str, current_user: models.User = Depends(get_curren
     if existing:
         return {"message": "Already following this brand"}
 
-    # Free tier: max 3 follows
-    if not current_user.is_pro:
+    # Tier-based follow limits
+    plan = get_effective_plan(current_user)
+    follow_limit = get_limit(plan, "follows")
+    if follow_limit is not None:
         follow_count = db.query(models.UserFollow).filter(
             models.UserFollow.user_id == current_user.id
         ).count()
-        if follow_count >= 3:
-            raise HTTPException(status_code=403, detail="Free plan allows up to 3 brand follows. Upgrade to Pro for unlimited.")
+        if follow_count >= follow_limit:
+            result = check_numeric_limit(plan, "follows", follow_count)
+            raise HTTPException(
+                status_code=403,
+                detail=f"Your plan allows up to {follow_limit} brand follows. Upgrade to {result['upgrade_to'] or 'a higher plan'} for more.",
+            )
 
     # Create new follow
     follow = models.UserFollow(user_id=current_user.id, brand_name=brand_name)
@@ -555,13 +742,19 @@ def add_bookmark(data: dict, current_user: models.User = Depends(get_current_use
     if existing:
         return {"message": "Already bookmarked"}
 
-    # Free tier: max 10 bookmarks
-    if not current_user.is_pro:
+    # Tier-based bookmark limits
+    plan = get_effective_plan(current_user)
+    bookmark_limit = get_limit(plan, "bookmarks")
+    if bookmark_limit is not None:
         bookmark_count = db.query(models.UserBookmark).filter(
             models.UserBookmark.user_id == current_user.id
         ).count()
-        if bookmark_count >= 10:
-            raise HTTPException(status_code=403, detail="Free plan allows up to 10 bookmarks. Upgrade to Pro for unlimited.")
+        if bookmark_count >= bookmark_limit:
+            result = check_numeric_limit(plan, "bookmarks", bookmark_count)
+            raise HTTPException(
+                status_code=403,
+                detail=f"Your plan allows up to {bookmark_limit} bookmarks. Upgrade to {result['upgrade_to'] or 'a higher plan'} for more.",
+            )
 
     bookmark = models.UserBookmark(user_id=current_user.id, email_id=email_id)
     db.add(bookmark)
@@ -587,6 +780,294 @@ def remove_bookmark(email_id: int, current_user: models.User = Depends(get_curre
     return {"message": "Bookmark removed"}
 
 
+# ============ Collections Endpoints ============
+
+@app.get("/user/collections")
+def list_collections(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Get user's collections with email counts."""
+    collections = db.query(models.Collection).filter(
+        models.Collection.user_id == current_user.id
+    ).order_by(models.Collection.created_at.desc()).all()
+
+    return {
+        "collections": [
+            {
+                "id": c.id,
+                "name": c.name,
+                "email_count": len(c.emails),
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+            }
+            for c in collections
+        ]
+    }
+
+
+@app.post("/user/collections")
+def create_collection(data: schemas.CollectionCreate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Create a new collection. Tier-based limits apply."""
+    plan = get_effective_plan(current_user)
+    coll_limit = get_limit(plan, "collections")
+    if coll_limit is not None:
+        count = db.query(models.Collection).filter(
+            models.Collection.user_id == current_user.id
+        ).count()
+        if count >= coll_limit:
+            result = check_numeric_limit(plan, "collections", count)
+            raise HTTPException(
+                status_code=403,
+                detail=f"Your plan allows up to {coll_limit} collections. Upgrade to {result['upgrade_to'] or 'a higher plan'} for more.",
+            )
+
+    collection = models.Collection(user_id=current_user.id, name=data.name)
+    db.add(collection)
+    db.commit()
+    db.refresh(collection)
+
+    return {"id": collection.id, "name": collection.name, "message": "Collection created"}
+
+
+@app.delete("/user/collections/{collection_id}")
+def delete_collection(collection_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Delete a collection (cascade deletes its emails)."""
+    collection = db.query(models.Collection).filter(
+        models.Collection.id == collection_id,
+        models.Collection.user_id == current_user.id,
+    ).first()
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+
+    db.delete(collection)
+    db.commit()
+    return {"message": "Collection deleted"}
+
+
+@app.post("/user/collections/{collection_id}/emails")
+def add_email_to_collection(
+    collection_id: int,
+    data: dict,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Add an email to a collection. Tier-based per-collection limits apply."""
+    email_id = data.get("email_id")
+    if not email_id:
+        raise HTTPException(status_code=400, detail="email_id is required")
+
+    collection = db.query(models.Collection).filter(
+        models.Collection.id == collection_id,
+        models.Collection.user_id == current_user.id,
+    ).first()
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+
+    # Check per-collection email limit
+    plan = get_effective_plan(current_user)
+    per_coll_limit = get_limit(plan, "emails_per_collection")
+    if per_coll_limit is not None:
+        count = db.query(models.CollectionEmail).filter(
+            models.CollectionEmail.collection_id == collection_id
+        ).count()
+        if count >= per_coll_limit:
+            raise HTTPException(
+                status_code=403,
+                detail=f"This collection can hold up to {per_coll_limit} emails on your plan. Upgrade for more.",
+            )
+
+    # Check not already added
+    existing = db.query(models.CollectionEmail).filter(
+        models.CollectionEmail.collection_id == collection_id,
+        models.CollectionEmail.email_id == email_id,
+    ).first()
+    if existing:
+        return {"message": "Email already in collection"}
+
+    ce = models.CollectionEmail(collection_id=collection_id, email_id=email_id)
+    db.add(ce)
+    db.commit()
+    return {"message": "Email added to collection"}
+
+
+@app.delete("/user/collections/{collection_id}/emails/{email_id}")
+def remove_email_from_collection(
+    collection_id: int,
+    email_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Remove an email from a collection."""
+    ce = db.query(models.CollectionEmail).filter(
+        models.CollectionEmail.collection_id == collection_id,
+        models.CollectionEmail.email_id == email_id,
+    ).first()
+    if not ce:
+        raise HTTPException(status_code=404, detail="Email not in collection")
+
+    # Verify ownership
+    collection = db.query(models.Collection).filter(
+        models.Collection.id == collection_id,
+        models.Collection.user_id == current_user.id,
+    ).first()
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+
+    db.delete(ce)
+    db.commit()
+    return {"message": "Email removed from collection"}
+
+
+@app.get("/user/collections/{collection_id}/emails")
+def get_collection_emails(
+    collection_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get all emails in a collection."""
+    collection = db.query(models.Collection).filter(
+        models.Collection.id == collection_id,
+        models.Collection.user_id == current_user.id,
+    ).first()
+    if not collection:
+        raise HTTPException(status_code=404, detail="Collection not found")
+
+    results = []
+    for ce in collection.emails:
+        email = ce.email
+        if email:
+            results.append({
+                "id": email.id,
+                "subject": email.subject,
+                "brand": email.brand,
+                "industry": email.industry,
+                "type": email.type,
+                "preview": email.preview,
+                "received_at": email.received_at.isoformat() if email.received_at else None,
+                "added_at": ce.added_at.isoformat() if ce.added_at else None,
+            })
+
+    return {"collection": {"id": collection.id, "name": collection.name}, "emails": results}
+
+
+# ============ Usage & Trial Endpoints ============
+
+@app.get("/user/usage")
+def get_user_usage(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get current usage stats for the authenticated user."""
+    from datetime import date as date_type
+
+    plan = get_effective_plan(current_user)
+    usage = get_or_create_daily_usage(db, current_user.id)
+
+    follow_count = db.query(models.UserFollow).filter(
+        models.UserFollow.user_id == current_user.id
+    ).count()
+    bookmark_count = db.query(models.UserBookmark).filter(
+        models.UserBookmark.user_id == current_user.id
+    ).count()
+    collection_count = db.query(models.Collection).filter(
+        models.Collection.user_id == current_user.id
+    ).count()
+
+    def _usage_dict(feature, current):
+        limit = get_limit(plan, feature)
+        return {
+            "used": current,
+            "limit": limit,
+            "remaining": None if limit is None else max(0, limit - current),
+        }
+
+    return {
+        "plan": plan,
+        "is_on_trial": current_user.is_on_trial,
+        "trial_ends_at": current_user.trial_ends_at.isoformat() if current_user.trial_ends_at else None,
+        "email_views": _usage_dict("email_views_per_day", usage.html_views),
+        "brand_views": _usage_dict("brand_pages_per_day", usage.brand_views),
+        "html_exports": _usage_dict("html_exports_per_month", usage.html_exports or 0),
+        "collections": _usage_dict("collections", collection_count),
+        "follows": _usage_dict("follows", follow_count),
+        "bookmarks": _usage_dict("bookmarks", bookmark_count),
+    }
+
+
+@app.get("/subscription/trial-status")
+def get_trial_status(current_user: models.User = Depends(get_current_user)):
+    """Get trial information for the current user."""
+    is_on_trial = current_user.is_on_trial
+    days_left = 0
+    if is_on_trial and current_user.trial_ends_at:
+        delta = current_user.trial_ends_at - datetime.utcnow()
+        days_left = max(0, delta.days)
+
+    return {
+        "is_on_trial": is_on_trial,
+        "trial_ends_at": current_user.trial_ends_at.isoformat() if current_user.trial_ends_at else None,
+        "days_left": days_left,
+        "effective_plan": current_user.effective_plan,
+    }
+
+
+@app.post("/contact-sales")
+@limiter.limit("3/minute")
+def contact_sales(request: Request, data: schemas.ContactSalesRequest, db: Session = Depends(get_db)):
+    """Submit an Agency tier sales inquiry."""
+    inquiry = models.ContactSalesInquiry(
+        name=data.name,
+        email=data.email,
+        company=data.company,
+        message=data.message,
+    )
+    db.add(inquiry)
+    db.commit()
+    return {"message": "Thank you! Our team will get back to you within 24 hours."}
+
+
+@app.post("/emails/export-html")
+def export_email_html(
+    data: dict,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Export email HTML template. Tier-based monthly limits apply."""
+    email_id = data.get("email_id")
+    if not email_id:
+        raise HTTPException(status_code=400, detail="email_id is required")
+
+    email = db.query(models.Email).filter(models.Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    plan = get_effective_plan(current_user)
+    export_limit = get_limit(plan, "html_exports_per_month")
+
+    if export_limit is not None:
+        if export_limit == 0:
+            raise HTTPException(
+                status_code=403,
+                detail="HTML export is not available on your plan. Upgrade to Starter or higher.",
+            )
+        usage = get_or_create_daily_usage(db, current_user.id)
+        exports_used = usage.html_exports or 0
+        if exports_used >= export_limit:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Monthly export limit reached ({export_limit}/month). Upgrade for more exports.",
+            )
+        usage.html_exports = exports_used + 1
+        # Set reset date if not already set (first of next month)
+        if not usage.exports_reset_at:
+            now = datetime.utcnow()
+            if now.month == 12:
+                reset = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            else:
+                reset = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+            usage.exports_reset_at = reset
+        db.commit()
+
+    return {"html": email.html, "subject": email.subject, "brand": email.brand}
+
+
 # ============ Email Endpoints ============
 
 @app.get("/emails", response_model=List[schemas.EmailListOut])
@@ -608,10 +1089,12 @@ def list_emails(
     """
     query = db.query(models.Email).order_by(models.Email.received_at.desc())
 
-    # Free tier / unauthenticated: limit to last 30 days
-    if not current_user or not current_user.is_pro:
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-        query = query.filter(models.Email.received_at >= thirty_days_ago)
+    # Tier-based archive depth
+    plan = get_effective_plan(current_user) if current_user else "free"
+    archive_days = get_limit(plan, "archive_days")
+    if archive_days is not None:
+        cutoff = datetime.utcnow() - timedelta(days=archive_days)
+        query = query.filter(models.Email.received_at >= cutoff)
 
     if brand:
         query = query.filter(models.Email.brand == brand)
@@ -669,11 +1152,17 @@ def get_emails_html(
     if len(ids) > 50:
         ids = ids[:50]
 
-    if not current_user.is_pro:
+    plan = get_effective_plan(current_user)
+    view_limit = get_limit(plan, "email_views_per_day")
+    if view_limit is not None:
         usage = get_or_create_daily_usage(db, current_user.id)
-        remaining = 10 - usage.html_views
+        remaining = view_limit - usage.html_views
         if remaining <= 0:
-            raise HTTPException(status_code=403, detail="Daily HTML view limit reached (10/day). Upgrade to Pro for unlimited access.")
+            raise HTTPException(
+                status_code=403,
+                detail=f"Daily email view limit reached ({view_limit}/day). Upgrade for more access.",
+                headers={"X-Upgrade-To": check_numeric_limit(plan, "email_views_per_day", usage.html_views).get("upgrade_to", "")},
+            )
         ids = ids[:remaining]
         usage.html_views += len(ids)
         db.commit()
@@ -690,13 +1179,19 @@ def get_email_html(
     current_user: Optional[models.User] = Depends(get_optional_user),
     db: Session = Depends(get_db),
 ):
-    """Get just the HTML content for a single email. Free users limited to 10/day."""
-    if current_user and not current_user.is_pro:
-        usage = get_or_create_daily_usage(db, current_user.id)
-        if usage.html_views >= 10:
-            raise HTTPException(status_code=403, detail="Daily HTML view limit reached (10/day). Upgrade to Pro for unlimited access.")
-        usage.html_views += 1
-        db.commit()
+    """Get just the HTML content for a single email. Tier-based daily limits."""
+    if current_user:
+        plan = get_effective_plan(current_user)
+        view_limit = get_limit(plan, "email_views_per_day")
+        if view_limit is not None:
+            usage = get_or_create_daily_usage(db, current_user.id)
+            if usage.html_views >= view_limit:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Daily email view limit reached ({view_limit}/day). Upgrade for more access.",
+                )
+            usage.html_views += 1
+            db.commit()
 
     email = db.query(models.Email).filter(models.Email.id == email_id).first()
     if not email:
@@ -751,17 +1246,17 @@ def get_email(
 
     html_content = email.html
 
-    # Enforce 10/day HTML view limit for free users
-    if current_user and not current_user.is_pro:
-        usage = get_or_create_daily_usage(db, current_user.id)
-        if usage.html_views >= 10:
-            html_content = "<div style='text-align:center;padding:60px 20px;font-family:sans-serif;'><h2>Daily limit reached</h2><p>You've viewed 10 emails today. Upgrade to Pro for unlimited access.</p><a href='/pricing' style='color:#c45a3c;font-weight:600;'>View Plans</a></div>"
-        else:
-            usage.html_views += 1
-            db.commit()
-    elif not current_user:
-        # Unauthenticated: allow viewing but don't track
-        pass
+    # Enforce tier-based HTML view limit
+    if current_user:
+        plan = get_effective_plan(current_user)
+        view_limit = get_limit(plan, "email_views_per_day")
+        if view_limit is not None:
+            usage = get_or_create_daily_usage(db, current_user.id)
+            if usage.html_views >= view_limit:
+                html_content = "<div style='text-align:center;padding:60px 20px;font-family:sans-serif;'><h2>Daily limit reached</h2><p>You've viewed your daily limit of emails. Upgrade for more access.</p><a href='/pricing' style='color:#c45a3c;font-weight:600;'>View Plans</a></div>"
+            else:
+                usage.html_views += 1
+                db.commit()
 
     # Add preview_image_url
     email_dict = {
@@ -1635,13 +2130,19 @@ def get_brand_analytics(
     is_authenticated = current_user is not None
     is_sample = brand_name.strip().lower() == SAMPLE_BRAND
 
-    # Free tier: 5 brand analytics views per day
-    if current_user and not current_user.is_pro:
-        usage = get_or_create_daily_usage(db, current_user.id)
-        if usage.brand_views >= 5:
-            raise HTTPException(status_code=403, detail="Daily brand analytics limit reached (5/day). Upgrade to Pro for unlimited access.")
-        usage.brand_views += 1
-        db.commit()
+    # Tier-based brand analytics view limits
+    if current_user:
+        plan = get_effective_plan(current_user)
+        brand_limit = get_limit(plan, "brand_pages_per_day")
+        if brand_limit is not None:
+            usage = get_or_create_daily_usage(db, current_user.id)
+            if usage.brand_views >= brand_limit:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Daily brand analytics limit reached ({brand_limit}/day). Upgrade for more access.",
+                )
+            usage.brand_views += 1
+            db.commit()
     
     # Get all emails for this brand
     emails = db.query(models.Email).filter(
@@ -1750,9 +2251,11 @@ def get_industry_analytics(
     
     is_authenticated = current_user is not None
 
-    # Free users get 403 — pro-only endpoint
-    if current_user and not current_user.is_pro:
-        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+    # Require at least Starter plan for analytics
+    if current_user:
+        plan = get_effective_plan(current_user)
+        if plan == "free":
+            raise HTTPException(status_code=403, detail="Starter plan or higher required for full analytics. Upgrade at /pricing")
 
     # Get all emails for this industry
     emails = db.query(models.Email).filter(
@@ -1826,9 +2329,11 @@ def compare_brands(
     
     is_authenticated = current_user is not None
 
-    # Free users get 403 — pro-only endpoint
-    if current_user and not current_user.is_pro:
-        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+    # Require at least Starter plan for analytics
+    if current_user:
+        plan = get_effective_plan(current_user)
+        if plan == "free":
+            raise HTTPException(status_code=403, detail="Starter plan or higher required for full analytics. Upgrade at /pricing")
 
     brand_list = [b.strip() for b in brands.split(",") if b.strip()]
     
@@ -1914,9 +2419,11 @@ def get_subject_lines(
     """
     is_authenticated = current_user is not None
 
-    # Free users get 403 — pro-only endpoint
-    if current_user and not current_user.is_pro:
-        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+    # Require at least Starter plan for analytics
+    if current_user:
+        plan = get_effective_plan(current_user)
+        if plan == "free":
+            raise HTTPException(status_code=403, detail="Starter plan or higher required for full analytics. Upgrade at /pricing")
 
     if not is_authenticated:
         return {
@@ -1974,9 +2481,11 @@ def get_brand_calendar(
     
     is_authenticated = current_user is not None
 
-    # Free users get 403 — pro-only endpoint
-    if current_user and not current_user.is_pro:
-        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+    # Require at least Starter plan for analytics
+    if current_user:
+        plan = get_effective_plan(current_user)
+        if plan == "free":
+            raise HTTPException(status_code=403, detail="Starter plan or higher required for full analytics. Upgrade at /pricing")
 
     # Calculate date range
     end_date = datetime.utcnow()
@@ -2050,9 +2559,11 @@ def get_analytics_overview(
     
     is_authenticated = current_user is not None
 
-    # Free users get 403 — pro-only endpoint
-    if current_user and not current_user.is_pro:
-        raise HTTPException(status_code=403, detail="Pro subscription required for full analytics. Upgrade at /pricing")
+    # Require at least Starter plan for analytics
+    if current_user:
+        plan = get_effective_plan(current_user)
+        if plan == "free":
+            raise HTTPException(status_code=403, detail="Starter plan or higher required for full analytics. Upgrade at /pricing")
 
     # Total counts
     total_emails = db.query(models.Email).count()
