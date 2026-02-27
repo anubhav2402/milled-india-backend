@@ -33,3 +33,6 @@ openai
 
 # Rate Limiting
 slowapi
+
+# Twitter/X API
+tweepy

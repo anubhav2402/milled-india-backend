@@ -8,7 +8,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 
 from . import models, schemas
 from .db import Base, SessionLocal, engine
@@ -26,6 +26,7 @@ from .auth import (
     require_plan,
 )
 from .plans import get_effective_plan, PLAN_LIMITS, check_numeric_limit, get_limit
+from .twitter import generate_tweet_content, post_tweet, is_twitter_configured
 from .payments import (
     create_subscription,
     verify_payment_signature,
@@ -209,6 +210,10 @@ def run_migrations():
             conn.commit()
         except Exception:
             pass
+
+    # Create tweet_queue table
+    if not inspect(engine).has_table("tweet_queue"):
+        models.TweetQueue.__table__.create(engine)
 
 run_migrations()
 
@@ -3379,3 +3384,148 @@ def seo_campaign_detail(festival_slug: str, year: int, db: Session = Depends(get
             "top_subject_words": top_subject_words,
         },
     }
+
+
+# ── Admin: Tweet Queue ──
+
+@app.get("/admin/tweets")
+def list_tweets(
+    status: str = None,
+    limit: int = 50,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    q = db.query(models.TweetQueue).order_by(models.TweetQueue.created_at.desc())
+    if status:
+        q = q.filter(models.TweetQueue.status == status)
+    tweets = q.limit(limit).all()
+    return [
+        {
+            "id": t.id,
+            "content": t.content,
+            "tweet_type": t.tweet_type,
+            "status": t.status,
+            "scheduled_for": t.scheduled_for.isoformat() if t.scheduled_for else None,
+            "posted_at": t.posted_at.isoformat() if t.posted_at else None,
+            "twitter_id": t.twitter_id,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+            "char_count": len(t.content),
+        }
+        for t in tweets
+    ]
+
+
+@app.post("/admin/tweets/generate")
+def generate_tweets(
+    tweet_type: str = "daily_digest",
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    valid_types = ["daily_digest", "weekly_digest", "brand_spotlight", "subject_line_insight"]
+    if tweet_type not in valid_types:
+        raise HTTPException(400, f"Invalid type. Must be one of: {valid_types}")
+
+    content = generate_tweet_content(tweet_type, db)
+    tweet = models.TweetQueue(
+        content=content,
+        tweet_type=tweet_type,
+        status="draft",
+    )
+    db.add(tweet)
+    db.commit()
+    db.refresh(tweet)
+    return {
+        "id": tweet.id,
+        "content": tweet.content,
+        "tweet_type": tweet.tweet_type,
+        "status": tweet.status,
+        "char_count": len(tweet.content),
+    }
+
+
+@app.patch("/admin/tweets/{tweet_id}/approve")
+def approve_tweet(
+    tweet_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    tweet = db.query(models.TweetQueue).filter(models.TweetQueue.id == tweet_id).first()
+    if not tweet:
+        raise HTTPException(404, "Tweet not found")
+    tweet.status = "approved"
+    tweet.updated_at = datetime.utcnow()
+    db.commit()
+    return {"id": tweet.id, "status": "approved"}
+
+
+@app.patch("/admin/tweets/{tweet_id}/reject")
+def reject_tweet(
+    tweet_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    tweet = db.query(models.TweetQueue).filter(models.TweetQueue.id == tweet_id).first()
+    if not tweet:
+        raise HTTPException(404, "Tweet not found")
+    tweet.status = "rejected"
+    tweet.updated_at = datetime.utcnow()
+    db.commit()
+    return {"id": tweet.id, "status": "rejected"}
+
+
+@app.patch("/admin/tweets/{tweet_id}/edit")
+def edit_tweet(
+    tweet_id: int,
+    body: dict,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    tweet = db.query(models.TweetQueue).filter(models.TweetQueue.id == tweet_id).first()
+    if not tweet:
+        raise HTTPException(404, "Tweet not found")
+    new_content = body.get("content", "").strip()
+    if not new_content:
+        raise HTTPException(400, "Content cannot be empty")
+    if len(new_content) > 280:
+        raise HTTPException(400, f"Tweet too long ({len(new_content)}/280 chars)")
+    tweet.content = new_content
+    tweet.updated_at = datetime.utcnow()
+    db.commit()
+    return {"id": tweet.id, "content": tweet.content, "char_count": len(tweet.content)}
+
+
+@app.post("/admin/tweets/{tweet_id}/post")
+def post_tweet_endpoint(
+    tweet_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    tweet = db.query(models.TweetQueue).filter(models.TweetQueue.id == tweet_id).first()
+    if not tweet:
+        raise HTTPException(404, "Tweet not found")
+    if tweet.status == "posted":
+        raise HTTPException(400, "Tweet already posted")
+    if not is_twitter_configured():
+        raise HTTPException(400, "Twitter API not configured. Set TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET env vars.")
+
+    twitter_id = post_tweet(tweet.content)
+    tweet.status = "posted"
+    tweet.posted_at = datetime.utcnow()
+    tweet.twitter_id = twitter_id
+    tweet.updated_at = datetime.utcnow()
+    db.commit()
+    return {"id": tweet.id, "status": "posted", "twitter_id": twitter_id}
+
+
+@app.delete("/admin/tweets/{tweet_id}")
+def delete_tweet(
+    tweet_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    tweet = db.query(models.TweetQueue).filter(models.TweetQueue.id == tweet_id).first()
+    if not tweet:
+        raise HTTPException(404, "Tweet not found")
+    db.delete(tweet)
+    db.commit()
+    return {"deleted": True}

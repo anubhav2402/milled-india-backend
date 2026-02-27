@@ -187,3 +187,18 @@ class BrandClassification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
+class TweetQueue(Base):
+    """Queue of generated tweets awaiting approval and posting."""
+    __tablename__ = "tweet_queue"
+
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)  # Tweet text (max 280 chars)
+    tweet_type = Column(String, nullable=False, index=True)  # daily_digest, weekly_digest, brand_spotlight, subject_line_insight
+    status = Column(String, default="draft", index=True)  # draft, approved, posted, rejected
+    scheduled_for = Column(DateTime, nullable=True)
+    posted_at = Column(DateTime, nullable=True)
+    twitter_id = Column(String, nullable=True)  # Twitter's tweet ID after posting
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
