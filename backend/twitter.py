@@ -41,6 +41,7 @@ def get_twitter_client() -> tweepy.Client:
         consumer_secret=os.getenv("TWITTER_API_SECRET"),
         access_token=os.getenv("TWITTER_ACCESS_TOKEN"),
         access_token_secret=os.getenv("TWITTER_ACCESS_TOKEN_SECRET"),
+        wait_on_rate_limit=False,
     )
     return client
 
@@ -126,7 +127,8 @@ def _call_claude_for_tweet(system_prompt: str, user_prompt: str) -> str:
 # ---------------------------------------------------------------------------
 
 SITE_URL = "\nhttps://www.mailmuse.in?ref=twitter"
-MAX_TWEET_BODY_LEN = 270  # leave room for the appended URL
+# Twitter counts URLs as 23 chars (t.co) + 1 for newline = 24.  280 - 24 = 256.
+MAX_TWEET_BODY_LEN = 255
 
 SYSTEM_PROMPT = (
     "You are a witty, concise social-media copywriter for MailMuse, "

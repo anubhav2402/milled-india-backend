@@ -3537,7 +3537,13 @@ def post_tweet_endpoint(
     if not is_twitter_configured():
         raise HTTPException(400, "Twitter API not configured. Set TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET env vars.")
 
-    twitter_id = post_tweet(tweet.content)
+    try:
+        twitter_id = post_tweet(tweet.content)
+    except RuntimeError as exc:
+        raise HTTPException(500, f"Twitter API error: {exc}")
+    except Exception as exc:
+        raise HTTPException(500, f"Failed to post: {exc}")
+
     tweet.status = "posted"
     tweet.posted_at = datetime.utcnow()
     tweet.twitter_id = twitter_id
