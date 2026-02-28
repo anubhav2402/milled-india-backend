@@ -313,6 +313,30 @@ def list_users(
     }
 
 
+@app.patch("/admin/users/{user_id}/plan")
+def admin_set_user_plan(
+    user_id: int,
+    tier: str = Query(..., description="Plan tier: free, starter, pro, agency"),
+    current_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Admin: set a user's subscription tier."""
+    if tier not in ("free", "starter", "pro", "agency"):
+        raise HTTPException(400, f"Invalid tier: {tier}")
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.subscription_tier = tier
+    user.subscription_expires_at = None  # No expiry for admin-granted plans
+    db.commit()
+    return {
+        "id": user.id,
+        "email": user.email,
+        "subscription_tier": user.subscription_tier,
+        "effective_plan": user.effective_plan,
+    }
+
+
 @app.get("/admin/newsletter-subscribers")
 def list_newsletter_subscribers(
     skip: int = 0,
