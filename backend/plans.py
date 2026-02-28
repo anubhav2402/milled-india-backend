@@ -49,6 +49,8 @@ PLAN_LIMITS = {
         "downloadable_reports": False,
         "follows": 3,
         "bookmarks": 10,
+        "email_analysis": "teaser",        # overall score only
+        "ai_generator": False,
     },
     "starter": {
         "archive_days": 180,
@@ -67,6 +69,8 @@ PLAN_LIMITS = {
         "downloadable_reports": False,
         "follows": 10,
         "bookmarks": 50,
+        "email_analysis": "full",          # full dimension breakdown
+        "ai_generator": False,
     },
     "pro": {
         "archive_days": None,              # None = unlimited
@@ -85,6 +89,8 @@ PLAN_LIMITS = {
         "downloadable_reports": False,
         "follows": None,
         "bookmarks": None,
+        "email_analysis": "full",
+        "ai_generator": 10,               # 10 generations per month
     },
     "agency": {
         "archive_days": None,
@@ -103,6 +109,8 @@ PLAN_LIMITS = {
         "downloadable_reports": True,
         "follows": None,
         "bookmarks": None,
+        "email_analysis": "full",
+        "ai_generator": None,             # unlimited
     },
 }
 

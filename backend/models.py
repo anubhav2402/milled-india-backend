@@ -116,6 +116,7 @@ class UserDailyUsage(Base):
     brand_views = Column(Integer, default=0)
     html_exports = Column(Integer, default=0)  # Monthly counter for template exports
     exports_reset_at = Column(DateTime, nullable=True)  # When to reset export counter
+    ai_generations = Column(Integer, default=0)  # Monthly counter for AI email generations
 
     __table_args__ = (
         UniqueConstraint("user_id", "usage_date", name="uq_user_daily_usage"),

@@ -27,6 +27,8 @@ from .auth import (
 )
 from .plans import get_effective_plan, PLAN_LIMITS, check_numeric_limit, get_limit
 from .twitter import generate_tweet_content, post_tweet, is_twitter_configured
+from .email_analysis import analyze_email
+from .email_generator import extract_template_schema, generate_email
 from .payments import (
     create_subscription,
     verify_payment_signature,
@@ -129,6 +131,7 @@ def run_migrations():
         usage_columns = [
             ("html_exports", "INTEGER DEFAULT 0"),
             ("exports_reset_at", "TIMESTAMP"),
+            ("ai_generations", "INTEGER DEFAULT 0"),
         ]
         for col_name, col_type in usage_columns:
             try:
@@ -3564,3 +3567,135 @@ def delete_tweet(
     db.delete(tweet)
     db.commit()
     return {"deleted": True}
+
+
+# ── Email Analysis ──
+
+@app.get("/emails/{email_id}/analysis")
+def get_email_analysis(
+    email_id: int,
+    current_user: Optional[models.User] = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Analyse an email across 5 dimensions (Subject, Copy, CTA, Design, Strategy).
+    Free users get teaser (overall score only). Starter+ get full breakdown.
+    """
+    email = db.query(models.Email).filter(models.Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    result = analyze_email(
+        subject=email.subject or "",
+        html=email.html or "",
+        email_type=email.type,
+        industry=email.industry,
+        received_at=email.received_at,
+        preview=email.preview,
+    )
+
+    # Plan gating: free users only see overall score
+    plan = get_effective_plan(current_user) if current_user else "free"
+    analysis_level = get_limit(plan, "email_analysis") if "email_analysis" in PLAN_LIMITS.get(plan, {}) else ("full" if plan != "free" else "teaser")
+
+    if analysis_level == "teaser" or (not current_user and analysis_level != "full"):
+        return {
+            "overall_score": result["overall_score"],
+            "overall_grade": result["overall_grade"],
+            "dimensions": None,
+            "gated": True,
+            "required_plan": "starter",
+        }
+
+    return {
+        **result,
+        "gated": False,
+    }
+
+
+# ── Email Generator ──
+
+@app.post("/emails/{email_id}/extract-template")
+def extract_email_template(
+    email_id: int,
+    current_user: models.User = Depends(require_plan("pro")),
+    db: Session = Depends(get_db),
+):
+    """Extract a template schema from an existing email. Pro+ only."""
+    email = db.query(models.Email).filter(models.Email.id == email_id).first()
+    if not email:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    schema = extract_template_schema(email.html or "")
+    return {
+        "email_id": email.id,
+        "brand": email.brand,
+        "type": email.type,
+        "subject": email.subject,
+        "template": schema,
+    }
+
+
+class GenerateEmailRequest(schemas.BaseModel):
+    template_schema: dict
+    brand_name: str
+    brand_url: str = ""
+    industry: str = ""
+    tone: str = "professional"
+    instructions: str = ""
+
+
+@app.post("/ai/generate-email")
+def ai_generate_email(
+    req: GenerateEmailRequest,
+    current_user: models.User = Depends(require_plan("pro")),
+    db: Session = Depends(get_db),
+):
+    """Generate a new email using AI based on a template schema. Pro+ only."""
+    # Rate limit: check monthly AI generations
+    plan = get_effective_plan(current_user)
+    ai_limit = PLAN_LIMITS.get(plan, {}).get("ai_generator")
+
+    if ai_limit is not None and ai_limit is not False and isinstance(ai_limit, int):
+        # Count generations this month
+        from datetime import date
+        month_start = date.today().replace(day=1)
+        usage = (
+            db.query(models.UserDailyUsage)
+            .filter(
+                models.UserDailyUsage.user_id == current_user.id,
+                models.UserDailyUsage.usage_date >= month_start,
+            )
+            .all()
+        )
+        total_generations = sum(getattr(u, "ai_generations", 0) or 0 for u in usage)
+        if total_generations >= ai_limit:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Monthly AI generation limit reached ({ai_limit}). Upgrade for more.",
+            )
+
+    try:
+        result = generate_email(
+            template_schema=req.template_schema,
+            brand_name=req.brand_name,
+            brand_url=req.brand_url,
+            industry=req.industry,
+            tone=req.tone,
+            instructions=req.instructions,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(exc)[:200]}")
+
+    # Track usage
+    try:
+        daily_usage = get_or_create_daily_usage(db, current_user.id)
+        if hasattr(daily_usage, "ai_generations"):
+            daily_usage.ai_generations = (daily_usage.ai_generations or 0) + 1
+            db.commit()
+    except Exception:
+        pass  # Don't fail the request over tracking
+
+    return result
