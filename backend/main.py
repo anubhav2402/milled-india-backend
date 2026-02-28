@@ -1944,13 +1944,13 @@ def get_brand_stats(
     db: Session = Depends(get_db)
 ):
     """
-    Get statistics for all brands including send frequency.
-    Returns email count and average emails per week for each brand.
-    If not authenticated, stats are masked with "xx".
+    Get statistics for all brands including send frequency and industry.
+    Returns email count, average emails per week, and industry for each brand.
+    If not authenticated, numeric stats are masked with "xx" but industry is always shown.
     """
     from sqlalchemy import func
     from datetime import datetime, timedelta
-    
+
     # Get email counts per brand
     results = db.query(
         models.Email.brand,
@@ -1961,16 +1961,31 @@ def get_brand_stats(
         models.Email.brand.isnot(None),
         models.Email.brand != "Unknown"
     ).group_by(models.Email.brand).all()
-    
+
+    # Get most common industry per brand
+    industry_rows = db.query(
+        models.Email.brand,
+        models.Email.industry,
+        func.count(models.Email.id).label('cnt')
+    ).filter(
+        models.Email.brand.isnot(None),
+        models.Email.industry.isnot(None)
+    ).group_by(models.Email.brand, models.Email.industry).all()
+
+    brand_industries = {}
+    for row in industry_rows:
+        if row.brand not in brand_industries or row.cnt > brand_industries[row.brand][1]:
+            brand_industries[row.brand] = (row.industry, row.cnt)
+
     brand_stats = {}
     is_authenticated = current_user is not None
-    
+
     for row in results:
         brand = row.brand
         count = row.email_count
         first = row.first_email
         last = row.last_email
-        
+
         # Calculate send frequency
         if first and last and first != last:
             days = (last - first).days
@@ -1987,19 +2002,23 @@ def get_brand_stats(
                 freq = "1x"
         else:
             freq = "1x"
-        
-        # Mask stats for non-authenticated users
+
+        industry = brand_industries.get(brand, (None,))[0]
+
+        # Mask numeric stats for non-authenticated users; industry is always public
         if is_authenticated:
             brand_stats[brand] = {
                 "email_count": count,
-                "send_frequency": freq
+                "send_frequency": freq,
+                "industry": industry
             }
         else:
             brand_stats[brand] = {
                 "email_count": "xx",
-                "send_frequency": "xx"
+                "send_frequency": "xx",
+                "industry": industry
             }
-    
+
     return brand_stats
 
 
