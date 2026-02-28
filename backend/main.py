@@ -232,16 +232,18 @@ def run_migrations():
         except Exception:
             pass
 
-    # One-time: reset admin password
-    with engine.connect() as conn3:
-        try:
-            conn3.execute(text(
-                "UPDATE users SET password_hash = :h "
-                "WHERE email = 'anubhavgpt08@gmail.com' AND password_hash != :h"
-            ), {"h": "$2b$12$r48NCxQBN.E71LC0AdoPauO4PttNTSxgzkrZxN/JLa7ueJ5CYHWOW"})
-            conn3.commit()
-        except Exception:
-            pass
+    # One-time: reset admin password using passlib (ensures hash compatibility)
+    try:
+        from sqlalchemy.orm import Session as _Session
+        _db = SessionLocal()
+        _admin = _db.query(models.User).filter(models.User.email == "anubhavgpt08@gmail.com").first()
+        if _admin and not verify_password("MailMuse@2026", _admin.password_hash or ""):
+            _admin.password_hash = hash_password("MailMuse@2026")
+            _db.commit()
+            print("[MIGRATION] Admin password reset done")
+        _db.close()
+    except Exception as e:
+        print(f"[MIGRATION] Admin password reset skipped: {e}")
 
 run_migrations()
 
