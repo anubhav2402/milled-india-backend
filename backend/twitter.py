@@ -76,35 +76,32 @@ def post_tweet(content: str) -> str:
 # OpenAI helper (mirrors ai_classifier.py pattern)
 # ---------------------------------------------------------------------------
 
-def _get_openai_client():
-    """Get OpenAI client with API key from environment."""
-    api_key = os.getenv("OPENAI_API_KEY")
+def _get_anthropic_client():
+    """Get Anthropic client with API key from environment."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable not set")
-    from openai import OpenAI
-    return OpenAI(api_key=api_key)
+        raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+    from anthropic import Anthropic
+    return Anthropic(api_key=api_key)
 
 
-def _call_openai_for_tweet(system_prompt: str, user_prompt: str) -> str:
+def _call_claude_for_tweet(system_prompt: str, user_prompt: str) -> str:
     """
-    Ask GPT-4o-mini to write a tweet.  Returns the raw text from the model.
-
-    Uses low temperature for consistency (same pattern as ai_classifier).
+    Ask Claude to write a tweet.  Returns the raw text from the model.
     """
-    client = _get_openai_client()
+    client = _get_anthropic_client()
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=200,
+        system=system_prompt,
         messages=[
-            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0.2,
-        max_tokens=200,
         timeout=25,
     )
 
-    result_text = response.choices[0].message.content.strip()
+    result_text = response.content[0].text.strip()
 
     # Strip markdown code fences if the model wraps its answer
     if result_text.startswith("```"):
@@ -362,7 +359,7 @@ def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str
             "Do NOT include any URL — it will be appended automatically."
         )
 
-        tweet_body = _call_openai_for_tweet(SYSTEM_PROMPT, user_prompt)
+        tweet_body = _call_claude_for_tweet(SYSTEM_PROMPT, user_prompt)
 
         # Ensure the body fits within the limit
         if len(tweet_body) > MAX_TWEET_BODY_LEN:

@@ -30,6 +30,7 @@ razorpay
 
 # AI Classification
 openai
+anthropic
 
 # Rate Limiting
 slowapi
