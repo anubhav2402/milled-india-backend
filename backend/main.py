@@ -3445,7 +3445,16 @@ def generate_tweets(
     if tweet_type not in valid_types:
         raise HTTPException(400, f"Invalid type. Must be one of: {valid_types}")
 
-    content = generate_tweet_content(tweet_type, db)
+    try:
+        content = generate_tweet_content(tweet_type, db)
+    except ValueError as exc:
+        raise HTTPException(400, f"Configuration error: {exc}")
+    except Exception as exc:
+        raise HTTPException(
+            500,
+            f"Failed to generate tweet: {exc}",
+        )
+
     tweet = models.TweetQueue(
         content=content,
         tweet_type=tweet_type,

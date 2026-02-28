@@ -101,6 +101,7 @@ def _call_openai_for_tweet(system_prompt: str, user_prompt: str) -> str:
         ],
         temperature=0.2,
         max_tokens=200,
+        timeout=25,
     )
 
     result_text = response.choices[0].message.content.strip()
@@ -127,12 +128,12 @@ def _call_openai_for_tweet(system_prompt: str, user_prompt: str) -> str:
 # Data queries & tweet generation per type
 # ---------------------------------------------------------------------------
 
-SITE_URL = " https://www.mailmuse.in"
+SITE_URL = "\nhttps://www.mailmuse.in?ref=twitter"
 MAX_TWEET_BODY_LEN = 270  # leave room for the appended URL
 
 SYSTEM_PROMPT = (
     "You are a witty, concise social-media copywriter for MailMuse, "
-    "an Indian email marketing intelligence platform. "
+    "an email marketing intelligence platform tracking 300+ brands worldwide. "
     "Write a single tweet (max 270 characters, no hashtags unless they "
     "feel natural). Be insightful, data-driven, and engaging. "
     "Return ONLY the tweet text — no quotes, no labels, no extra formatting."
