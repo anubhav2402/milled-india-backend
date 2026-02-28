@@ -406,6 +406,26 @@ def login(request: Request, credentials: schemas.UserLogin, db: Session = Depend
     )
 
 
+@app.post("/auth/reset-password")
+@limiter.limit("3/minute")
+def reset_password_by_secret(request: Request, payload: dict, db: Session = Depends(get_db)):
+    """Reset password using admin secret key (temporary until email-based reset is built)."""
+    secret = payload.get("secret", "")
+    email = payload.get("email", "").strip().lower()
+    new_password = payload.get("new_password", "")
+    admin_secret = os.getenv("ADMIN_RESET_SECRET", "")
+    if not admin_secret or secret != admin_secret:
+        raise HTTPException(status_code=403, detail="Invalid secret")
+    if not email or not new_password:
+        raise HTTPException(status_code=400, detail="email and new_password required")
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.password_hash = hash_password(new_password)
+    db.commit()
+    return {"message": f"Password reset for {email}"}
+
+
 @app.post("/auth/google", response_model=schemas.TokenResponse)
 @limiter.limit("10/minute")
 def google_auth(request: Request, auth_data: schemas.GoogleAuth, db: Session = Depends(get_db)):
