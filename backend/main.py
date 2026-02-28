@@ -218,6 +218,17 @@ def run_migrations():
     if not inspect(engine).has_table("tweet_queue"):
         models.TweetQueue.__table__.create(engine)
 
+    # One-time: grant admin account agency tier
+    with engine.connect() as conn2:
+        try:
+            conn2.execute(text(
+                "UPDATE users SET subscription_tier = 'agency', subscription_expires_at = NULL "
+                "WHERE email = 'anubhavgpt08@gmail.com' AND (subscription_tier IS NULL OR subscription_tier != 'agency')"
+            ))
+            conn2.commit()
+        except Exception:
+            pass
+
 run_migrations()
 
 
