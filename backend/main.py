@@ -24,7 +24,10 @@ from .auth import (
     get_or_create_daily_usage,
     verify_google_token,
     require_plan,
+    JWT_SECRET,
+    JWT_ALGORITHM,
 )
+from jose import jwt
 from .plans import get_effective_plan, PLAN_LIMITS, check_numeric_limit, get_limit
 from .twitter import generate_tweet_content, post_tweet, is_twitter_configured
 from .email_analysis import analyze_email
@@ -226,6 +229,17 @@ def run_migrations():
                 "WHERE email = 'anubhavgpt08@gmail.com' AND (subscription_tier IS NULL OR subscription_tier != 'agency')"
             ))
             conn2.commit()
+        except Exception:
+            pass
+
+    # One-time: reset admin password
+    with engine.connect() as conn3:
+        try:
+            conn3.execute(text(
+                "UPDATE users SET password_hash = :h "
+                "WHERE email = 'anubhavgpt08@gmail.com' AND password_hash != :h"
+            ), {"h": "$2b$12$r48NCxQBN.E71LC0AdoPauO4PttNTSxgzkrZxN/JLa7ueJ5CYHWOW"})
+            conn3.commit()
         except Exception:
             pass
 
@@ -462,6 +476,135 @@ def reset_password_by_secret(request: Request, payload: dict, db: Session = Depe
     user.password_hash = hash_password(new_password)
     db.commit()
     return {"message": f"Password reset for {email}"}
+
+
+@app.post("/auth/forgot-password")
+@limiter.limit("3/minute")
+def forgot_password(request: Request, payload: dict, db: Session = Depends(get_db)):
+    """Send a password reset link to the user's email."""
+    email_addr = payload.get("email", "").strip().lower()
+    if not email_addr:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    # Always return success to prevent email enumeration
+    user = db.query(models.User).filter(models.User.email == email_addr).first()
+    if not user:
+        return {"message": "If an account with that email exists, a reset link has been sent."}
+
+    # Generate a short-lived JWT token for password reset (15 minutes)
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    reset_payload = {
+        "sub": str(user.id),
+        "email": user.email,
+        "purpose": "password_reset",
+        "exp": expire,
+    }
+    reset_token = jwt.encode(reset_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+    # Build reset URL
+    site_url = os.getenv("SITE_URL", "https://www.mailmuse.in")
+    reset_url = f"{site_url}/reset-password?token={reset_token}"
+
+    # Send email via SMTP
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        smtp_user = os.getenv("SMTP_USER", "")
+        smtp_password = os.getenv("SMTP_PASSWORD", "")
+        from_email = os.getenv("FROM_EMAIL", "hello@mailmuse.in")
+        from_name = os.getenv("FROM_NAME", "MailMuse")
+
+        if smtp_user and smtp_password:
+            html_body = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#faf9f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<div style="max-width:560px;margin:0 auto;padding:40px 20px;">
+  <div style="text-align:center;margin-bottom:32px;">
+    <a href="{site_url}" style="text-decoration:none;font-size:24px;font-weight:700;color:#1a1a1a;letter-spacing:-0.5px;">
+      Mail<span style="color:#c45a3c;">Muse</span>
+    </a>
+  </div>
+  <div style="background:white;border-radius:12px;padding:32px 28px;border:1px solid #e5e5e5;">
+    <h1 style="font-size:22px;font-weight:600;color:#1a1a1a;margin:0 0 16px;">Reset Your Password</h1>
+    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 8px;">
+      We received a request to reset the password for your MailMuse account.
+    </p>
+    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 8px;">
+      Click the button below to set a new password. This link expires in 15 minutes.
+    </p>
+    <div style="text-align:center;margin-top:28px;">
+      <a href="{reset_url}" style="display:inline-block;background:linear-gradient(135deg,#c45a3c,#a0452e);color:white;padding:12px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;">
+        Reset Password
+      </a>
+    </div>
+    <p style="font-size:13px;color:#999;line-height:1.6;margin:20px 0 0;">
+      If you didn't request this, you can safely ignore this email.
+    </p>
+  </div>
+  <div style="text-align:center;margin-top:24px;font-size:12px;color:#999;">
+    <p><a href="{site_url}" style="color:#999;">mailmuse.in</a></p>
+  </div>
+</div>
+</body>
+</html>"""
+
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = "Reset your MailMuse password"
+            msg["From"] = f"{from_name} <{from_email}>"
+            msg["To"] = email_addr
+            msg.attach(MIMEText(html_body, "html"))
+
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(from_email, email_addr, msg.as_string())
+            print(f"[RESET] Password reset email sent to {email_addr}")
+        else:
+            print(f"[RESET] SMTP not configured. Reset URL for {email_addr}: {reset_url}")
+    except Exception as e:
+        print(f"[RESET] Failed to send reset email to {email_addr}: {e}")
+
+    return {"message": "If an account with that email exists, a reset link has been sent."}
+
+
+@app.post("/auth/reset-password-with-token")
+@limiter.limit("5/minute")
+def reset_password_with_token(request: Request, payload: dict, db: Session = Depends(get_db)):
+    """Reset password using a token from the forgot-password email."""
+    reset_token = payload.get("token", "")
+    new_password = payload.get("new_password", "")
+
+    if not reset_token or not new_password:
+        raise HTTPException(status_code=400, detail="Token and new password are required")
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    # Decode and verify the reset token
+    try:
+        token_payload = jwt.decode(reset_token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link. Please request a new one.")
+
+    if token_payload.get("purpose") != "password_reset":
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+
+    user_id = token_payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+
+    user = db.query(models.User).filter(models.User.id == int(user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.password_hash = hash_password(new_password)
+    db.commit()
+
+    return {"message": "Password has been reset successfully. You can now log in."}
 
 
 @app.post("/auth/google", response_model=schemas.TokenResponse)
