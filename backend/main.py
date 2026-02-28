@@ -78,7 +78,7 @@ def run_migrations():
                 conn.commit()
                 print(f"Migration: Added '{col_name}' column to users table")
             except Exception:
-                pass  # Column likely already exists
+                conn.rollback()  # Reset transaction state for PostgreSQL
 
         # Create user_daily_usage table if it doesn't exist
         try:
@@ -123,7 +123,7 @@ def run_migrations():
                 conn.commit()
                 print(f"Migration: Added '{col_name}' column to users table")
             except Exception:
-                pass  # Column likely already exists
+                conn.rollback()
 
         # New columns on user_daily_usage table
         usage_columns = [
@@ -136,7 +136,7 @@ def run_migrations():
                 conn.commit()
                 print(f"Migration: Added '{col_name}' column to user_daily_usage table")
             except Exception:
-                pass
+                conn.rollback()
 
         # Create collections table
         try:
