@@ -526,8 +526,8 @@ def register(request: Request, user_data: schemas.UserCreate, db: Session = Depe
         try:
             from backend.trial_emails import send_admin_new_signup
             send_admin_new_signup(user.email, user.name)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[Admin email] Failed to send signup notification: {e}")
 
         # Create access token
         token = create_access_token(user.id, user.email)
@@ -765,8 +765,8 @@ def google_auth(request: Request, auth_data: schemas.GoogleAuth, db: Session = D
             try:
                 from backend.trial_emails import send_admin_new_signup
                 send_admin_new_signup(user.email, user.name)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[Admin email] Failed to send signup notification: {e}")
     
     # Create access token
     token = create_access_token(user.id, user.email)
@@ -871,8 +871,8 @@ def verify_subscription(
     try:
         from backend.trial_emails import send_admin_new_subscription
         send_admin_new_subscription(current_user.email, current_user.name, tier, billing)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Admin email] Failed to send subscription notification: {e}")
 
     return {
         "message": f"{tier.title()} subscription activated",
