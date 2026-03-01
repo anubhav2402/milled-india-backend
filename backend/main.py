@@ -342,6 +342,112 @@ def list_users(
     }
 
 
+@app.get("/admin/metrics")
+def admin_metrics(
+    current_user: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Admin dashboard metrics: signups, usage, plans, etc."""
+    from sqlalchemy import func
+    from datetime import timedelta
+
+    now = datetime.utcnow()
+
+    # Total users
+    total_users = db.query(models.User).count()
+
+    # Users by plan
+    plan_counts = dict(
+        db.query(models.User.subscription_tier, func.count(models.User.id))
+        .group_by(models.User.subscription_tier)
+        .all()
+    )
+
+    # Active trials
+    active_trials = db.query(models.User).filter(
+        models.User.trial_ends_at > now
+    ).count()
+
+    # Signups per day (last 30 days)
+    thirty_days_ago = now - timedelta(days=30)
+    daily_signups_raw = (
+        db.query(
+            func.date(models.User.created_at).label("day"),
+            func.count(models.User.id).label("count"),
+        )
+        .filter(models.User.created_at >= thirty_days_ago)
+        .group_by(func.date(models.User.created_at))
+        .order_by(func.date(models.User.created_at))
+        .all()
+    )
+    daily_signups = [{"date": str(row.day), "count": row.count} for row in daily_signups_raw]
+
+    # Active users (last 7 days — users with usage records)
+    seven_days_ago = (now - timedelta(days=7)).date()
+    active_users_7d = (
+        db.query(func.count(func.distinct(models.UserDailyUsage.user_id)))
+        .filter(models.UserDailyUsage.usage_date >= seven_days_ago)
+        .scalar()
+    ) or 0
+
+    # Total page views (all time)
+    total_views = (
+        db.query(
+            func.coalesce(func.sum(models.UserDailyUsage.html_views), 0)
+            + func.coalesce(func.sum(models.UserDailyUsage.brand_views), 0)
+        ).scalar()
+    ) or 0
+
+    # Views last 7 days
+    views_7d = (
+        db.query(
+            func.coalesce(func.sum(models.UserDailyUsage.html_views), 0)
+            + func.coalesce(func.sum(models.UserDailyUsage.brand_views), 0)
+        )
+        .filter(models.UserDailyUsage.usage_date >= seven_days_ago)
+        .scalar()
+    ) or 0
+
+    # Total emails and brands in DB
+    total_emails = db.query(models.Email).count()
+    total_brands = db.query(func.count(func.distinct(models.Email.brand))).scalar() or 0
+
+    # Recent signups (last 10)
+    recent_signups = (
+        db.query(models.User)
+        .order_by(models.User.created_at.desc())
+        .limit(10)
+        .all()
+    )
+
+    # Newsletter subscribers count
+    newsletter_count = db.query(models.NewsletterSubscriber).count()
+
+    return {
+        "total_users": total_users,
+        "active_users_7d": active_users_7d,
+        "active_trials": active_trials,
+        "total_emails": total_emails,
+        "total_brands": total_brands,
+        "total_page_views": total_views,
+        "page_views_7d": views_7d,
+        "newsletter_subscribers": newsletter_count,
+        "users_by_plan": plan_counts,
+        "daily_signups": daily_signups,
+        "recent_signups": [
+            {
+                "id": u.id,
+                "email": u.email,
+                "name": u.name,
+                "plan": u.subscription_tier or "free",
+                "is_on_trial": u.is_on_trial,
+                "created_at": u.created_at.isoformat() if u.created_at else None,
+            }
+            for u in recent_signups
+        ],
+    }
+
+
 @app.patch("/admin/users/{user_id}/plan")
 def admin_set_user_plan(
     user_id: int,
