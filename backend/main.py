@@ -4005,9 +4005,33 @@ def admin_reclassify(
     from apply_classifications import BRAND_CLASSIFICATIONS
     from sqlalchemy import or_, func
 
+    # Phase A: Deterministic rename of old industry names
+    RENAME_MAP = {
+        "Women's Fashion": "Apparel & Accessories",
+        "Men's Fashion": "Apparel & Accessories",
+        "Food & Beverages": "Food & Beverage",
+        "Travel & Hospitality": "Travel & Outdoors",
+        "Electronics & Gadgets": "Electronics & Tech",
+        "Health & Wellness": "Health, Fitness & Wellness",
+        "Kids & Baby": "Baby & Kids",
+        "Sports & Fitness": "Apparel & Accessories",
+        "General Retail": "General / Department Store",
+    }
+    rename_log = []
+    for old_name, new_name in RENAME_MAP.items():
+        count = db.query(models.Email).filter(models.Email.industry == old_name).count()
+        if count > 0:
+            db.query(models.Email).filter(models.Email.industry == old_name).update(
+                {"industry": new_name}
+            )
+            rename_log.append(f"{old_name} -> {new_name} ({count} emails)")
+    if rename_log:
+        db.commit()
+
+    # Phase B: Brand-level classifications
     updated_brands = 0
     updated_emails = 0
-    log = []
+    log = rename_log
 
     for brand, (new_industry, new_subcategory) in BRAND_CLASSIFICATIONS.items():
         needs_update = db.query(models.Email).filter(
