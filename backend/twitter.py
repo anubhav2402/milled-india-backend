@@ -444,9 +444,10 @@ def _build_viral_thread(db: Session) -> str:
     stats["creative_short_subjects"] = [(r[0], r[1]) for r in creative]
 
     # ALL CAPS subject lines rate by brand
+    # Use SIMILAR TO for Postgres, avoids SQLite-only GLOB
     caps_brands = db.execute(text("""
         SELECT brand, COUNT(*) as total,
-            ROUND(100.0 * SUM(CASE WHEN subject = UPPER(subject) AND subject GLOB '*[A-Z]*' THEN 1 ELSE 0 END) / COUNT(*), 1) as caps_pct
+            ROUND(100.0 * SUM(CASE WHEN subject = UPPER(subject) AND LENGTH(subject) > 3 THEN 1 ELSE 0 END) / COUNT(*), 1) as caps_pct
         FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL
         GROUP BY brand HAVING COUNT(*) >= 20
         ORDER BY caps_pct DESC LIMIT 5
