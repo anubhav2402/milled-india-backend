@@ -26,6 +26,7 @@ from .auth import (
     require_plan,
     JWT_SECRET,
     JWT_ALGORITHM,
+    ADMIN_EMAILS,
 )
 from jose import jwt
 from .plans import get_effective_plan, PLAN_LIMITS, check_numeric_limit, get_limit
@@ -259,6 +260,7 @@ def _user_out(user: models.User) -> schemas.UserOut:
         is_pro=user.is_pro,
         is_on_trial=user.is_on_trial,
         trial_ends_at=user.trial_ends_at,
+        is_admin=user.email.lower() in ADMIN_EMAILS,
     )
 
 

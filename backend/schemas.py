@@ -30,6 +30,7 @@ class UserOut(BaseModel):
     is_pro: bool = False
     is_on_trial: bool = False
     trial_ends_at: Optional[datetime] = None
+    is_admin: bool = False
 
     class Config:
         from_attributes = True
