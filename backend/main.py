@@ -3990,3 +3990,77 @@ def ai_generate_email(
         pass  # Don't fail the request over tracking
 
     return result
+
+
+# ─── Admin: one-time reclassify ───────────────────────────────────────────────
+
+@app.post("/admin/reclassify")
+def admin_reclassify(
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Apply the 17-category taxonomy + subcategory classifications to all emails.
+    Admin-only, one-time migration endpoint. Safe to run multiple times (idempotent).
+    """
+    from apply_classifications import BRAND_CLASSIFICATIONS
+    from sqlalchemy import or_, func
+
+    updated_brands = 0
+    updated_emails = 0
+    log = []
+
+    for brand, (new_industry, new_subcategory) in BRAND_CLASSIFICATIONS.items():
+        needs_update = db.query(models.Email).filter(
+            models.Email.brand == brand,
+            or_(
+                models.Email.industry != new_industry,
+                models.Email.industry.is_(None),
+                models.Email.category != new_subcategory,
+                models.Email.category.is_(None),
+            ),
+        ).count()
+
+        if needs_update > 0:
+            db.query(models.Email).filter(models.Email.brand == brand).update({
+                "industry": new_industry,
+                "category": new_subcategory,
+            })
+
+            # Update brand_classifications cache
+            existing = db.query(models.BrandClassification).filter(
+                models.BrandClassification.brand_name.ilike(brand)
+            ).first()
+            if existing:
+                existing.industry = new_industry
+                existing.confidence = 1.0
+                existing.classified_by = "manual"
+            else:
+                db.add(models.BrandClassification(
+                    brand_name=brand,
+                    industry=new_industry,
+                    confidence=1.0,
+                    classified_by="manual",
+                ))
+
+            log.append(f"{brand}: {new_industry} / {new_subcategory} ({needs_update} emails)")
+            updated_brands += 1
+            updated_emails += needs_update
+
+    db.commit()
+
+    # Get new distribution
+    distribution = (
+        db.query(models.Email.industry, func.count(models.Email.id))
+        .group_by(models.Email.industry)
+        .order_by(func.count(models.Email.id).desc())
+        .all()
+    )
+
+    return {
+        "status": "done",
+        "updated_brands": updated_brands,
+        "updated_emails": updated_emails,
+        "changes": log,
+        "distribution": {ind: cnt for ind, cnt in distribution},
+    }
