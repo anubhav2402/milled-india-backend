@@ -1435,6 +1435,14 @@ def list_emails(
         cutoff = datetime.utcnow() - timedelta(days=archive_days)
         query = query.filter(models.Email.received_at >= cutoff)
 
+    # Search level gate: free users can only use keyword search
+    search_level = get_limit(plan, "search_level")
+    if search_level == "basic" and any([type, industry, category]):
+        raise HTTPException(
+            status_code=403,
+            detail="Advanced filters (type, industry, category) require a Starter plan or higher. Upgrade at /pricing",
+        )
+
     if brand:
         query = query.filter(models.Email.brand == brand)
     if type:
@@ -2838,14 +2846,14 @@ def get_brand_calendar(
     """
     from datetime import datetime, timedelta
     from collections import defaultdict
-    
+
     is_authenticated = current_user is not None
 
-    # Require at least Starter plan for analytics
+    # Campaign calendar requires Pro plan or higher
     if current_user:
         plan = get_effective_plan(current_user)
-        if plan == "free":
-            raise HTTPException(status_code=403, detail="Starter plan or higher required for full analytics. Upgrade at /pricing")
+        if not get_limit(plan, "campaign_calendar"):
+            raise HTTPException(status_code=403, detail="Campaign calendar requires a Pro plan or higher. Upgrade at /pricing")
 
     # Calculate date range
     end_date = datetime.utcnow()
