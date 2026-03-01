@@ -3994,9 +3994,8 @@ def ai_generate_email(
 
 # ─── Admin: one-time reclassify ───────────────────────────────────────────────
 
-@app.post("/admin/reclassify")
+@app.get("/admin/reclassify")
 def admin_reclassify(
-    admin: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
     """
