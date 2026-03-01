@@ -212,7 +212,7 @@ Return a JSON object with this exact structure:
 Important: The "html" field must contain a COMPLETE, production-ready HTML email that renders well in Gmail, Outlook, and Apple Mail. Use tables for layout. All CSS must be inline."""
 
     response = client.messages.create(
-        model="claude-sonnet-4-5-20241022",
+        model="claude-sonnet-4-5-20250929",
         max_tokens=4096,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_prompt}],
