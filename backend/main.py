@@ -30,7 +30,7 @@ from .auth import (
 )
 from jose import jwt
 from .plans import get_effective_plan, PLAN_LIMITS, check_numeric_limit, get_limit
-from .twitter import generate_tweet_content, post_tweet, is_twitter_configured
+from .twitter import generate_tweet_content, post_tweet, is_twitter_configured, get_twitter_client
 from .email_analysis import analyze_email
 from .email_generator import extract_template_schema, generate_email
 from .payments import (
