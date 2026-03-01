@@ -115,22 +115,54 @@ BRAND_MAPPING = {
     # Add more mappings as needed
 }
 
-# Industry categories
+# Industry categories (must match ai_classifier.py)
 INDUSTRIES = [
-    "Men's Fashion",
-    "Women's Fashion",
+    "Apparel & Accessories",
+    "Baby & Kids",
     "Beauty & Personal Care",
-    "Food & Beverages",
-    "Travel & Hospitality",
-    "Electronics & Gadgets",
-    "Home & Living",
-    "Health & Wellness",
-    "Finance & Fintech",
-    "Kids & Baby",
-    "Sports & Fitness",
+    "Books, Art & Stationery",
+    "Business & B2B Retail",
+    "Electronics & Tech",
     "Entertainment",
-    "General Retail",  # Fallback for multi-category retailers
+    "Finance & Fintech",
+    "Food & Beverage",
+    "General / Department Store",
+    "Gifts & Lifestyle",
+    "Health, Fitness & Wellness",
+    "Home & Living",
+    "Luxury & High-End Goods",
+    "Pets",
+    "Tools, Auto & DIY",
+    "Travel & Outdoors",
 ]
+
+# Suffixes/variants to strip when normalizing brand names for mapping lookup
+BRAND_SUFFIXES_TO_STRIP = [
+    r'\s*[-–—_,]\s*a\s+tata\s+product',
+    r'\s*[-–—_,]\s*a\s+tanishq\s+partnership',
+    r'\s*[-–—_,]\s*a\s+godrej\s+\w+\s+brand',
+    r'\s*,?\s*a\s+\w+\s+(brand|product|partnership)',
+    r'\s+(sale|promotion|promotions|rewards|new arrivals|black friday|cyber monday)$',
+    r'\s+at\s+\w+$',       # "Maeve At Brooklinen"
+    r'\s+by\s+\w+$',       # "Maeve By Anthropologie"
+    r'\+\s*clinic$',        # "Supertails+ Clinic"
+]
+
+
+def normalize_brand_name(brand):
+    """
+    Strip suffixes/variants to get the core brand name for mapping lookup.
+    E.g. "Caratlane - A Tata Product" → "caratlane"
+         "Anthropologie Sale" → "anthropologie"
+         "Net-A-Porter Rewards" → "net-a-porter"
+    """
+    if not brand:
+        return ""
+    normalized = brand.lower().strip()
+    for pattern in BRAND_SUFFIXES_TO_STRIP:
+        normalized = re.sub(pattern, '', normalized, flags=re.IGNORECASE).strip()
+    return normalized
+
 
 # Brand to Industry mapping - COMPREHENSIVE
 # This mapping covers all known brands for accurate classification
@@ -184,154 +216,154 @@ BRAND_INDUSTRY_MAPPING = {
     "drunk elephant": "Beauty & Personal Care",
     "tatcha": "Beauty & Personal Care",
     "olaplex": "Beauty & Personal Care",
-    "dyson": "Beauty & Personal Care",  # Hair tools
+    "dyson": "Electronics & Tech",  # Hair tools & home tech
     
-    # ============ Women's Fashion ============
+    # ============ Apparel & Accessories (Women's) ============
     # Indian brands
-    "myntra": "General Retail",  # Multi-category
-    "westside": "Women's Fashion",
-    "w": "Women's Fashion",
-    "biba": "Women's Fashion",
-    "fabindia": "Women's Fashion",
-    "global desi": "Women's Fashion",
-    "zivame": "Women's Fashion",
-    "clovia": "Women's Fashion",
-    "shein": "Women's Fashion",
-    "urbanic": "Women's Fashion",
-    "stalkbuylove": "Women's Fashion",
-    "faballey": "Women's Fashion",
-    "libas": "Women's Fashion",
-    "nicobar": "Women's Fashion",
-    "11.11": "Women's Fashion",
-    "11.11 / eleven eleven": "Women's Fashion",
-    "peeli dori": "Women's Fashion",
-    "ogaan": "Women's Fashion",
-    "tilfi": "Women's Fashion",
-    "manish malhotra": "Women's Fashion",
-    "tribe amrapali": "Women's Fashion",
-    "shop lune": "Women's Fashion",
-    "and": "Women's Fashion",
-    "no nasties": "Women's Fashion",
-    "truth be told": "Women's Fashion",
-    "turn black": "Women's Fashion",
+    "myntra": "General / Department Store",  # Multi-category
+    "westside": "Apparel & Accessories",
+    "w": "Apparel & Accessories",
+    "biba": "Apparel & Accessories",
+    "fabindia": "Apparel & Accessories",
+    "global desi": "Apparel & Accessories",
+    "zivame": "Apparel & Accessories",
+    "clovia": "Apparel & Accessories",
+    "shein": "Apparel & Accessories",
+    "urbanic": "Apparel & Accessories",
+    "stalkbuylove": "Apparel & Accessories",
+    "faballey": "Apparel & Accessories",
+    "libas": "Apparel & Accessories",
+    "nicobar": "Apparel & Accessories",
+    "11.11": "Apparel & Accessories",
+    "11.11 / eleven eleven": "Apparel & Accessories",
+    "peeli dori": "Apparel & Accessories",
+    "ogaan": "Apparel & Accessories",
+    "tilfi": "Apparel & Accessories",
+    "manish malhotra": "Apparel & Accessories",
+    "tribe amrapali": "Apparel & Accessories",
+    "shop lune": "Apparel & Accessories",
+    "and": "Apparel & Accessories",
+    "no nasties": "Apparel & Accessories",
+    "truth be told": "Apparel & Accessories",
+    "turn black": "Apparel & Accessories",
     # International fashion brands
-    "ganni": "Women's Fashion",
-    "reformation": "Women's Fashion",
-    "luisaviaroma": "Women's Fashion",
-    "mytheresa": "Women's Fashion",
-    "anthropologie": "Women's Fashion",
-    "maeve by anthropologie": "Women's Fashion",
-    "zara": "Women's Fashion",
-    "mango": "Women's Fashion",
-    "mango sale": "Women's Fashion",
-    "h&m": "Women's Fashion",
-    "gucci": "Women's Fashion",
-    "balenciaga": "Women's Fashion",
-    "net-a-porter": "Women's Fashion",
-    "farfetch": "Women's Fashion",
-    "revolve": "Women's Fashion",
-    "asos": "Women's Fashion",
-    "free people": "Women's Fashion",
-    "cos": "Women's Fashion",
-    "& other stories": "Women's Fashion",
-    "everlane": "Women's Fashion",
-    "realisation par": "Women's Fashion",
-    "house of cb": "Women's Fashion",
-    "princess polly": "Women's Fashion",
+    "ganni": "Apparel & Accessories",
+    "reformation": "Apparel & Accessories",
+    "luisaviaroma": "Apparel & Accessories",
+    "mytheresa": "Apparel & Accessories",
+    "anthropologie": "Apparel & Accessories",
+    "maeve by anthropologie": "Apparel & Accessories",
+    "zara": "Apparel & Accessories",
+    "mango": "Apparel & Accessories",
+    "mango sale": "Apparel & Accessories",
+    "h&m": "Apparel & Accessories",
+    "gucci": "Apparel & Accessories",
+    "balenciaga": "Apparel & Accessories",
+    "net-a-porter": "Apparel & Accessories",
+    "farfetch": "Apparel & Accessories",
+    "revolve": "Apparel & Accessories",
+    "asos": "Apparel & Accessories",
+    "free people": "Apparel & Accessories",
+    "cos": "Apparel & Accessories",
+    "& other stories": "Apparel & Accessories",
+    "everlane": "Apparel & Accessories",
+    "realisation par": "Apparel & Accessories",
+    "house of cb": "Apparel & Accessories",
+    "princess polly": "Apparel & Accessories",
     
-    # ============ Men's Fashion ============
-    "bewakoof": "Men's Fashion",
-    "the souled store": "Men's Fashion",
-    "snitch": "Men's Fashion",
-    "rare rabbit": "Men's Fashion",
-    "jack & jones": "Men's Fashion",
-    "levis": "Men's Fashion",
-    "levi's": "Men's Fashion",
-    "peter england": "Men's Fashion",
-    "van heusen": "Men's Fashion",
-    "louis philippe": "Men's Fashion",
-    "allen solly": "Men's Fashion",
-    "uniqlo": "Men's Fashion",
-    "gap": "Men's Fashion",
-    "calvin klein": "Men's Fashion",
-    "calvin klein outlet": "Men's Fashion",
-    "bombay shirt company": "Men's Fashion",
-    "march tee": "Men's Fashion",
-    "tommy hilfiger": "Men's Fashion",
-    "ralph lauren": "Men's Fashion",
-    "hugo boss": "Men's Fashion",
-    "massimo dutti": "Men's Fashion",
-    "bonobos": "Men's Fashion",
-    "j.crew": "Men's Fashion",
-    "banana republic": "Men's Fashion",
-    "brooks brothers": "Men's Fashion",
+    # ============ Apparel & Accessories (Men's) ============
+    "bewakoof": "Apparel & Accessories",
+    "the souled store": "Apparel & Accessories",
+    "snitch": "Apparel & Accessories",
+    "rare rabbit": "Apparel & Accessories",
+    "jack & jones": "Apparel & Accessories",
+    "levis": "Apparel & Accessories",
+    "levi's": "Apparel & Accessories",
+    "peter england": "Apparel & Accessories",
+    "van heusen": "Apparel & Accessories",
+    "louis philippe": "Apparel & Accessories",
+    "allen solly": "Apparel & Accessories",
+    "uniqlo": "Apparel & Accessories",
+    "gap": "Apparel & Accessories",
+    "calvin klein": "Apparel & Accessories",
+    "calvin klein outlet": "Apparel & Accessories",
+    "bombay shirt company": "Apparel & Accessories",
+    "march tee": "Apparel & Accessories",
+    "tommy hilfiger": "Apparel & Accessories",
+    "ralph lauren": "Apparel & Accessories",
+    "hugo boss": "Apparel & Accessories",
+    "massimo dutti": "Apparel & Accessories",
+    "bonobos": "Apparel & Accessories",
+    "j.crew": "Apparel & Accessories",
+    "banana republic": "Apparel & Accessories",
+    "brooks brothers": "Apparel & Accessories",
     
-    # ============ Food & Beverages ============
-    "zomato": "Food & Beverages",
-    "swiggy": "Food & Beverages",
-    "bigbasket": "Food & Beverages",
-    "grofers": "Food & Beverages",
-    "blinkit": "Food & Beverages",
-    "zepto": "Food & Beverages",
-    "instamart": "Food & Beverages",
-    "dunzo": "Food & Beverages",
-    "dominos": "Food & Beverages",
-    "mcdonalds": "Food & Beverages",
-    "burger king": "Food & Beverages",
-    "kfc": "Food & Beverages",
-    "pizza hut": "Food & Beverages",
-    "starbucks": "Food & Beverages",
-    "chaayos": "Food & Beverages",
-    "blue tokai": "Food & Beverages",
-    "sleepy owl": "Food & Beverages",
-    "licious": "Food & Beverages",
-    "freshmeat": "Food & Beverages",
-    "country delight": "Food & Beverages",
-    "farmer's dog": "Food & Beverages",
-    "the farmer's dog": "Food & Beverages",
-    "native pet": "Food & Beverages",  # Pet food
-    "matt | the farmer's dog": "Food & Beverages",
+    # ============ Food & Beverage ============
+    "zomato": "Food & Beverage",
+    "swiggy": "Food & Beverage",
+    "bigbasket": "Food & Beverage",
+    "grofers": "Food & Beverage",
+    "blinkit": "Food & Beverage",
+    "zepto": "Food & Beverage",
+    "instamart": "Food & Beverage",
+    "dunzo": "Food & Beverage",
+    "dominos": "Food & Beverage",
+    "mcdonalds": "Food & Beverage",
+    "burger king": "Food & Beverage",
+    "kfc": "Food & Beverage",
+    "pizza hut": "Food & Beverage",
+    "starbucks": "Food & Beverage",
+    "chaayos": "Food & Beverage",
+    "blue tokai": "Food & Beverage",
+    "sleepy owl": "Food & Beverage",
+    "licious": "Food & Beverage",
+    "freshmeat": "Food & Beverage",
+    "country delight": "Food & Beverage",
+    "farmer's dog": "Pets",
+    "the farmer's dog": "Pets",
+    "native pet": "Pets",  # Pet food
+    "matt | the farmer's dog": "Pets",
     
-    # ============ Travel & Hospitality ============
-    "makemytrip": "Travel & Hospitality",
-    "goibibo": "Travel & Hospitality",
-    "cleartrip": "Travel & Hospitality",
-    "yatra": "Travel & Hospitality",
-    "ixigo": "Travel & Hospitality",
-    "booking": "Travel & Hospitality",
-    "airbnb": "Travel & Hospitality",
-    "oyo": "Travel & Hospitality",
-    "treebo": "Travel & Hospitality",
-    "fabhotels": "Travel & Hospitality",
-    "redbus": "Travel & Hospitality",
-    "indigo": "Travel & Hospitality",
-    "spicejet": "Travel & Hospitality",
-    "airindia": "Travel & Hospitality",
-    "air india": "Travel & Hospitality",
-    "vistara": "Travel & Hospitality",
-    "all accor": "Travel & Hospitality",
-    "all - accor live limitless": "Travel & Hospitality",
-    "accor": "Travel & Hospitality",
-    "marriott": "Travel & Hospitality",
-    "hilton": "Travel & Hospitality",
-    "taj": "Travel & Hospitality",
-    "ihg": "Travel & Hospitality",
-    "hyatt": "Travel & Hospitality",
+    # ============ Travel & Outdoors ============
+    "makemytrip": "Travel & Outdoors",
+    "goibibo": "Travel & Outdoors",
+    "cleartrip": "Travel & Outdoors",
+    "yatra": "Travel & Outdoors",
+    "ixigo": "Travel & Outdoors",
+    "booking": "Travel & Outdoors",
+    "airbnb": "Travel & Outdoors",
+    "oyo": "Travel & Outdoors",
+    "treebo": "Travel & Outdoors",
+    "fabhotels": "Travel & Outdoors",
+    "redbus": "Travel & Outdoors",
+    "indigo": "Travel & Outdoors",
+    "spicejet": "Travel & Outdoors",
+    "airindia": "Travel & Outdoors",
+    "air india": "Travel & Outdoors",
+    "vistara": "Travel & Outdoors",
+    "all accor": "Travel & Outdoors",
+    "all - accor live limitless": "Travel & Outdoors",
+    "accor": "Travel & Outdoors",
+    "marriott": "Travel & Outdoors",
+    "hilton": "Travel & Outdoors",
+    "taj": "Travel & Outdoors",
+    "ihg": "Travel & Outdoors",
+    "hyatt": "Travel & Outdoors",
     
-    # ============ Electronics & Gadgets ============
-    "croma": "Electronics & Gadgets",
-    "reliance digital": "Electronics & Gadgets",
-    "vijay sales": "Electronics & Gadgets",
-    "apple": "Electronics & Gadgets",
-    "samsung": "Electronics & Gadgets",
-    "oneplus": "Electronics & Gadgets",
-    "xiaomi": "Electronics & Gadgets",
-    "realme": "Electronics & Gadgets",
-    "boat": "Electronics & Gadgets",
-    "noise": "Electronics & Gadgets",
-    "fire-boltt": "Electronics & Gadgets",
-    "pebble": "Electronics & Gadgets",
-    "fossil": "Electronics & Gadgets",  # Watches/wearables
+    # ============ Electronics & Tech ============
+    "croma": "Electronics & Tech",
+    "reliance digital": "Electronics & Tech",
+    "vijay sales": "Electronics & Tech",
+    "apple": "Electronics & Tech",
+    "samsung": "Electronics & Tech",
+    "oneplus": "Electronics & Tech",
+    "xiaomi": "Electronics & Tech",
+    "realme": "Electronics & Tech",
+    "boat": "Electronics & Tech",
+    "noise": "Electronics & Tech",
+    "fire-boltt": "Electronics & Tech",
+    "pebble": "Electronics & Tech",
+    "fossil": "Electronics & Tech",  # Watches/wearables
     
     # ============ Home & Living ============
     "pepperfry": "Home & Living",
@@ -356,26 +388,26 @@ BRAND_INDUSTRY_MAPPING = {
     "cb2": "Home & Living",
     "house of things": "Home & Living",
     
-    # ============ Health & Wellness ============
-    "pharmeasy": "Health & Wellness",
-    "netmeds": "Health & Wellness",
-    "1mg": "Health & Wellness",
-    "apollo pharmacy": "Health & Wellness",
-    "apollo 24|7": "Health & Wellness",
-    "apollo24|7": "Health & Wellness",
-    "healthkart": "Health & Wellness",
-    "cult.fit": "Health & Wellness",
-    "cure.fit": "Health & Wellness",
-    "practo": "Health & Wellness",
-    "mfine": "Health & Wellness",
-    "truweight": "Health & Wellness",
-    "oziva": "Health & Wellness",
-    "kapiva": "Health & Wellness",
-    "ultrahuman": "Health & Wellness",
-    "ultrahuman cyborg": "Health & Wellness",
-    "whoop": "Health & Wellness",
-    "oura": "Health & Wellness",
-    "fitbit": "Health & Wellness",
+    # ============ Health, Fitness & Wellness ============
+    "pharmeasy": "Health, Fitness & Wellness",
+    "netmeds": "Health, Fitness & Wellness",
+    "1mg": "Health, Fitness & Wellness",
+    "apollo pharmacy": "Health, Fitness & Wellness",
+    "apollo 24|7": "Health, Fitness & Wellness",
+    "apollo24|7": "Health, Fitness & Wellness",
+    "healthkart": "Health, Fitness & Wellness",
+    "cult.fit": "Health, Fitness & Wellness",
+    "cure.fit": "Health, Fitness & Wellness",
+    "practo": "Health, Fitness & Wellness",
+    "mfine": "Health, Fitness & Wellness",
+    "truweight": "Health, Fitness & Wellness",
+    "oziva": "Health, Fitness & Wellness",
+    "kapiva": "Health, Fitness & Wellness",
+    "ultrahuman": "Health, Fitness & Wellness",
+    "ultrahuman cyborg": "Health, Fitness & Wellness",
+    "whoop": "Health, Fitness & Wellness",
+    "oura": "Health, Fitness & Wellness",
+    "fitbit": "Health, Fitness & Wellness",
     
     # ============ Finance & Fintech ============
     "paytm": "Finance & Fintech",
@@ -397,40 +429,40 @@ BRAND_INDUSTRY_MAPPING = {
     "niyo": "Finance & Fintech",
     "uni": "Finance & Fintech",
     
-    # ============ Kids & Baby ============
-    "firstcry": "Kids & Baby",
-    "hopscotch": "Kids & Baby",
-    "babyhug": "Kids & Baby",
-    "the mom co": "Kids & Baby",
-    "mamaearth baby": "Kids & Baby",
-    "mothercare": "Kids & Baby",
-    "the moms co": "Kids & Baby",
+    # ============ Baby & Kids ============
+    "firstcry": "Baby & Kids",
+    "hopscotch": "Baby & Kids",
+    "babyhug": "Baby & Kids",
+    "the mom co": "Baby & Kids",
+    "mamaearth baby": "Baby & Kids",
+    "mothercare": "Baby & Kids",
+    "the moms co": "Baby & Kids",
     
-    # ============ Sports & Fitness ============
-    "decathlon": "Sports & Fitness",
-    "puma": "Sports & Fitness",
-    "nike": "Sports & Fitness",
-    "adidas": "Sports & Fitness",
-    "reebok": "Sports & Fitness",
-    "asics": "Sports & Fitness",
-    "skechers": "Sports & Fitness",
-    "hrx": "Sports & Fitness",
-    "allbirds": "Sports & Fitness",  # Sustainable sneakers
-    "strava": "Sports & Fitness",  # Fitness tracking app
-    "new balance": "Sports & Fitness",
-    "under armour": "Sports & Fitness",
-    "lululemon": "Sports & Fitness",
-    "gymshark": "Sports & Fitness",
-    "alo yoga": "Sports & Fitness",
+    # ============ Apparel & Accessories (Athletic) ============
+    "decathlon": "Apparel & Accessories",
+    "puma": "Apparel & Accessories",
+    "nike": "Apparel & Accessories",
+    "adidas": "Apparel & Accessories",
+    "reebok": "Apparel & Accessories",
+    "asics": "Apparel & Accessories",
+    "skechers": "Apparel & Accessories",
+    "hrx": "Apparel & Accessories",
+    "allbirds": "Apparel & Accessories",  # Sustainable sneakers
+    "strava": "Apparel & Accessories",  # Fitness tracking app
+    "new balance": "Apparel & Accessories",
+    "under armour": "Apparel & Accessories",
+    "lululemon": "Apparel & Accessories",
+    "gymshark": "Apparel & Accessories",
+    "alo yoga": "Apparel & Accessories",
     
     # ============ Jewelry & Accessories ============
-    "caratlane": "Women's Fashion",  # Jewelry
-    "tanishq": "Women's Fashion",
-    "bluestone": "Women's Fashion",
-    "melorra": "Women's Fashion",
-    "candere": "Women's Fashion",
-    "kalyan jewellers": "Women's Fashion",
-    "malabar gold": "Women's Fashion",
+    "caratlane": "Apparel & Accessories",  # Jewelry
+    "tanishq": "Apparel & Accessories",
+    "bluestone": "Apparel & Accessories",
+    "melorra": "Apparel & Accessories",
+    "candere": "Apparel & Accessories",
+    "kalyan jewellers": "Apparel & Accessories",
+    "malabar gold": "Apparel & Accessories",
     
     # ============ Entertainment ============
     "bookmyshow": "Entertainment",
@@ -445,115 +477,271 @@ BRAND_INDUSTRY_MAPPING = {
     "gaana": "Entertainment",
     "wynk": "Entertainment",
     
-    # ============ General Retail (multi-category) ============
-    "flipkart": "General Retail",
-    "amazon": "General Retail",
-    "snapdeal": "General Retail",
-    "meesho": "General Retail",
-    "tatacliq": "General Retail",
-    "tata cliq": "General Retail",
-    "reliance": "General Retail",
-    "jiomart": "General Retail",
-    "ajio": "General Retail",
-    "anubhav barsaiyan": "General Retail",  # Likely test/personal
+    # ============ General / Department Store (multi-category) ============
+    "flipkart": "General / Department Store",
+    "amazon": "General / Department Store",
+    "snapdeal": "General / Department Store",
+    "meesho": "General / Department Store",
+    "tatacliq": "General / Department Store",
+    "tata cliq": "General / Department Store",
+    "reliance": "General / Department Store",
+    "jiomart": "General / Department Store",
+    "ajio": "General / Department Store",
+    "anubhav barsaiyan": "General / Department Store",  # Likely test/personal
+
+    # ============ Brands added from misclassification fix ============
+    # Home & Living
+    "burrow": "Home & Living",
+    "brooklinen": "Home & Living",
+    "stayvista": "Home & Living",  # Vacation homes/stays
+    "circus": "Home & Living",  # Circus by Godrej — home/lifestyle
+
+    # Luxury / Multi-category Retail (not purely women's fashion)
+    "anthropologie": "General / Department Store",
+    "shopbop": "General / Department Store",
+    "net-a-porter": "General / Department Store",
+    "luisaviaroma": "General / Department Store",
+    "shopsimon": "General / Department Store",
+    "ganni": "General / Department Store",  # Danish fashion — mixed gender
+    "gucci": "Luxury & High-End Goods",  # Luxury — mixed gender
+    "balenciaga": "Luxury & High-End Goods",
+    "mango": "General / Department Store",  # Fast fashion — mixed gender
+    "porter": "General / Department Store",  # Could be logistics or retail
+
+    # Beauty & Personal Care (missed)
+    "anastasia beverly hills": "Beauty & Personal Care",
+
+    # Health & Wellness
+    "quip": "Health, Fitness & Wellness",  # Oral care
+
+    # Sports & Fitness / Outdoor
+    "cotopaxi": "Apparel & Accessories",  # Outdoor gear
+    "outdoor voices": "Apparel & Accessories",
+    "alo": "Apparel & Accessories",  # Alo Yoga
+
+    # Kids & Baby
+    "monica + andy": "Baby & Kids",
+
+    # Basics / Underwear (not gendered)
+    "bombas": "General / Department Store",  # Socks/basics
+    "meundies": "General / Department Store",  # Underwear basics
+
+    # Pets
+    "supertails": "Pets",  # Pet care
+
+    # Travel
+    "mokobara": "Apparel & Accessories",  # Luggage/bags brand
+
+    # Logistics / Other
+    "shadowfax": "General / Department Store",  # Logistics
+    "newaudience": "General / Department Store",
+    "cosmos": "General / Department Store",
+    "nik sharma": "General / Department Store",  # Marketing personality/newsletter
+
+    # Indian Women's Fashion (correctly classified — adding for normalization)
+    "aashni + co": "Apparel & Accessories",
+    "aashni": "Apparel & Accessories",
+    "khara kapas": "Apparel & Accessories",
+    "ka-sha": "Apparel & Accessories",
+    "payal singhal": "Apparel & Accessories",
+    "jaypore": "Apparel & Accessories",
+    "j a y p o r e": "Apparel & Accessories",
+    "11.11": "Apparel & Accessories",  # 11.11 / Eleven Eleven
+    "eleven eleven": "Apparel & Accessories",
+    "alex van divner": "Apparel & Accessories",
+    "ashwajeet singh": "Apparel & Accessories",  # Designer
+    "rothy's": "Apparel & Accessories",  # Women's shoes
+    "maeve": "Apparel & Accessories",  # Anthropologie sub-brand for women
+    "anthroliving": "Home & Living",  # Anthropologie home line
+    "anthro living": "Home & Living",
+    "anthro black friday": "General / Department Store",  # Anthropologie sale — mixed
+    "anthro cyber monday": "General / Department Store",
+    "anthro new arrivals": "General / Department Store",
+
+    # Food & Beverages (missed)
+    "daily harvest": "Food & Beverage",  # Meal delivery
+    "teabox": "Food & Beverage",  # Tea brand
+
+    # Health supplements
+    "ritual": "Health, Fitness & Wellness",  # Vitamins/supplements
+
+    # Luxury fashion (ungendered → General Retail)
+    "versace": "Luxury & High-End Goods",
+
+    # ============ Round 2 fixes — brands still unmapped or wrong ============
+    # Eyewear / Accessories
+    "warby parker": "Apparel & Accessories",  # Eyewear
+    "shinola": "General / Department Store",  # Watches/leather goods/lifestyle
+
+    # Fashion brands that should be General Retail (mixed gender)
+    "zara": "General / Department Store",
+    "uniqlo": "General / Department Store",  # Mixed gender basics
+    "gap": "General / Department Store",
+    "calvin klein": "General / Department Store",  # Mixed gender
+
+    # Home & Living (missed)
+    "interior define": "Home & Living",  # Custom furniture
+    "sleepycat": "Home & Living",  # Mattresses
+    "eve sleep": "Home & Living",  # Mattresses
+    "ecdb": "Home & Living",
+
+    # Beauty & Personal Care (missed)
+    "d'you": "Beauty & Personal Care",  # Skincare
+    "ilia": "Beauty & Personal Care",  # Clean beauty
+    "madison reed": "Beauty & Personal Care",  # Hair color
+    "credo beauty": "Beauty & Personal Care",
+    "typsy beauty": "Beauty & Personal Care",
+    "nua": "Beauty & Personal Care",  # Women's wellness/period care
+    "marie claire": "Apparel & Accessories",  # Fashion magazine/brand
+    "aromaworks london": "Beauty & Personal Care",  # Aromatherapy
+
+    # Food & Beverages (missed)
+    "native pet": "Food & Beverage",  # Pet food (closest category)
+    "farmer's dog": "Food & Beverage",  # Pet food delivery
+
+    # Health & Wellness
+    "cava athleisure": "Apparel & Accessories",  # Athleisure
+    "zevo insect": "Home & Living",  # Insect control — home product
+
+    # Fashion — correctly Women's Fashion
+    "bare necessities": "Apparel & Accessories",  # Lingerie
+    "autry": "Apparel & Accessories",  # Sneaker brand
+    "proper cloth": "Apparel & Accessories",  # Custom men's shirts
+    "la maison goyard": "Luxury & High-End Goods",  # Luxury house
+    "ayr": "Apparel & Accessories",  # Women's clothing
+    "vibecrafts": "Home & Living",  # Crafts/home decor
+    "phool": "Home & Living",  # Incense/fragrance — home
+
+    # People/newsletters — General Retail fallback
+    "arman sood": "General / Department Store",
+    "pallavi": "General / Department Store",
+    "james at radiant": "General / Department Store",
+    "kellie hackney": "General / Department Store",
+    "maddison cox": "General / Department Store",
+    "theo at growthrocks": "General / Department Store",
+    "matt | the farmer's dog": "Food & Beverage",
+
+    # SaaS/Tools — classify as General Retail rather than None
+    "zendesk": "General / Department Store",
+    "your zendesk": "General / Department Store",
+    "zendesk sell": "General / Department Store",
+    "topconsumerreviews.com": "General / Department Store",
+    "gabit": "Electronics & Tech",  # Wearable tech
 }
 
 
 # Industry keywords for content-based classification
+# Industry keywords for content-based classification (WEIGHTED)
+# Format: {industry: [(keyword, weight), ...]}
+# Weight 3 = highly specific (only this industry uses it)
+# Weight 2 = moderately specific
+# Weight 1 = generic (appears across industries)
+# Generic/ambiguous words removed: "dress", "top", "blouse", "sandals", "flats",
+# "heels", "order", "wallet", "watch", "tablet", "offer", "booking", "room", etc.
 INDUSTRY_KEYWORDS = {
+    "Apparel & Accessories": [
+        ("saree", 3), ("kurti", 3), ("lehenga", 3), ("salwar", 3),
+        ("dupatta", 3), ("ethnic wear", 3), ("women's fashion", 3),
+        ("lingerie", 3), ("nightwear", 2), ("western wear", 2),
+        ("anarkali", 3), ("palazzo", 3), ("churidar", 3),
+        ("men's fashion", 3), ("blazer", 2), ("formal wear", 2),
+        ("sherwani", 3), ("trouser", 2), ("polo shirt", 2),
+        ("sportswear", 3), ("activewear", 3), ("athleisure", 3),
+        ("tracksuit", 3), ("sneakers", 2), ("footwear", 2),
+        ("handbag", 3), ("sunglasses", 3), ("eyewear", 2),
+        ("jewelry", 3), ("necklace", 3), ("earring", 3), ("bracelet", 3),
+        ("swimwear", 3), ("outerwear", 2), ("jacket", 2), ("coat", 2),
+        ("denim", 2), ("jeans", 2), ("t-shirt", 1),
+    ],
+    "Baby & Kids": [
+        ("baby", 2), ("kids", 2), ("toddler", 3), ("infant", 3),
+        ("newborn", 3), ("diaper", 3), ("feeding", 2), ("stroller", 3),
+        ("crib", 3), ("toy", 2), ("kids wear", 3), ("baby clothes", 3),
+        ("nursery", 3), ("parenting", 3), ("pregnancy", 3), ("maternity", 3),
+    ],
     "Beauty & Personal Care": [
-        "skincare", "makeup", "cosmetic", "lipstick", "mascara", "foundation", 
-        "serum", "moisturizer", "sunscreen", "face wash", "cleanser", "toner",
-        "beauty", "glow", "skin", "haircare", "shampoo", "conditioner", "hair oil",
-        "perfume", "fragrance", "deodorant", "grooming", "salon", "spa",
-        "nail polish", "eye shadow", "blush", "concealer", "primer",
+        ("skincare", 3), ("makeup", 3), ("cosmetic", 3), ("lipstick", 3),
+        ("mascara", 3), ("foundation", 2), ("serum", 3), ("moisturizer", 3),
+        ("sunscreen", 3), ("face wash", 3), ("cleanser", 3), ("toner", 2),
+        ("haircare", 3), ("shampoo", 3), ("conditioner", 2), ("hair oil", 3),
+        ("perfume", 3), ("fragrance", 2), ("deodorant", 2), ("grooming", 2),
+        ("nail polish", 3), ("eye shadow", 3), ("blush", 2), ("concealer", 3),
+        ("primer", 2), ("beauty routine", 3), ("glow", 1),
     ],
-    "Women's Fashion": [
-        "saree", "kurti", "lehenga", "salwar", "dupatta", "ethnic wear",
-        "women's", "ladies", "dress", "gown", "skirt", "blouse", "top",
-        "lingerie", "bra", "panties", "nightwear", "western wear",
-        "handbag", "clutch", "earrings", "necklace", "jewelry", "jewellery",
-        "heels", "sandals", "flats", "women footwear",
-    ],
-    "Men's Fashion": [
-        "men's", "shirt", "trouser", "jeans", "t-shirt", "polo", "blazer",
-        "suit", "formal wear", "casual wear", "men footwear", "sneakers",
-        "wallet", "belt", "tie", "cufflinks", "watch", "sunglasses",
-        "kurta", "sherwani", "ethnic men",
-    ],
-    "Food & Beverages": [
-        "food", "restaurant", "order", "delivery", "hungry", "eat", "meal",
-        "pizza", "burger", "biryani", "curry", "cuisine", "chef",
-        "grocery", "vegetables", "fruits", "fresh", "organic",
-        "coffee", "tea", "juice", "smoothie", "dessert", "cake", "sweet",
-        "meat", "chicken", "fish", "seafood", "mutton",
-        "snacks", "breakfast", "lunch", "dinner", "menu",
-    ],
-    "Travel & Hospitality": [
-        "flight", "hotel", "booking", "travel", "trip", "vacation", "holiday",
-        "destination", "airport", "airline", "boarding", "check-in",
-        "resort", "stay", "accommodation", "room", "suite",
-        "bus", "train", "cab", "taxi", "car rental",
-        "tour", "package", "itinerary", "passport", "visa",
-    ],
-    "Electronics & Gadgets": [
-        "phone", "mobile", "smartphone", "laptop", "computer", "tablet",
-        "earbuds", "headphones", "speaker", "smartwatch", "wearable",
-        "television", "tv", "camera", "appliance", "gadget", "tech",
-        "charger", "cable", "accessory", "electronic",
-        "gaming", "console", "processor", "ram", "storage",
-    ],
-    "Home & Living": [
-        "furniture", "sofa", "bed", "mattress", "pillow", "table", "chair",
-        "decor", "home", "living room", "bedroom", "kitchen", "bathroom",
-        "curtain", "carpet", "rug", "lamp", "lighting",
-        "storage", "organizer", "shelf", "wardrobe", "cupboard",
-        "kitchenware", "cookware", "utensil", "dinnerware",
-    ],
-    "Health & Wellness": [
-        "medicine", "pharmacy", "health", "wellness", "vitamin", "supplement",
-        "doctor", "consultation", "prescription", "tablet", "capsule",
-        "fitness", "gym", "workout", "exercise", "yoga", "meditation",
-        "protein", "nutrition", "diet", "weight loss", "immunity",
-        "ayurveda", "herbal", "natural remedy",
-    ],
-    "Finance & Fintech": [
-        "payment", "transaction", "transfer", "upi", "wallet", "money",
-        "credit card", "debit card", "emi", "loan", "insurance",
-        "invest", "mutual fund", "stock", "trading", "portfolio",
-        "bank", "account", "savings", "fd", "deposit",
-        "bill", "recharge", "cashback", "reward", "offer",
-    ],
-    "Kids & Baby": [
-        "baby", "kids", "child", "toddler", "infant", "newborn",
-        "diaper", "feeding", "stroller", "crib", "toy",
-        "kids wear", "baby clothes", "school", "nursery",
-        "parenting", "mom", "mother", "pregnancy", "maternity",
-    ],
-    "Sports & Fitness": [
-        "sports", "athletic", "running", "jogging", "cycling", "swimming",
-        "football", "cricket", "badminton", "tennis", "gym wear",
-        "sportswear", "activewear", "tracksuit", "sneakers", "sports shoes",
-        "fitness tracker", "equipment", "outdoor", "adventure",
+    "Electronics & Tech": [
+        ("smartphone", 3), ("laptop", 3), ("computer", 2), ("earbuds", 3),
+        ("headphones", 3), ("speaker", 2), ("smartwatch", 3), ("wearable", 2),
+        ("television", 3), ("camera", 2), ("appliance", 2), ("gadget", 3),
+        ("charger", 2), ("electronic", 2), ("gaming", 2), ("console", 2),
+        ("processor", 3), ("tech", 1), ("smart home", 3),
     ],
     "Entertainment": [
-        "movie", "film", "cinema", "theatre", "show", "concert", "event",
-        "streaming", "watch", "series", "episode", "season",
-        "music", "song", "playlist", "podcast", "audio",
-        "game", "gaming", "play", "ticket", "booking",
+        ("movie", 3), ("film", 2), ("cinema", 3), ("theatre", 3),
+        ("concert", 3), ("streaming", 2), ("series", 2), ("episode", 3),
+        ("season", 1), ("music", 2), ("playlist", 3), ("podcast", 3),
+    ],
+    "Finance & Fintech": [
+        ("payment", 2), ("transaction", 3), ("transfer", 2), ("upi", 3),
+        ("credit card", 3), ("debit card", 3), ("emi", 3), ("loan", 3),
+        ("insurance", 3), ("invest", 3), ("mutual fund", 3), ("stock", 2),
+        ("trading", 3), ("portfolio", 3), ("bank", 2), ("savings", 2),
+        ("deposit", 2), ("recharge", 2), ("cashback", 2),
+    ],
+    "Food & Beverage": [
+        ("restaurant", 3), ("pizza", 3), ("burger", 3), ("biryani", 3),
+        ("curry", 2), ("cuisine", 3), ("chef", 2), ("grocery", 3),
+        ("vegetables", 2), ("fruits", 2), ("coffee", 2), ("smoothie", 3),
+        ("dessert", 2), ("cake", 2), ("meat", 2), ("chicken", 2),
+        ("seafood", 3), ("snacks", 2), ("breakfast", 1), ("lunch", 1),
+        ("dinner", 1), ("menu", 2), ("recipe", 3), ("delicious", 2),
+    ],
+    "Health, Fitness & Wellness": [
+        ("medicine", 3), ("pharmacy", 3), ("wellness", 2), ("vitamin", 3),
+        ("supplement", 3), ("doctor", 2), ("prescription", 3),
+        ("workout", 2), ("exercise", 2), ("yoga", 2), ("meditation", 3),
+        ("protein", 2), ("nutrition", 3), ("diet", 2), ("weight loss", 3),
+        ("immunity", 3), ("ayurveda", 3), ("herbal", 2), ("natural remedy", 3),
+        ("fitness tracker", 3), ("gym", 2),
+    ],
+    "Home & Living": [
+        ("furniture", 3), ("sofa", 3), ("mattress", 3), ("pillow", 2),
+        ("decor", 2), ("living room", 3), ("bedroom", 2), ("bathroom", 2),
+        ("curtain", 3), ("carpet", 3), ("rug", 2), ("lamp", 2),
+        ("lighting", 2), ("organizer", 2), ("shelf", 2), ("wardrobe", 2),
+        ("kitchenware", 3), ("cookware", 3), ("utensil", 2), ("dinnerware", 3),
+    ],
+    "Pets": [
+        ("pet food", 3), ("dog food", 3), ("cat food", 3), ("pet toy", 3),
+        ("pet grooming", 3), ("veterinary", 3), ("pet health", 3),
+        ("dog treat", 3), ("cat litter", 3), ("pet supplement", 3),
+        ("puppy", 2), ("kitten", 2), ("pet bed", 3), ("leash", 3),
+    ],
+    "Travel & Outdoors": [
+        ("flight", 3), ("hotel", 3), ("travel", 3), ("trip", 2),
+        ("vacation", 3), ("holiday", 2), ("destination", 3), ("airport", 3),
+        ("airline", 3), ("resort", 3), ("accommodation", 3),
+        ("car rental", 3), ("tour", 2), ("itinerary", 3),
+        ("passport", 3), ("visa", 2), ("luggage", 2),
+        ("camping", 3), ("hiking", 3), ("outdoor gear", 3),
+    ],
+    "Tools, Auto & DIY": [
+        ("power tool", 3), ("hand tool", 3), ("drill", 3), ("wrench", 3),
+        ("automotive", 3), ("car care", 3), ("car wash", 3),
+        ("home improvement", 3), ("diy", 2), ("hardware", 2),
+        ("lawn mower", 3), ("garden tool", 3),
     ],
 }
 
 
-def extract_industry(brand_name, subject=None, preview=None, html=None, db_session=None, use_ai=False):
+def extract_industry(brand_name, subject=None, preview=None, html=None, db_session=None, use_ai=False, return_dict=False):
     """
     Extract industry using keyword-based classification (no AI by default).
-    
+
     Priority order:
     1. Exact brand name match in mapping
     2. Partial/fuzzy brand name match
     3. Content-based keyword analysis
-    
+
     Args:
         brand_name: The brand name to classify
         subject: Email subject line
@@ -561,50 +749,55 @@ def extract_industry(brand_name, subject=None, preview=None, html=None, db_sessi
         html: Full HTML content
         db_session: SQLAlchemy session for caching (optional)
         use_ai: Whether to use AI classification (default False)
-    
+        return_dict: If True, return {"industry": ..., "category": ...} instead of string
+
     Returns:
-        Industry string or None
+        Industry string (or dict if return_dict=True), or None
     """
+    def _result(industry, category=None):
+        if return_dict:
+            return {"industry": industry, "category": category}
+        return industry
     if not brand_name or brand_name == "Unknown":
-        return _extract_industry_by_keywords(subject, preview, html)
-    
-    # Normalize brand name for matching
-    brand_lower = brand_name.lower().strip()
+        kw_industry = _extract_industry_by_keywords(subject, preview, html)
+        return _result(kw_industry)
+
+    # Normalize brand name — strip suffixes like "- A Tata Product", "Sale", etc.
+    brand_lower = normalize_brand_name(brand_name)
     # Also create a version without special chars for fuzzy matching
     brand_normalized = re.sub(r'[^a-z0-9\s]', '', brand_lower)
-    
-    # Method 1: Exact match in mapping
+
+    # Method 1: Exact match in mapping (using normalized name)
     if brand_lower in BRAND_INDUSTRY_MAPPING:
         industry = BRAND_INDUSTRY_MAPPING[brand_lower]
         if db_session:
             _cache_brand_classification(db_session, brand_name, industry, "keyword", 1.0)
-        return industry
-    
+        return _result(industry)
+
     # Method 2: Partial/fuzzy match in mapping
-    # Check if any mapping key is contained in brand name or vice versa
     best_match = None
     best_match_len = 0
-    
+
     for key, industry in BRAND_INDUSTRY_MAPPING.items():
         key_normalized = re.sub(r'[^a-z0-9\s]', '', key)
-        
+
         # Exact normalized match
         if key_normalized == brand_normalized:
             best_match = industry
             best_match_len = len(key)
             break
-        
+
         # Key is substring of brand (e.g., "bobbi brown" in "bobbi brown cosmetics")
         if key_normalized in brand_normalized and len(key) > best_match_len:
             best_match = industry
             best_match_len = len(key)
-        
+
         # Brand is substring of key
         elif brand_normalized in key_normalized and len(brand_normalized) > 3:
             if len(key) > best_match_len:
                 best_match = industry
                 best_match_len = len(key)
-        
+
         # Word-level match (e.g., "kiehl" matches "kiehl's since 1851")
         brand_words = brand_normalized.split()
         key_words = key_normalized.split()
@@ -612,12 +805,12 @@ def extract_industry(brand_name, subject=None, preview=None, html=None, db_sessi
             if len(key) > best_match_len:
                 best_match = industry
                 best_match_len = len(key)
-    
+
     if best_match:
         if db_session:
             _cache_brand_classification(db_session, brand_name, best_match, "keyword", 0.9)
-        return best_match
-    
+        return _result(best_match)
+
     # Method 3: AI classification (only if explicitly enabled)
     if use_ai:
         try:
@@ -625,17 +818,19 @@ def extract_industry(brand_name, subject=None, preview=None, html=None, db_sessi
             if is_ai_available():
                 result = classify_brand_with_ai(brand_name, subject, preview)
                 industry = result.get("industry")
+                subcategory = result.get("subcategory")
                 confidence = result.get("confidence", 0.8)
-                
+
                 if db_session and industry:
                     _cache_brand_classification(db_session, brand_name, industry, "ai", confidence)
-                
-                return industry
+
+                return _result(industry, subcategory)
         except Exception as e:
             print(f"AI classification error: {e}")
-    
+
     # Method 4: Fallback to keyword analysis
-    return _extract_industry_by_keywords(subject, preview, html)
+    kw_industry = _extract_industry_by_keywords(subject, preview, html)
+    return _result(kw_industry)
 
 
 def _cache_brand_classification(db_session, brand_name: str, industry: str, classified_by: str, confidence: float):
@@ -672,9 +867,12 @@ def _cache_brand_classification(db_session, brand_name: str, industry: str, clas
 
 def _extract_industry_by_keywords(subject=None, preview=None, html=None):
     """
-    Fallback: Extract industry using keyword analysis.
-    Used when AI is unavailable or brand is unknown.
+    Fallback: Extract industry using weighted keyword analysis.
+    Returns None when uncertain rather than guessing wrong.
     """
+    MIN_SCORE_THRESHOLD = 4   # Need at least 4 weighted points to classify
+    AMBIGUITY_RATIO = 0.7     # If 2nd-best > 70% of best, too ambiguous → None
+
     # Combine all available text
     text_parts = []
     if subject:
@@ -682,41 +880,51 @@ def _extract_industry_by_keywords(subject=None, preview=None, html=None):
     if preview:
         text_parts.append(preview.lower())
     if html:
-        # Extract text from HTML (simple approach - just get visible text)
         from bs4 import BeautifulSoup
         try:
             soup = BeautifulSoup(html, "html.parser")
-            # Remove script and style elements
             for script in soup(["script", "style"]):
                 script.decompose()
-            text_parts.append(soup.get_text(separator=" ").lower()[:5000])  # Limit to first 5000 chars
+            text_parts.append(soup.get_text(separator=" ").lower()[:5000])
         except Exception:
             pass
-    
+
     if not text_parts:
         return None
-    
+
     combined_text = " ".join(text_parts)
-    
-    # Score each industry based on keyword matches
+    subject_lower = subject.lower() if subject else ""
+
+    # Score each industry based on weighted keyword matches
     industry_scores = {}
-    for industry, keywords in INDUSTRY_KEYWORDS.items():
+    for industry, keyword_weights in INDUSTRY_KEYWORDS.items():
         score = 0
-        for keyword in keywords:
+        for keyword, weight in keyword_weights:
             if keyword in combined_text:
-                # Weight by keyword position (earlier = more important)
-                score += 1
-                # Bonus if keyword is in subject
-                if subject and keyword in subject.lower():
-                    score += 2
+                score += weight
+                # Extra bonus if keyword is in subject (subject is strong signal)
+                if subject_lower and keyword in subject_lower:
+                    score += weight  # double the weight for subject matches
         if score > 0:
             industry_scores[industry] = score
-    
-    # Return industry with highest score (if any matches found)
-    if industry_scores:
-        return max(industry_scores, key=industry_scores.get)
-    
-    return None
+
+    if not industry_scores:
+        return None
+
+    sorted_scores = sorted(industry_scores.items(), key=lambda x: x[1], reverse=True)
+    best_industry, best_score = sorted_scores[0]
+
+    # Not enough signal — return None instead of guessing
+    if best_score < MIN_SCORE_THRESHOLD:
+        return None
+
+    # Too ambiguous — two industries score similarly
+    if len(sorted_scores) > 1:
+        second_score = sorted_scores[1][1]
+        if second_score / best_score > AMBIGUITY_RATIO:
+            return None
+
+    return best_industry
 
 
 # Campaign type keywords for classification
@@ -1283,17 +1491,22 @@ def fetch_label_emails(label_name: str = LABEL_NAME, max_results: int = 20, fetc
     
     while True:
         page_count += 1
-        results = service.users().messages().list(
-            userId="me",
-            labelIds=[label_id],
-            maxResults=min(max_results, 500),  # Gmail API max is 500 per page
-            pageToken=page_token
-        ).execute()
+        try:
+            results = service.users().messages().list(
+                userId="me",
+                labelIds=[label_id],
+                maxResults=min(max_results, 500),  # Gmail API max is 500 per page
+                pageToken=page_token
+            ).execute()
+        except Exception as e:
+            print(f">>> Page {page_count} failed: {e}")
+            print(f">>> Continuing with {len(all_messages)} messages collected so far")
+            break
 
         messages = results.get("messages", [])
         all_messages.extend(messages)
         print(f">>> Page {page_count}: fetched {len(messages)} messages (total so far: {len(all_messages)})")
-        
+
         # Check if we should continue pagination
         page_token = results.get("nextPageToken")
         if not fetch_all or not page_token:

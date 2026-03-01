@@ -1393,6 +1393,7 @@ def list_emails(
     brand: Optional[str] = Query(default=None),
     type: Optional[str] = Query(default=None),
     industry: Optional[str] = Query(default=None),
+    category: Optional[str] = Query(default=None),
     q: Optional[str] = Query(default=None),
     skip: int = 0,
     limit: Optional[int] = Query(default=None),  # No limit by default - returns all
@@ -1418,6 +1419,8 @@ def list_emails(
         query = query.filter(models.Email.type == type)
     if industry:
         query = query.filter(models.Email.industry == industry)
+    if category:
+        query = query.filter(models.Email.category == category)
     if q:
         like = f"%{q}%"
         query = query.filter(

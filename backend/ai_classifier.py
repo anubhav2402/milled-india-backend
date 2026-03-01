@@ -9,20 +9,105 @@ from typing import Optional, Dict, Any
 
 # Industry categories (must match engine.py)
 INDUSTRIES = [
+    "Apparel & Accessories",
+    "Baby & Kids",
     "Beauty & Personal Care",
-    "Women's Fashion",
-    "Men's Fashion",
-    "Food & Beverages",
-    "Travel & Hospitality",
-    "Electronics & Gadgets",
-    "Home & Living",
-    "Health & Wellness",
-    "Finance & Fintech",
-    "Kids & Baby",
-    "Sports & Fitness",
+    "Books, Art & Stationery",
+    "Business & B2B Retail",
+    "Electronics & Tech",
     "Entertainment",
-    "General Retail",
+    "Finance & Fintech",
+    "Food & Beverage",
+    "General / Department Store",
+    "Gifts & Lifestyle",
+    "Health, Fitness & Wellness",
+    "Home & Living",
+    "Luxury & High-End Goods",
+    "Pets",
+    "Tools, Auto & DIY",
+    "Travel & Outdoors",
 ]
+
+# Subcategories per main industry
+SUBCATEGORIES = {
+    "Apparel & Accessories": [
+        "Activewear / Athleisure", "Bags & Handbags", "Footwear",
+        "Hats & Accessories", "Intimates / Lingerie", "Jewelry",
+        "Men's Clothing", "Outerwear", "Sunglasses & Eyewear",
+        "Swimwear", "Unisex / Gender-Neutral Clothing", "Watches",
+        "Women's Clothing", "Others",
+    ],
+    "Baby & Kids": [
+        "Baby Gear", "Clothing", "Diapers & Hygiene", "Educational Products",
+        "Feeding & Nursing", "Kids' Furniture", "Toys & Games", "Others",
+    ],
+    "Beauty & Personal Care": [
+        "Bath & Body", "Beauty Tools & Devices", "Clean / Organic Beauty",
+        "Fragrance / Perfume", "Grooming / Shaving", "Haircare",
+        "Makeup / Cosmetics", "Oral Care", "Skincare", "Others",
+    ],
+    "Books, Art & Stationery": [
+        "Art Supplies", "Crafting & DIY Kits", "Educational / Academic",
+        "Fiction / Non-Fiction", "Journals & Planners",
+        "Notebooks / Writing Tools", "Others",
+    ],
+    "Business & B2B Retail": [
+        "Corporate Gifts", "Office Supplies", "Packaging & Fulfillment",
+        "Promotional Products", "Others",
+    ],
+    "Electronics & Tech": [
+        "Cameras & Photography", "Computers & Laptops", "Drones & Gadgets",
+        "Gaming Consoles & Accessories", "Headphones & Audio Gear",
+        "Smart Home Devices", "Smartphones", "Smartwatches & Wearables",
+        "Tablets & Accessories", "Others",
+    ],
+    "Entertainment": [
+        "Streaming", "Events & Ticketing", "Music", "Gaming", "Others",
+    ],
+    "Finance & Fintech": [
+        "Payments", "Banking", "Insurance", "Investment", "Credit Cards", "Others",
+    ],
+    "Food & Beverage": [
+        "Alcohol", "Beverages (Coffee, Tea, Juices)", "Cooking Ingredients & Spices",
+        "Meal Kits", "Pantry Staples", "Snacks & Treats", "Specialty Foods",
+        "Subscription Boxes", "Others",
+    ],
+    "General / Department Store": [
+        "Multi-Category Retail", "Online Marketplaces", "Flash Sale Retailers", "Others",
+    ],
+    "Gifts & Lifestyle": [
+        "Eco-Friendly / Sustainable Products", "Gift Cards",
+        "Hobby & Craft Supplies", "Novelty & Fun Items", "Personalized Gifts",
+        "Seasonal / Holiday Gifts", "Subscription Boxes", "Others",
+    ],
+    "Health, Fitness & Wellness": [
+        "Fitness Equipment", "Mental Health / Meditation",
+        "Personal Health Devices", "Supplements", "Vitamins & Nutrition",
+        "Wearable Fitness Trackers", "Yoga & Recovery Gear", "Others",
+    ],
+    "Home & Living": [
+        "Bedding & Bath", "Cleaning Supplies", "Furniture", "Home Décor",
+        "Home Improvement", "Kitchen & Dining", "Lawn & Garden", "Lighting",
+        "Rugs & Curtains", "Smart Home Devices", "Storage & Organization", "Others",
+    ],
+    "Luxury & High-End Goods": [
+        "Collectibles & Limited Editions", "Designer Fashion", "Fine Jewelry",
+        "Premium Skincare", "Others",
+    ],
+    "Pets": [
+        "Pet Food", "Pet Apparel", "Pet Grooming", "Pet Health / Supplements",
+        "Pet Toys", "Accessories", "Beds & Crates", "Others",
+    ],
+    "Tools, Auto & DIY": [
+        "Automotive Accessories", "Car Cleaning & Care", "Hand Tools",
+        "Hardware Supplies", "Home DIY Kits", "Lawn & Garden", "Power Tools", "Others",
+    ],
+    "Travel & Outdoors": [
+        "Camping & Hiking Gear", "Coolers / Hydration",
+        "Luggage & Travel Accessories", "Outdoor Furniture",
+        "Travel Skincare & Essentials", "Beachwear & Travel Apparel", "Others",
+    ],
+}
 
 # Campaign types (must match engine.py)
 CAMPAIGN_TYPES = [
@@ -76,19 +161,31 @@ def classify_brand_with_ai(
     
     context = "\n".join(context_parts)
     
+    # Build subcategory reference for the prompt
+    subcategory_ref = "\n".join(
+        f"  {ind}: {', '.join(subs)}"
+        for ind, subs in SUBCATEGORIES.items()
+    )
+
     # Create the classification prompt
-    prompt = f"""You are a marketing email classifier. Classify the following brand into an industry category.
+    prompt = f"""You are a marketing email classifier. Classify the following brand into an industry category and subcategory.
 
 {context}
 
 IMPORTANT: You must select from ONLY these industry categories:
 {json.dumps(INDUSTRIES, indent=2)}
 
-If the brand sells multiple product types (like Amazon, Flipkart), classify as "General Retail".
-For luxury fashion brands (Gucci, Zara, H&M), classify based on their primary focus:
-- If primarily women's clothing: "Women's Fashion"
-- If primarily men's clothing: "Men's Fashion"
-- If mixed equally: "Women's Fashion" (default for fashion brands)
+And for each industry, pick a subcategory from this list:
+{subcategory_ref}
+
+Guidelines:
+- Multi-category retailers (Amazon, Flipkart, Meesho) → "General / Department Store"
+- Athletic/sportswear brands (Nike, Puma, Adidas) → "Apparel & Accessories" with subcategory "Activewear / Athleisure"
+- Luxury brands (Gucci, Balenciaga, Louis Vuitton) → "Luxury & High-End Goods" with subcategory "Designer Fashion"
+- If the brand primarily sells women's clothing → "Apparel & Accessories" / "Women's Clothing"
+- If the brand primarily sells men's clothing → "Apparel & Accessories" / "Men's Clothing"
+- Jewelry brands → "Apparel & Accessories" / "Jewelry"
+- If unsure about subcategory, use "Others"
 
 Also classify the campaign type from ONLY these options:
 {json.dumps(CAMPAIGN_TYPES, indent=2)}
@@ -96,7 +193,7 @@ Also classify the campaign type from ONLY these options:
 If unsure about campaign type, use "Newsletter" as default.
 
 Respond with ONLY a JSON object in this exact format:
-{{"industry": "category name", "campaign_type": "type name", "confidence": 0.95}}
+{{"industry": "category name", "subcategory": "subcategory name", "campaign_type": "type name", "confidence": 0.95}}
 
 The confidence should be between 0.5 and 1.0 based on how certain you are.
 """
@@ -126,26 +223,32 @@ The confidence should be between 0.5 and 1.0 based on how certain you are.
         
         # Validate industry is in allowed list
         if result.get("industry") not in INDUSTRIES:
-            print(f"AI returned invalid industry '{result.get('industry')}', defaulting to General Retail")
-            result["industry"] = "General Retail"
-        
+            print(f"AI returned invalid industry '{result.get('industry')}', defaulting to General / Department Store")
+            result["industry"] = "General / Department Store"
+
+        # Validate subcategory is in allowed list for that industry
+        valid_subs = SUBCATEGORIES.get(result["industry"], [])
+        if result.get("subcategory") not in valid_subs:
+            result["subcategory"] = "Others"
+
         # Validate campaign type is in allowed list
         if result.get("campaign_type") not in CAMPAIGN_TYPES:
             result["campaign_type"] = "Newsletter"
-        
+
         # Ensure confidence is within bounds
         confidence = result.get("confidence", 0.8)
         if not isinstance(confidence, (int, float)) or confidence < 0 or confidence > 1:
             confidence = 0.8
         result["confidence"] = confidence
-        
+
         return result
-        
+
     except json.JSONDecodeError as e:
         print(f"Failed to parse AI response as JSON: {e}")
         print(f"Raw response was: {result_text}")
         return {
-            "industry": "General Retail",
+            "industry": "General / Department Store",
+            "subcategory": "Others",
             "campaign_type": "Newsletter",
             "confidence": 0.5,
             "error": f"JSON parse error: {e}"
@@ -155,8 +258,9 @@ The confidence should be between 0.5 and 1.0 based on how certain you are.
         print(f"AI classification error: {e}")
         print(traceback.format_exc())
         return {
-            "industry": "General Retail",
-            "campaign_type": "Newsletter", 
+            "industry": "General / Department Store",
+            "subcategory": "Others",
+            "campaign_type": "Newsletter",
             "confidence": 0.5,
             "error": str(e)
         }
