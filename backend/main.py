@@ -3752,6 +3752,8 @@ def list_tweets(
             "scheduled_for": t.scheduled_for.isoformat() if t.scheduled_for else None,
             "posted_at": t.posted_at.isoformat() if t.posted_at else None,
             "twitter_id": t.twitter_id,
+            "thread_id": t.thread_id,
+            "thread_order": t.thread_order,
             "created_at": t.created_at.isoformat() if t.created_at else None,
             "char_count": len(t.content),
         }
@@ -3765,7 +3767,7 @@ def generate_tweets(
     admin: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
-    valid_types = ["daily_digest", "weekly_digest", "brand_spotlight", "subject_line_insight"]
+    valid_types = ["daily_digest", "weekly_digest", "brand_spotlight", "subject_line_insight", "viral_thread"]
     if tweet_type not in valid_types:
         raise HTTPException(400, f"Invalid type. Must be one of: {valid_types}")
 
@@ -3778,6 +3780,34 @@ def generate_tweets(
             500,
             f"Failed to generate tweet: {exc}",
         )
+
+    # Viral threads return multiple tweets separated by ---
+    if tweet_type == "viral_thread":
+        import uuid
+        thread_id = str(uuid.uuid4())[:8]
+        tweets_text = [t.strip() for t in content.split("---") if t.strip()]
+        created = []
+        for i, tweet_text in enumerate(tweets_text):
+            tweet = models.TweetQueue(
+                content=tweet_text,
+                tweet_type="viral_thread",
+                status="draft",
+                thread_id=thread_id,
+                thread_order=i,
+            )
+            db.add(tweet)
+            db.flush()
+            created.append({
+                "id": tweet.id,
+                "content": tweet.content,
+                "tweet_type": tweet.tweet_type,
+                "status": tweet.status,
+                "char_count": len(tweet.content),
+                "thread_id": thread_id,
+                "thread_order": i,
+            })
+        db.commit()
+        return {"thread_id": thread_id, "tweets": created}
 
     tweet = models.TweetQueue(
         content=content,
@@ -3874,6 +3904,53 @@ def post_tweet_endpoint(
     tweet.updated_at = datetime.utcnow()
     db.commit()
     return {"id": tweet.id, "status": "posted", "twitter_id": twitter_id}
+
+
+@app.post("/admin/tweets/thread/{thread_id}/post")
+def post_thread(
+    thread_id: str,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Post all tweets in a thread as a reply chain on X."""
+    tweets = (
+        db.query(models.TweetQueue)
+        .filter(models.TweetQueue.thread_id == thread_id)
+        .order_by(models.TweetQueue.thread_order.asc())
+        .all()
+    )
+    if not tweets:
+        raise HTTPException(404, "Thread not found")
+    if any(t.status == "posted" for t in tweets):
+        raise HTTPException(400, "Some tweets in this thread are already posted")
+    if not is_twitter_configured():
+        raise HTTPException(400, "Twitter API not configured")
+
+    import time
+    client = get_twitter_client()
+    previous_tweet_id = None
+    posted = []
+
+    try:
+        for t in tweets:
+            kwargs = {"text": t.content}
+            if previous_tweet_id:
+                kwargs["in_reply_to_tweet_id"] = previous_tweet_id
+            response = client.create_tweet(**kwargs)
+            tid = str(response.data["id"])
+            t.status = "posted"
+            t.posted_at = datetime.utcnow()
+            t.twitter_id = tid
+            t.updated_at = datetime.utcnow()
+            posted.append({"id": t.id, "twitter_id": tid})
+            previous_tweet_id = tid
+            time.sleep(1)  # Rate limit safety
+    except Exception as exc:
+        db.commit()  # Save any tweets that were already posted
+        raise HTTPException(500, f"Thread posting failed at tweet {len(posted)+1}: {exc}")
+
+    db.commit()
+    return {"thread_id": thread_id, "posted": posted}
 
 
 @app.delete("/admin/tweets/{tweet_id}")

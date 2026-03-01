@@ -132,11 +132,55 @@ MAX_TWEET_BODY_LEN = 255
 
 SYSTEM_PROMPT = (
     "You are a witty, concise social-media copywriter for MailMuse, "
-    "an email marketing intelligence platform tracking 300+ brands worldwide. "
+    "an email marketing intelligence platform tracking 10,000+ brands worldwide. "
     "Write a single tweet (max 270 characters, no hashtags unless they "
     "feel natural). Be insightful, data-driven, and engaging. "
     "Return ONLY the tweet text — no quotes, no labels, no extra formatting."
 )
+
+VIRAL_THREAD_SYSTEM_PROMPT = """You are an elite Twitter/X ghostwriter for MailMuse, an email marketing intelligence platform tracking 10,000+ brands.
+
+Your job: turn raw email marketing data into VIRAL Twitter threads that get saves, retweets, and followers.
+
+## VIRAL FRAMEWORKS (use one or combine):
+
+1. **Myth Buster**: "[Common belief] is wrong. Here's what the data actually shows."
+   - Works because: challenges tribal knowledge, creates righteous anger
+   - Example hook: "Everything you learned about email subject lines is wrong."
+
+2. **Contrarian Take**: "Everyone says [X]. The data says the opposite."
+   - Works because: pattern interrupt, makes reader question their assumptions
+   - Example: "The most successful email brands never say 'sale.'"
+
+3. **Bold Claim + Proof**: Make a shocking claim in tweet 1, then prove it with receipts.
+   - Works because: curiosity gap forces people to read the thread
+   - Example: "The best email subject line I found was 3 characters long."
+
+4. **Data-Driven Surprise**: Lead with the most counterintuitive stat.
+   - Works because: unexpected data creates "wait, what?" moments
+   - Example: "11 brands use ZERO exclamation marks. They include Gucci and Balenciaga."
+
+5. **Good vs Bad Comparison**: Show two brands, same context, opposite approach.
+   - Works because: concrete comparison is more memorable than abstract advice
+
+## EMOTIONAL TRIGGERS (thread MUST hit at least 2):
+- **Surprise**: Unexpected data that makes people go "wait, really?"
+- **Validation**: Makes readers feel smart for already suspecting something
+- **Anger/Indignation**: Calls out lazy practices most brands follow
+- **FOMO/Save-worthy**: Real examples people will bookmark as a swipe file
+
+## THREAD STRUCTURE RULES:
+- Tweet 1 (Hook): Under 110 characters. Create a massive curiosity gap. No hashtags.
+- Tweets 2-7: Build the argument with REAL data and REAL brand examples. Each tweet must be under 280 characters.
+- Second-to-last tweet: The insight/"so what" — the deeper lesson beyond tactics.
+- Last tweet: CTA mentioning MailMuse (mailmuse.in). Keep it under 160 chars.
+- Total: 7-9 tweets per thread.
+
+## OUTPUT FORMAT:
+Return ONLY the thread tweets, separated by exactly "---" on its own line.
+No tweet numbers, no labels, no formatting. Just the raw tweet text between --- separators.
+Each tweet MUST be under 280 characters.
+Do NOT include any URL in any tweet except the last one which should end with: mailmuse.in"""
 
 
 def _build_daily_digest(db: Session) -> str:
@@ -310,32 +354,198 @@ def _build_subject_line_insight(db: Session) -> str:
     return context
 
 
+def _build_viral_thread(db: Session) -> str:
+    """
+    Query the ENTIRE database for surprising, counterintuitive patterns
+    to feed into the viral thread prompt.
+    """
+    from sqlalchemy import text
+
+    stats = {}
+
+    # Overall stats
+    row = db.execute(text("""
+        SELECT COUNT(*) as total,
+            ROUND(AVG(LENGTH(subject)), 1) as avg_len,
+            COUNT(DISTINCT brand) as brand_count
+        FROM emails WHERE subject IS NOT NULL
+    """)).fetchone()
+    stats["total_emails"] = row[0]
+    stats["avg_subject_len"] = row[1]
+    stats["brand_count"] = row[2]
+
+    # Brands by volume (top 10)
+    top_brands = db.execute(text("""
+        SELECT brand, COUNT(*) as cnt, ROUND(AVG(LENGTH(subject)), 1) as avg_len
+        FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL
+        GROUP BY brand ORDER BY cnt DESC LIMIT 10
+    """)).fetchall()
+    stats["top_brands"] = [(r[0], r[1], r[2]) for r in top_brands]
+
+    # Brands with ZERO exclamation marks (20+ emails)
+    no_excl = db.execute(text("""
+        SELECT brand, COUNT(*) as total
+        FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL
+        GROUP BY brand
+        HAVING COUNT(*) >= 20
+            AND SUM(CASE WHEN subject LIKE '%!%' THEN 1 ELSE 0 END) = 0
+        ORDER BY total DESC
+    """)).fetchall()
+    stats["no_exclamation_brands"] = [(r[0], r[1]) for r in no_excl]
+
+    # Brands with highest exclamation rate
+    high_excl = db.execute(text("""
+        SELECT brand, COUNT(*) as total,
+            ROUND(100.0 * SUM(CASE WHEN subject LIKE '%!%' THEN 1 ELSE 0 END) / COUNT(*), 1) as pct
+        FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL
+        GROUP BY brand HAVING COUNT(*) >= 20
+        ORDER BY pct DESC LIMIT 5
+    """)).fetchall()
+    stats["high_exclamation_brands"] = [(r[0], r[1], r[2]) for r in high_excl]
+
+    # Shortest avg subject lines by brand
+    short_subj = db.execute(text("""
+        SELECT brand, ROUND(AVG(LENGTH(subject)), 1) as avg_len, COUNT(*) as cnt
+        FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL
+        GROUP BY brand HAVING COUNT(*) >= 20
+        ORDER BY avg_len ASC LIMIT 5
+    """)).fetchall()
+    stats["shortest_subjects"] = [(r[0], r[1], r[2]) for r in short_subj]
+
+    # Longest avg subject lines by brand
+    long_subj = db.execute(text("""
+        SELECT brand, ROUND(AVG(LENGTH(subject)), 1) as avg_len, COUNT(*) as cnt
+        FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL
+        GROUP BY brand HAVING COUNT(*) >= 20
+        ORDER BY avg_len DESC LIMIT 5
+    """)).fetchall()
+    stats["longest_subjects"] = [(r[0], r[1], r[2]) for r in long_subj]
+
+    # Discount word frequency
+    disc = db.execute(text("""
+        SELECT
+            ROUND(100.0 * SUM(CASE WHEN LOWER(subject) LIKE '% off%' OR LOWER(subject) LIKE '%off %' THEN 1 ELSE 0 END) / COUNT(*), 1),
+            ROUND(100.0 * SUM(CASE WHEN subject LIKE '%!%' THEN 1 ELSE 0 END) / COUNT(*), 1),
+            ROUND(100.0 * SUM(CASE WHEN subject LIKE '%?%' THEN 1 ELSE 0 END) / COUNT(*), 1),
+            ROUND(100.0 * SUM(CASE WHEN LOWER(subject) LIKE '%last chance%' OR LOWER(subject) LIKE '%ends today%' OR LOWER(subject) LIKE '%ends soon%' OR LOWER(subject) LIKE '%hurry%' THEN 1 ELSE 0 END) / COUNT(*), 1)
+        FROM emails WHERE subject IS NOT NULL
+    """)).fetchone()
+    stats["pct_discount"] = disc[0]
+    stats["pct_exclamation"] = disc[1]
+    stats["pct_question"] = disc[2]
+    stats["pct_urgency"] = disc[3]
+
+    # Most interesting/creative short subject lines
+    creative = db.execute(text("""
+        SELECT brand, subject FROM emails
+        WHERE subject IS NOT NULL AND LENGTH(subject) <= 20 AND LENGTH(subject) >= 3
+        ORDER BY LENGTH(subject) ASC LIMIT 25
+    """)).fetchall()
+    stats["creative_short_subjects"] = [(r[0], r[1]) for r in creative]
+
+    # ALL CAPS subject lines rate by brand
+    caps_brands = db.execute(text("""
+        SELECT brand, COUNT(*) as total,
+            ROUND(100.0 * SUM(CASE WHEN subject = UPPER(subject) AND subject GLOB '*[A-Z]*' THEN 1 ELSE 0 END) / COUNT(*), 1) as caps_pct
+        FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL
+        GROUP BY brand HAVING COUNT(*) >= 20
+        ORDER BY caps_pct DESC LIMIT 5
+    """)).fetchall()
+    stats["all_caps_brands"] = [(r[0], r[1], r[2]) for r in caps_brands]
+
+    # Sample subject lines from top brands (for real examples)
+    sample_subjects = {}
+    for brand_name in ["Reformation", "Balenciaga", "Nykaa", "Net-A-Porter", "Nicobar", "Zomato"]:
+        rows = db.execute(text(
+            "SELECT subject FROM emails WHERE brand = :b AND subject IS NOT NULL ORDER BY RANDOM() LIMIT 10"
+        ), {"b": brand_name}).fetchall()
+        if rows:
+            sample_subjects[brand_name] = [r[0] for r in rows]
+    stats["sample_subjects"] = sample_subjects
+
+    # Brands that use "Bestie" or casual language
+    casual = db.execute(text("""
+        SELECT brand, COUNT(*) as cnt FROM emails
+        WHERE subject IS NOT NULL
+            AND (LOWER(subject) LIKE '%bestie%' OR LOWER(subject) LIKE '%babe%' OR LOWER(subject) LIKE '%hey %')
+        GROUP BY brand ORDER BY cnt DESC LIMIT 5
+    """)).fetchall()
+    stats["casual_language_brands"] = [(r[0], r[1]) for r in casual]
+
+    # Build the context string
+    lines = [
+        f"=== MAILMUSE DATABASE STATS ===",
+        f"Total emails analyzed: {stats['total_emails']}",
+        f"Total brands: {stats['brand_count']}",
+        f"Average subject line length: {stats['avg_subject_len']} characters",
+        "",
+        f"=== GLOBAL PATTERNS ===",
+        f"Emails mentioning 'off' (discounts): {stats['pct_discount']}%",
+        f"Emails with exclamation marks: {stats['pct_exclamation']}%",
+        f"Emails with question marks: {stats['pct_question']}%",
+        f"Emails with urgency language: {stats['pct_urgency']}%",
+        "",
+        f"=== TOP BRANDS BY EMAIL VOLUME ===",
+    ]
+    for brand, cnt, avg in stats["top_brands"]:
+        lines.append(f"  {brand}: {cnt} emails, avg subject {avg} chars")
+
+    lines.append("")
+    lines.append("=== BRANDS WITH ZERO EXCLAMATION MARKS (20+ emails) ===")
+    for brand, cnt in stats["no_exclamation_brands"]:
+        lines.append(f"  {brand} ({cnt} emails)")
+
+    lines.append("")
+    lines.append("=== SHORTEST AVG SUBJECT LINES ===")
+    for brand, avg, cnt in stats["shortest_subjects"]:
+        lines.append(f"  {brand}: {avg} chars avg ({cnt} emails)")
+
+    lines.append("")
+    lines.append("=== LONGEST AVG SUBJECT LINES ===")
+    for brand, avg, cnt in stats["longest_subjects"]:
+        lines.append(f"  {brand}: {avg} chars avg ({cnt} emails)")
+
+    lines.append("")
+    lines.append("=== ALL CAPS USAGE BY BRAND ===")
+    for brand, cnt, pct in stats["all_caps_brands"]:
+        lines.append(f"  {brand}: {pct}% all caps ({cnt} emails)")
+
+    lines.append("")
+    lines.append("=== CREATIVE SHORT SUBJECT LINES ===")
+    for brand, subj in stats["creative_short_subjects"]:
+        lines.append(f"  {brand}: \"{subj}\"")
+
+    lines.append("")
+    lines.append("=== CASUAL LANGUAGE BRANDS ===")
+    for brand, cnt in stats["casual_language_brands"]:
+        lines.append(f"  {brand}: {cnt} emails with bestie/babe/hey")
+
+    lines.append("")
+    lines.append("=== SAMPLE SUBJECT LINES FROM KEY BRANDS ===")
+    for brand, subjects in stats["sample_subjects"].items():
+        lines.append(f"\n  {brand}:")
+        for s in subjects:
+            lines.append(f"    \"{s}\"")
+
+    return "\n".join(lines)
+
+
 # Mapping of tweet types to their context-builder functions
 _TWEET_TYPE_BUILDERS = {
     "daily_digest": _build_daily_digest,
     "weekly_digest": _build_weekly_digest,
     "brand_spotlight": _build_brand_spotlight,
     "subject_line_insight": _build_subject_line_insight,
+    "viral_thread": _build_viral_thread,
 }
 
 
 def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str:
     """
-    Generate tweet text for a given *tweet_type* using live DB data and OpenAI.
+    Generate tweet text for a given *tweet_type* using live DB data and Claude.
 
-    Parameters
-    ----------
-    tweet_type : str
-        One of "daily_digest", "weekly_digest", "brand_spotlight",
-        "subject_line_insight".
-    db : Session, optional
-        An existing SQLAlchemy session. If ``None`` a new session is created
-        (and closed afterwards).
-
-    Returns
-    -------
-    str
-        The complete tweet text, including the trailing MailMuse URL.
+    For ``viral_thread`` type, returns multiple tweets separated by ``\\n---\\n``.
+    For all other types, returns a single tweet with the MailMuse URL appended.
     """
     if tweet_type not in _TWEET_TYPE_BUILDERS:
         raise ValueError(
@@ -353,7 +563,10 @@ def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str
         builder = _TWEET_TYPE_BUILDERS[tweet_type]
         context = builder(db)
 
-        # 2. Call OpenAI to craft a tweet
+        if tweet_type == "viral_thread":
+            return _generate_viral_thread(context)
+
+        # 2. Call Claude to craft a single tweet
         user_prompt = (
             f"Tweet type: {tweet_type}\n\n"
             f"Data context:\n{context}\n\n"
@@ -374,3 +587,40 @@ def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str
     finally:
         if close_db:
             db.close()
+
+
+def _generate_viral_thread(context: str) -> str:
+    """
+    Generate a viral Twitter thread using Claude Sonnet and the full
+    viral frameworks prompt. Returns tweets separated by \\n---\\n.
+    """
+    client = _get_anthropic_client()
+
+    user_prompt = (
+        "Using the database stats below, write a VIRAL Twitter thread "
+        "(7-9 tweets). Pick the most surprising/counterintuitive data "
+        "points and use the frameworks from your instructions.\n\n"
+        f"{context}\n\n"
+        "Remember: tweet 1 hook must be under 110 chars. Each tweet under "
+        "280 chars. Separate tweets with --- on its own line. Last tweet "
+        "should mention mailmuse.in as CTA."
+    )
+
+    response = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=2500,
+        system=VIRAL_THREAD_SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": user_prompt}],
+        timeout=60,
+    )
+
+    result = response.content[0].text.strip()
+
+    # Strip markdown code fences if present
+    if result.startswith("```"):
+        result = result.split("```")[1]
+        if result.startswith("text") or result.startswith("json"):
+            result = result[4:]
+        result = result.strip()
+
+    return result

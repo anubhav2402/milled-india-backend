@@ -200,6 +200,8 @@ class TweetQueue(Base):
     scheduled_for = Column(DateTime, nullable=True)
     posted_at = Column(DateTime, nullable=True)
     twitter_id = Column(String, nullable=True)  # Twitter's tweet ID after posting
+    thread_id = Column(String, nullable=True, index=True)  # Groups tweets in same thread (UUID)
+    thread_order = Column(Integer, nullable=True)  # Order within thread (0-indexed)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
