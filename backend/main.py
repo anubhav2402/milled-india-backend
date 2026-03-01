@@ -3923,6 +3923,7 @@ def post_thread(
     db: Session = Depends(get_db),
 ):
     """Post all tweets in a thread as a reply chain on X."""
+    print(f"[Thread Post] Starting for thread_id={thread_id}")
     tweets = (
         db.query(models.TweetQueue)
         .filter(models.TweetQueue.thread_id == thread_id)
@@ -3931,10 +3932,15 @@ def post_thread(
     )
     if not tweets:
         raise HTTPException(404, "Thread not found")
-    if any(t.status == "posted" for t in tweets):
-        raise HTTPException(400, "Some tweets in this thread are already posted")
+    already_posted = [t for t in tweets if t.status == "posted"]
+    if already_posted:
+        raise HTTPException(400, f"{len(already_posted)} tweets already posted")
     if not is_twitter_configured():
-        raise HTTPException(400, "Twitter API not configured")
+        raise HTTPException(
+            400,
+            "Twitter API not configured. Set TWITTER_API_KEY, TWITTER_API_SECRET, "
+            "TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET env vars.",
+        )
 
     import time
     client = get_twitter_client()
@@ -3942,7 +3948,8 @@ def post_thread(
     posted = []
 
     try:
-        for t in tweets:
+        for i, t in enumerate(tweets):
+            print(f"[Thread Post] Tweet {i+1}/{len(tweets)}: {t.content[:50]}...")
             kwargs = {"text": t.content}
             if previous_tweet_id:
                 kwargs["in_reply_to_tweet_id"] = previous_tweet_id
@@ -3954,12 +3961,15 @@ def post_thread(
             t.updated_at = datetime.utcnow()
             posted.append({"id": t.id, "twitter_id": tid})
             previous_tweet_id = tid
-            time.sleep(1)  # Rate limit safety
+            if i < len(tweets) - 1:
+                time.sleep(0.5)
     except Exception as exc:
-        db.commit()  # Save any tweets that were already posted
-        raise HTTPException(500, f"Thread posting failed at tweet {len(posted)+1}: {exc}")
+        print(f"[Thread Post] Failed at tweet {len(posted)+1}: {exc}")
+        db.commit()
+        raise HTTPException(500, f"Thread failed at tweet {len(posted)+1}/{len(tweets)}: {exc}")
 
     db.commit()
+    print(f"[Thread Post] Done — {len(posted)} tweets posted")
     return {"thread_id": thread_id, "posted": posted}
 
 
