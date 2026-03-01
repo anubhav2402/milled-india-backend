@@ -143,7 +143,7 @@ def get_effective_plan(user) -> str:
 
     # Check if within trial period
     if user.trial_ends_at and user.trial_ends_at > datetime.utcnow():
-        return "pro"
+        return "starter"
 
     return "free"
 

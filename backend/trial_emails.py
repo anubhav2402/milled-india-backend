@@ -2,9 +2,9 @@
 Trial email reminder system for MailMuse.
 
 Sends reminder emails to users whose trial is about to expire:
-- Day 10 (4 days left): "Your Pro trial ends in 4 days"
-- Day 13 (1 day left): "Tomorrow is the last day"
-- Day 15 (1 day after expiry): "Your trial ended"
+- Day 4 (3 days left): "Your Starter trial ends in 3 days"
+- Day 6 (1 day left): "Tomorrow is the last day"
+- Day 8 (1 day after expiry): "Your trial ended"
 
 Usage:
     python -m backend.trial_emails
@@ -131,46 +131,46 @@ def send_trial_reminders():
         days_until_expiry = (user.trial_ends_at - now).days
         sent_keys = _get_sent_emails(user)
 
-        # Day 10 reminder (4 days left)
-        if days_until_expiry <= 4 and days_until_expiry > 1 and "day10" not in sent_keys:
-            subject = f"Your Pro trial ends in {days_until_expiry} days"
+        # Day 4 reminder (3 days left)
+        if days_until_expiry <= 3 and days_until_expiry > 1 and "day4" not in sent_keys:
+            subject = f"Your Starter trial ends in {days_until_expiry} days"
             body = f"""
             <p style="font-size:15px;color:#444;line-height:1.6;">
               Hi{(' ' + user.name.split()[0]) if user.name else ''},
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              Your 14-day Pro trial is ending soon — just <strong>{days_until_expiry} days left</strong>.
+              Your 7-day Starter trial is ending soon — just <strong>{days_until_expiry} days left</strong>.
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
               Here's what you'll lose access to when it expires:
             </p>
             <ul style="font-size:14px;color:#555;line-height:1.8;padding-left:20px;">
-              <li>Full email archive (will drop to 30 days)</li>
-              <li>Unlimited email views (will drop to 20/day)</li>
-              <li>Analytics & benchmarks</li>
-              <li>Campaign calendar</li>
-              <li>Template editor & exports</li>
+              <li>6-month email archive (will drop to 30 days)</li>
+              <li>75 email views/day (will drop to 20/day)</li>
+              <li>Advanced search & filters</li>
+              <li>Full email analysis</li>
+              <li>HTML template exports</li>
             </ul>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              Upgrade now to keep everything — plans start at just ₹599/month.
+              Upgrade now to keep everything — Starter is just ₹599/month, or go Pro for ₹1,599/month.
             </p>
             """
             if _send_email(user.email, subject, _email_template(subject, body, "Upgrade Now")):
-                _mark_sent(db, user, "day10")
+                _mark_sent(db, user, "day4")
                 sent_count += 1
 
-        # Day 13 reminder (1 day left)
-        elif days_until_expiry <= 1 and days_until_expiry > 0 and "day13" not in sent_keys:
-            subject = "Tomorrow is the last day of your Pro trial"
+        # Day 6 reminder (1 day left)
+        elif days_until_expiry <= 1 and days_until_expiry > 0 and "day6" not in sent_keys:
+            subject = "Tomorrow is the last day of your Starter trial"
             body = f"""
             <p style="font-size:15px;color:#444;line-height:1.6;">
               Hi{(' ' + user.name.split()[0]) if user.name else ''},
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              Your Pro trial expires <strong>tomorrow</strong>. After that, your account will revert to the Free plan.
+              Your Starter trial expires <strong>tomorrow</strong>. After that, your account will revert to the Free plan.
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              If you've been enjoying analytics, the full archive, and unlimited access — now's the time to upgrade.
+              If you've been enjoying advanced search, the 6-month archive, and more views — now's the time to upgrade.
             </p>
             <p style="font-size:14px;color:#666;line-height:1.6;background:#faf5f2;padding:16px;border-radius:8px;">
               <strong>Starter:</strong> ₹599/mo — 6-month archive, 75 views/day, advanced search<br/>
@@ -179,32 +179,68 @@ def send_trial_reminders():
             </p>
             """
             if _send_email(user.email, subject, _email_template(subject, body, "Choose a Plan")):
-                _mark_sent(db, user, "day13")
+                _mark_sent(db, user, "day6")
                 sent_count += 1
 
-        # Day 15 reminder (1 day after expiry)
-        elif days_until_expiry <= -1 and days_until_expiry > -3 and "day15" not in sent_keys:
-            subject = "Your Pro trial has ended — here's what's next"
+        # Day 8 reminder (1 day after expiry)
+        elif days_until_expiry <= -1 and days_until_expiry > -3 and "day8" not in sent_keys:
+            subject = "Your Starter trial has ended — here's what's next"
             body = f"""
             <p style="font-size:15px;color:#444;line-height:1.6;">
               Hi{(' ' + user.name.split()[0]) if user.name else ''},
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              Your Pro trial ended yesterday. Your account is now on the Free plan.
+              Your Starter trial ended yesterday. Your account is now on the Free plan.
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              You can still browse the last 30 days of emails and view up to 20 per day. But if you miss having the full archive, analytics, and unlimited access — upgrading takes just a minute.
+              You can still browse the last 30 days of emails and view up to 20 per day. But if you'd like the 6-month archive, 75 views/day, and advanced search back — upgrading takes just a minute.
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              We'd love to have you back on Pro. Plans start at ₹599/month with a 7-day money-back guarantee.
+              Plans start at ₹599/month with a 7-day money-back guarantee.
             </p>
             """
             if _send_email(user.email, subject, _email_template(subject, body, "Upgrade Now")):
-                _mark_sent(db, user, "day15")
+                _mark_sent(db, user, "day8")
                 sent_count += 1
 
     db.close()
     print(f"[Trial Emails] Done. Sent {sent_count} emails.")
+
+
+ADMIN_EMAIL = "anubhavgpt08@gmail.com"
+
+
+def send_admin_new_signup(email: str, name: str = None):
+    """Notify admin when a new user signs up."""
+    subject = f"New signup: {email}"
+    body = f"""
+    <p style="font-size:15px;color:#444;line-height:1.6;">
+      A new user just signed up on MailMuse.
+    </p>
+    <table style="font-size:14px;color:#444;line-height:1.8;border-collapse:collapse;">
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600;">Email</td><td>{email}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600;">Name</td><td>{name or '—'}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600;">Time</td><td>{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</td></tr>
+    </table>
+    """
+    _send_email(ADMIN_EMAIL, subject, _email_template(subject, body, "View Dashboard", f"{SITE_URL}/admin"))
+
+
+def send_admin_new_subscription(email: str, name: str = None, tier: str = "pro", billing_cycle: str = "monthly"):
+    """Notify admin when a user purchases a subscription."""
+    subject = f"New {tier.title()} subscriber: {email}"
+    body = f"""
+    <p style="font-size:15px;color:#444;line-height:1.6;">
+      A user just subscribed to a paid plan.
+    </p>
+    <table style="font-size:14px;color:#444;line-height:1.8;border-collapse:collapse;">
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600;">Email</td><td>{email}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600;">Name</td><td>{name or '—'}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600;">Plan</td><td>{tier.title()} ({billing_cycle.title()})</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;font-weight:600;">Time</td><td>{datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}</td></tr>
+    </table>
+    """
+    _send_email(ADMIN_EMAIL, subject, _email_template(subject, body, "View Dashboard", f"{SITE_URL}/admin"))
 
 
 if __name__ == "__main__":

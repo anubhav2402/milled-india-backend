@@ -516,11 +516,18 @@ def register(request: Request, user_data: schemas.UserCreate, db: Session = Depe
             email=user_data.email,
             password_hash=hash_password(user_data.password),
             name=user_data.name,
-            trial_ends_at=datetime.utcnow() + timedelta(days=14),
+            trial_ends_at=datetime.utcnow() + timedelta(days=7),
         )
         db.add(user)
         db.commit()
         db.refresh(user)
+
+        # Notify admin
+        try:
+            from backend.trial_emails import send_admin_new_signup
+            send_admin_new_signup(user.email, user.name)
+        except Exception:
+            pass
 
         # Create access token
         token = create_access_token(user.id, user.email)
@@ -740,18 +747,26 @@ def google_auth(request: Request, auth_data: schemas.GoogleAuth, db: Session = D
             user.google_id = google_info["google_id"]
             if not user.name and google_info.get("name"):
                 user.name = google_info["name"]
+            db.commit()
+            db.refresh(user)
         else:
-            # Create new user with 14-day Pro trial
+            # Create new user with 7-day Starter trial
             user = models.User(
                 email=google_info["email"],
                 google_id=google_info["google_id"],
                 name=google_info.get("name"),
-                trial_ends_at=datetime.utcnow() + timedelta(days=14),
+                trial_ends_at=datetime.utcnow() + timedelta(days=7),
             )
             db.add(user)
-        
-        db.commit()
-        db.refresh(user)
+            db.commit()
+            db.refresh(user)
+
+            # Notify admin of new signup
+            try:
+                from backend.trial_emails import send_admin_new_signup
+                send_admin_new_signup(user.email, user.name)
+            except Exception:
+                pass
     
     # Create access token
     token = create_access_token(user.id, user.email)
@@ -851,6 +866,13 @@ def verify_subscription(
     days = 370 if billing == "annual" else 35
     current_user.subscription_expires_at = datetime.utcnow() + timedelta(days=days)
     db.commit()
+
+    # Notify admin of new subscription
+    try:
+        from backend.trial_emails import send_admin_new_subscription
+        send_admin_new_subscription(current_user.email, current_user.name, tier, billing)
+    except Exception:
+        pass
 
     return {
         "message": f"{tier.title()} subscription activated",
