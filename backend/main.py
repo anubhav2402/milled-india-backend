@@ -222,6 +222,16 @@ def run_migrations():
     if not inspect(engine).has_table("tweet_queue"):
         models.TweetQueue.__table__.create(engine)
 
+    # Add thread columns to tweet_queue if missing
+    with engine.connect() as conn3:
+        for col_name, col_type in [("thread_id", "VARCHAR"), ("thread_order", "INTEGER")]:
+            try:
+                conn3.execute(text(f"ALTER TABLE tweet_queue ADD COLUMN {col_name} {col_type}"))
+                conn3.commit()
+                print(f"Migration: Added '{col_name}' column to tweet_queue table")
+            except Exception:
+                conn3.rollback()
+
     # One-time: grant admin account agency tier
     with engine.connect() as conn2:
         try:
