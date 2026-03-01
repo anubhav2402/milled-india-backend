@@ -10,6 +10,18 @@ from datetime import datetime
 from typing import Optional
 
 
+# ── Helpers ──
+
+def _good(text: str) -> dict:
+    return {"text": text, "type": "good"}
+
+def _bad(text: str) -> dict:
+    return {"text": text, "type": "bad"}
+
+def _neutral(text: str) -> dict:
+    return {"text": text, "type": "neutral"}
+
+
 # ── Grade calculation ──
 
 def calculate_grade(score: int) -> str:
@@ -153,25 +165,25 @@ def score_subject(subject: str, email_type: Optional[str] = None) -> dict:
     score = 50  # start at 50, adjust up/down
 
     if not subject:
-        return {"score": 0, "grade": "F", "findings": ["No subject line"]}
+        return {"score": 0, "grade": "F", "findings": [_bad("No subject line")]}
 
     # Length check (30-60 chars is ideal)
     length = len(subject)
     if 30 <= length <= 60:
         score += 15
-        findings.append(f"Good length ({length} chars)")
+        findings.append(_good(f"Good length ({length} chars)"))
     elif 20 <= length < 30:
         score += 8
-        findings.append(f"Slightly short ({length} chars)")
+        findings.append(_neutral(f"Slightly short ({length} chars)"))
     elif 60 < length <= 80:
         score += 5
-        findings.append(f"Slightly long ({length} chars)")
+        findings.append(_neutral(f"Slightly long ({length} chars)"))
     elif length > 80:
         score -= 10
-        findings.append(f"Too long ({length} chars) — may get truncated")
+        findings.append(_bad(f"Too long ({length} chars) — may get truncated"))
     else:
         score -= 5
-        findings.append(f"Very short ({length} chars)")
+        findings.append(_bad(f"Very short ({length} chars)"))
 
     subject_lower = subject.lower()
 
@@ -179,26 +191,26 @@ def score_subject(subject: str, email_type: Optional[str] = None) -> dict:
     has_personalization = any(token.lower() in subject_lower for token in PERSONALIZATION_TOKENS)
     if has_personalization:
         score += 10
-        findings.append("Has personalization token")
+        findings.append(_good("Has personalization token"))
     else:
-        findings.append("No personalization detected")
+        findings.append(_bad("No personalization detected"))
 
     # Urgency
     has_urgency = any(word in subject_lower for word in URGENCY_WORDS)
     if has_urgency:
         score += 8
-        findings.append("Contains urgency words")
+        findings.append(_good("Contains urgency words"))
 
     # Power words
     power_found = [w for w in POWER_WORDS if w in subject_lower]
     if power_found:
         score += 5
-        findings.append(f"Power words: {', '.join(power_found[:3])}")
+        findings.append(_good(f"Power words: {', '.join(power_found[:3])}"))
 
     # Numbers (perform better in subject lines)
     if re.search(r'\d', subject):
         score += 5
-        findings.append("Contains numbers (good for engagement)")
+        findings.append(_good("Contains numbers (good for engagement)"))
 
     # Emoji
     emoji_pattern = re.compile(
@@ -209,22 +221,22 @@ def score_subject(subject: str, email_type: Optional[str] = None) -> dict:
     )
     if emoji_pattern.search(subject):
         score += 3
-        findings.append("Has emoji")
+        findings.append(_good("Has emoji"))
 
     # Question mark (drives curiosity)
     if "?" in subject:
         score += 3
-        findings.append("Has question mark (drives curiosity)")
+        findings.append(_good("Has question mark (drives curiosity)"))
 
     # ALL CAPS spam check
     words = subject.split()
     caps_words = sum(1 for w in words if w.isupper() and len(w) > 2)
     if caps_words > len(words) * 0.5 and len(words) > 2:
         score -= 15
-        findings.append("Excessive ALL CAPS — may trigger spam filters")
+        findings.append(_bad("Excessive ALL CAPS — may trigger spam filters"))
     elif caps_words > 0:
         score += 2
-        findings.append(f"{caps_words} emphasized word(s)")
+        findings.append(_neutral(f"{caps_words} emphasized word(s)"))
 
     # Clamp
     score = max(0, min(100, score))
@@ -242,19 +254,19 @@ def score_copy(html: str, preview: Optional[str] = None) -> dict:
     # Word count
     if 50 <= word_count <= 500:
         score += 15
-        findings.append(f"Good word count ({word_count})")
+        findings.append(_good(f"Good word count ({word_count})"))
     elif 500 < word_count <= 1000:
         score += 8
-        findings.append(f"Lengthy copy ({word_count} words)")
+        findings.append(_neutral(f"Lengthy copy ({word_count} words)"))
     elif word_count > 1000:
         score += 2
-        findings.append(f"Very long copy ({word_count} words) — consider trimming")
+        findings.append(_bad(f"Very long copy ({word_count} words) — consider trimming"))
     elif 20 <= word_count < 50:
         score += 5
-        findings.append(f"Short copy ({word_count} words)")
+        findings.append(_neutral(f"Short copy ({word_count} words)"))
     else:
         score -= 5
-        findings.append(f"Minimal copy ({word_count} words)")
+        findings.append(_bad(f"Minimal copy ({word_count} words)"))
 
     # Readability — sentence length
     sentences = re.split(r'[.!?]+', body_text)
@@ -263,39 +275,38 @@ def score_copy(html: str, preview: Optional[str] = None) -> dict:
         avg_sentence_len = sum(len(s.split()) for s in sentences) / len(sentences)
         if avg_sentence_len <= 20:
             score += 10
-            findings.append(f"Good readability (avg {avg_sentence_len:.0f} words/sentence)")
+            findings.append(_good(f"Good readability (avg {avg_sentence_len:.0f} words/sentence)"))
         elif avg_sentence_len <= 30:
             score += 5
-            findings.append(f"Moderate readability (avg {avg_sentence_len:.0f} words/sentence)")
+            findings.append(_neutral(f"Moderate readability (avg {avg_sentence_len:.0f} words/sentence)"))
         else:
-            findings.append(f"Dense copy (avg {avg_sentence_len:.0f} words/sentence)")
+            findings.append(_bad(f"Dense copy (avg {avg_sentence_len:.0f} words/sentence)"))
 
     # Scannability — headers & lists
     if parsed.headings:
         score += 8
-        findings.append(f"{len(parsed.headings)} heading(s) found — good structure")
+        findings.append(_good(f"{len(parsed.headings)} heading(s) found — good structure"))
     else:
-        findings.append("No headings — consider adding structure")
+        findings.append(_bad("No headings — consider adding structure"))
 
     if parsed.lists > 0:
         score += 5
-        findings.append(f"{parsed.lists} list(s) found — scannable")
+        findings.append(_good(f"{parsed.lists} list(s) found — scannable"))
     else:
-        findings.append("No bullet/numbered lists found")
+        findings.append(_bad("No bullet/numbered lists found"))
 
     # Preview text
     if preview and len(preview.strip()) > 10:
         score += 5
-        findings.append("Has preview text")
+        findings.append(_good("Has preview text"))
     else:
-        findings.append("No preview text detected")
+        findings.append(_bad("No preview text detected"))
 
     # Personalization in body
-    body_lower = body_text.lower()
     has_personalization = any(token.lower() in (html or "").lower() for token in PERSONALIZATION_TOKENS)
     if has_personalization:
         score += 5
-        findings.append("Body uses personalization")
+        findings.append(_good("Body uses personalization"))
 
     score = max(0, min(100, score))
     return {"score": score, "grade": calculate_grade(score), "findings": findings}
@@ -319,20 +330,20 @@ def score_cta(html: str) -> dict:
 
     if not cta_links:
         score -= 20
-        findings.append("No CTA links found")
+        findings.append(_bad("No CTA links found"))
         score = max(0, min(100, score))
         return {"score": score, "grade": calculate_grade(score), "findings": findings}
 
-    findings.append(f"{len(cta_links)} CTA link(s) found")
+    findings.append(_neutral(f"{len(cta_links)} CTA link(s) found"))
 
     if 1 <= len(cta_links) <= 3:
         score += 15
-        findings.append("Good number of CTAs")
+        findings.append(_good("Good number of CTAs"))
     elif len(cta_links) <= 5:
         score += 10
     else:
         score += 3
-        findings.append(f"Many CTAs ({len(cta_links)}) — may dilute focus")
+        findings.append(_bad(f"Many CTAs ({len(cta_links)}) — may dilute focus"))
 
     # Check for action verbs
     action_found = []
@@ -344,9 +355,9 @@ def score_cta(html: str) -> dict:
                 break
     if action_found:
         score += 10
-        findings.append(f"Action verbs: {', '.join(set(action_found)[:3])}")
+        findings.append(_good(f"Action verbs: {', '.join(set(action_found)[:3])}"))
     else:
-        findings.append("No strong action verbs in CTAs")
+        findings.append(_bad("No strong action verbs in CTAs"))
 
     # Check if any link looks like a styled button (common patterns)
     html_lower = (html or "").lower()
@@ -356,9 +367,9 @@ def score_cta(html: str) -> dict:
     ])
     if has_button_style:
         score += 10
-        findings.append("Styled button CTA detected")
+        findings.append(_good("Styled button CTA detected"))
     else:
-        findings.append("Text-only CTAs — consider styled buttons")
+        findings.append(_bad("Text-only CTAs — consider styled buttons"))
 
     # Above-the-fold check: first CTA within first 30% of HTML
     if cta_links:
@@ -367,7 +378,7 @@ def score_cta(html: str) -> dict:
         html_len = len(html) if html else 1
         if 0 < first_pos < html_len * 0.3:
             score += 5
-            findings.append("CTA placed above the fold")
+            findings.append(_good("CTA placed above the fold"))
 
     score = max(0, min(100, score))
     return {"score": score, "grade": calculate_grade(score), "findings": findings}
@@ -382,18 +393,18 @@ def score_design(html: str) -> dict:
     # Images
     if parsed.images:
         score += 10
-        findings.append(f"{len(parsed.images)} image(s) found")
+        findings.append(_good(f"{len(parsed.images)} image(s) found"))
 
         # Alt text check
         missing_alt = sum(1 for _, alt in parsed.images if not alt.strip())
         if missing_alt == 0:
             score += 8
-            findings.append("All images have alt text")
+            findings.append(_good("All images have alt text"))
         elif missing_alt < len(parsed.images):
             score += 3
-            findings.append(f"{missing_alt} image(s) missing alt text")
+            findings.append(_bad(f"{missing_alt} image(s) missing alt text"))
         else:
-            findings.append("No images have alt text — accessibility issue")
+            findings.append(_bad("No images have alt text — accessibility issue"))
 
         # Image-to-text ratio
         body_text = parsed.get_body_text()
@@ -402,25 +413,25 @@ def score_design(html: str) -> dict:
             ratio = len(parsed.images) / word_count * 100
             if ratio < 5:
                 score += 5
-                findings.append("Good image-to-text ratio")
+                findings.append(_good("Good image-to-text ratio"))
             elif ratio > 20:
-                findings.append("Heavy on images vs text — may affect deliverability")
+                findings.append(_bad("Heavy on images vs text — may affect deliverability"))
     else:
-        findings.append("No images — consider adding visuals")
+        findings.append(_bad("No images — consider adding visuals"))
 
     # Responsive check
     if parsed.has_viewport:
         score += 10
-        findings.append("Has viewport meta tag (responsive)")
+        findings.append(_good("Has viewport meta tag (responsive)"))
     else:
-        findings.append("No viewport meta tag — may not render well on mobile")
+        findings.append(_bad("No viewport meta tag — may not render well on mobile"))
 
     # Dark mode support
     if parsed.has_dark_mode:
         score += 8
-        findings.append("Dark mode support detected")
+        findings.append(_good("Dark mode support detected"))
     else:
-        findings.append("No dark mode styles found")
+        findings.append(_bad("No dark mode styles found"))
 
     # Structured layout (tables or divs)
     html_lower = (html or "").lower()
@@ -428,13 +439,13 @@ def score_design(html: str) -> dict:
     has_structure = has_tables or "display:flex" in html_lower or "display: flex" in html_lower
     if has_structure:
         score += 5
-        findings.append("Structured layout detected")
+        findings.append(_good("Structured layout detected"))
 
     # Inline styles (common in email HTML)
     inline_style_count = html_lower.count('style="')
     if inline_style_count > 5:
         score += 3
-        findings.append("Uses inline styles (email-safe)")
+        findings.append(_good("Uses inline styles (email-safe)"))
 
     score = max(0, min(100, score))
     return {"score": score, "grade": calculate_grade(score), "findings": findings}
@@ -451,16 +462,16 @@ def score_strategy(
     # Campaign type present
     if email_type:
         score += 15
-        findings.append(f"Campaign type: {email_type}")
+        findings.append(_neutral(f"Campaign type: {email_type}"))
     else:
-        findings.append("No campaign type identified")
+        findings.append(_bad("No campaign type identified"))
 
     # Industry present
     if industry:
         score += 10
-        findings.append(f"Industry: {industry}")
+        findings.append(_neutral(f"Industry: {industry}"))
     else:
-        findings.append("No industry classification")
+        findings.append(_bad("No industry classification"))
 
     # Send timing
     if received_at:
@@ -471,30 +482,99 @@ def score_strategy(
         if weekday in (1, 2, 3):
             score += 10
             day_names = {1: "Tuesday", 2: "Wednesday", 3: "Thursday"}
-            findings.append(f"Sent on {day_names[weekday]} (optimal)")
+            findings.append(_good(f"Sent on {day_names[weekday]} (optimal)"))
         elif weekday in (0, 4):
             score += 5
             day_names = {0: "Monday", 4: "Friday"}
-            findings.append(f"Sent on {day_names[weekday]} (good)")
+            findings.append(_neutral(f"Sent on {day_names[weekday]} (good)"))
         else:
             day_names = {5: "Saturday", 6: "Sunday"}
-            findings.append(f"Sent on {day_names.get(weekday, 'weekend')} (lower engagement typical)")
+            findings.append(_bad(f"Sent on {day_names.get(weekday, 'weekend')} (lower engagement typical)"))
 
         # Best hours: 9-11 AM, 1-3 PM
         if 9 <= hour <= 11:
             score += 8
-            findings.append(f"Sent at {hour}:00 (morning peak)")
+            findings.append(_good(f"Sent at {hour}:00 (morning peak)"))
         elif 13 <= hour <= 15:
             score += 6
-            findings.append(f"Sent at {hour}:00 (afternoon peak)")
+            findings.append(_good(f"Sent at {hour}:00 (afternoon peak)"))
         elif 6 <= hour <= 20:
             score += 3
-            findings.append(f"Sent at {hour}:00 (business hours)")
+            findings.append(_neutral(f"Sent at {hour}:00 (business hours)"))
         else:
-            findings.append(f"Sent at {hour}:00 (off-peak)")
+            findings.append(_bad(f"Sent at {hour}:00 (off-peak)"))
 
     score = max(0, min(100, score))
     return {"score": score, "grade": calculate_grade(score), "findings": findings}
+
+
+# ── Suggestions generator ──
+
+SUGGESTION_MAP = {
+    "subject": [
+        ("No personalization detected", "Add personalization (e.g., subscriber's first name) to your subject line to boost open rates"),
+        ("Very short", "Aim for 30-60 characters in your subject line — long enough to be descriptive, short enough to not get truncated"),
+        ("Too long", "Shorten your subject line to under 60 characters so it displays fully on mobile"),
+        ("No personalization", "Add personalization (e.g., subscriber's first name) to your subject line to boost open rates"),
+    ],
+    "copy": [
+        ("No headings", "Add headings (H1, H2) to break up your email copy and improve scannability"),
+        ("No bullet", "Use bullet points or numbered lists to make key information easy to scan"),
+        ("No preview text", "Add compelling preview text — it's the second thing readers see after the subject line"),
+        ("Dense copy", "Shorten your sentences to under 20 words for better readability"),
+        ("Very long copy", "Consider trimming your email copy — shorter emails tend to have higher engagement"),
+        ("Minimal copy", "Add more body copy to provide context and drive the reader toward your CTA"),
+    ],
+    "cta": [
+        ("No CTA links", "Add at least one clear call-to-action link or button to guide readers"),
+        ("No strong action verbs", "Use action verbs like 'Shop', 'Get', 'Discover' in your CTA text"),
+        ("Text-only CTAs", "Style your CTAs as buttons with a contrasting background color for higher click-through"),
+        ("Many CTAs", "Reduce the number of CTAs to 2-3 to maintain focus and avoid decision fatigue"),
+    ],
+    "design": [
+        ("No images", "Add relevant images to make your email more visually engaging"),
+        ("missing alt text", "Add alt text to all images for better accessibility and deliverability"),
+        ("No viewport meta", "Add a viewport meta tag to ensure your email renders well on mobile devices"),
+        ("No dark mode", "Add prefers-color-scheme CSS media query to support dark mode email clients"),
+        ("Heavy on images", "Balance your image-to-text ratio — too many images can trigger spam filters"),
+        ("No images have alt text", "Add descriptive alt text to every image for accessibility and when images are blocked"),
+    ],
+    "strategy": [
+        ("Saturday", "Consider sending on Tuesday-Thursday between 9-11 AM for peak engagement"),
+        ("Sunday", "Consider sending on Tuesday-Thursday between 9-11 AM for peak engagement"),
+        ("off-peak", "Try sending during peak hours: 9-11 AM or 1-3 PM for better open rates"),
+        ("No campaign type", "Classify your campaign type (e.g., Sale, Newsletter) to better track performance"),
+    ],
+}
+
+
+def generate_suggestions(dimensions: dict) -> list:
+    """Generate 2-4 actionable improvement suggestions based on weakest dimensions."""
+    suggestions = []
+
+    # Sort dimensions by score ascending (weakest first)
+    sorted_dims = sorted(dimensions.items(), key=lambda x: x[1]["score"])
+
+    for dim_name, dim_result in sorted_dims:
+        if dim_result["score"] >= 80:
+            continue  # skip strong dimensions
+
+        dim_suggestions = SUGGESTION_MAP.get(dim_name, [])
+        # Check each finding for a matching suggestion
+        for finding in dim_result["findings"]:
+            finding_text = finding["text"] if isinstance(finding, dict) else finding
+            if finding.get("type") != "bad":
+                continue
+            for trigger, suggestion in dim_suggestions:
+                if trigger.lower() in finding_text.lower() and suggestion not in suggestions:
+                    suggestions.append(suggestion)
+                    break
+            if len(suggestions) >= 4:
+                break
+        if len(suggestions) >= 4:
+            break
+
+    return suggestions
 
 
 # ── Main entry point ──
@@ -519,7 +599,8 @@ def analyze_email(
     """
     Analyze an email and return scores across 5 dimensions.
 
-    Returns dict with overall_score, overall_grade, and per-dimension breakdown.
+    Returns dict with overall_score, overall_grade, per-dimension breakdown,
+    and actionable suggestions for improvement.
     """
     dimensions = {
         "subject": score_subject(subject, email_type),
@@ -541,4 +622,5 @@ def analyze_email(
         "overall_score": overall_score,
         "overall_grade": calculate_grade(overall_score),
         "dimensions": dimensions,
+        "suggestions": generate_suggestions(dimensions),
     }
