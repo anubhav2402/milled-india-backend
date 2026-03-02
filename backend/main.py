@@ -1445,12 +1445,12 @@ def list_emails(
         cutoff = datetime.utcnow() - timedelta(days=archive_days)
         query = query.filter(models.Email.received_at >= cutoff)
 
-    # Search level gate: free users can only use keyword search
+    # Search level gate: free users can use type/category but not industry
     search_level = get_limit(plan, "search_level")
-    if search_level == "basic" and any([type, industry, category]):
+    if search_level == "basic" and industry:
         raise HTTPException(
             status_code=403,
-            detail="Advanced filters (type, industry, category) require a Starter plan or higher. Upgrade at /pricing",
+            detail="Industry filter requires a Starter plan or higher. Upgrade at /pricing",
         )
 
     if brand:
