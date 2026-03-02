@@ -4222,6 +4222,7 @@ def reclassify_all_types(
     classified_count = 0
     type_counts: dict = {}
     errors = 0
+    last_error = ""
 
     for i in range(0, total, BATCH_SIZE):
         batch = emails_batch[i : i + BATCH_SIZE]
@@ -4291,13 +4292,14 @@ Respond with ONLY a JSON array: [{{"i": 1, "t": "Product Showcase"}}, ...]"""
         except Exception as exc:
             print(f"[Reclassify-All] Batch error at offset {offset}+{i}: {exc}")
             errors += 1
+            last_error = str(exc)
 
         db.commit()
         if i + BATCH_SIZE < total:
             _time.sleep(0.3)
 
     remaining = max(total_all - offset - total, 0)
-    return {
+    resp = {
         "message": f"Classified {classified_count}/{total} emails (offset={offset}, remaining≈{remaining})",
         "total": total,
         "classified": classified_count,
@@ -4306,6 +4308,9 @@ Respond with ONLY a JSON array: [{{"i": 1, "t": "Product Showcase"}}, ...]"""
         "errors": errors,
         "type_distribution": type_counts,
     }
+    if errors > 0:
+        resp["last_error"] = last_error
+    return resp
 
 
 # ── Email Analysis ──
