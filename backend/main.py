@@ -4055,6 +4055,7 @@ def reclassify_null_types(
     """
     import json as _json
     import time as _time
+    from sqlalchemy import func
 
     CAMPAIGN_TYPES = [
         "Sale", "Welcome", "Abandoned Cart", "Newsletter", "New Arrival",
