@@ -183,9 +183,43 @@ Each tweet MUST be under 280 characters.
 Do NOT include any URL in any tweet except the last one which should end with: mailmuse.in"""
 
 
+def _find_active_window(db: Session, preferred_days: int = 1) -> datetime:
+    """
+    Return a 'since' datetime that has enough data.
+    Tries preferred window first, then widens to 7d, 30d, 90d, then all-time.
+    """
+    for days in [preferred_days, 7, 30, 90, 365, 3650]:
+        since = datetime.utcnow() - timedelta(days=days)
+        count = (
+            db.query(func.count(Email.id))
+            .filter(Email.received_at >= since)
+            .scalar()
+        ) or 0
+        if count >= 10:
+            return since
+    # Fallback: all-time
+    return datetime(2000, 1, 1)
+
+
+def _window_label(since: datetime) -> str:
+    """Human-readable label for the time window."""
+    days = (datetime.utcnow() - since).days
+    if days <= 1:
+        return "today"
+    elif days <= 7:
+        return "this week"
+    elif days <= 30:
+        return "this month"
+    elif days <= 90:
+        return "in the last 3 months"
+    else:
+        return "across our archive"
+
+
 def _build_daily_digest(db: Session) -> str:
-    """Query today's emails and build a daily-digest tweet."""
-    since = datetime.utcnow() - timedelta(hours=24)
+    """Query recent emails and build a daily-digest tweet."""
+    since = _find_active_window(db, preferred_days=1)
+    window = _window_label(since)
 
     rows = (
         db.query(Email.brand, func.count(Email.id).label("cnt"))
@@ -197,7 +231,7 @@ def _build_daily_digest(db: Session) -> str:
     )
 
     if not rows:
-        return "No emails tracked in the last 24 hours."
+        return "No emails found in the database."
 
     # Grab a representative subject per brand for extra flavour
     brand_subjects = {}
@@ -217,15 +251,16 @@ def _build_daily_digest(db: Session) -> str:
         lines.append(f"{i}. {brand} ({cnt} emails) — \"{snippet}\"")
 
     context = (
-        "Today's top email campaigns tracked on MailMuse:\n"
+        f"Top email campaigns tracked on MailMuse {window}:\n"
         + "\n".join(lines)
     )
     return context
 
 
 def _build_weekly_digest(db: Session) -> str:
-    """Query the last 7 days and build a weekly-digest tweet."""
-    since = datetime.utcnow() - timedelta(days=7)
+    """Query recent data and build a weekly-digest style tweet."""
+    since = _find_active_window(db, preferred_days=7)
+    window = _window_label(since)
 
     total_emails = (
         db.query(func.count(Email.id))
@@ -257,17 +292,28 @@ def _build_weekly_digest(db: Session) -> str:
     )
     trending_type = trending_type_row[0] if trending_type_row else "Newsletter"
 
+    # Pick a few interesting subjects for flavour
+    interesting = (
+        db.query(Email.brand, Email.subject)
+        .filter(Email.received_at >= since, Email.subject.isnot(None))
+        .order_by(func.random())
+        .limit(5)
+        .all()
+    )
+    subject_examples = "\n".join(f"  - {b}: \"{s[:60]}\"" for b, s in interesting) if interesting else ""
+
     context = (
-        f"This week on MailMuse: {total_emails} campaigns tracked from "
+        f"MailMuse {window}: {total_emails} campaigns tracked from "
         f"{total_brands} brands. Top brand: {top_brand}. "
-        f"Trending campaign type: {trending_type}."
+        f"Trending campaign type: {trending_type}.\n"
+        f"Sample subject lines:\n{subject_examples}"
     )
     return context
 
 
 def _build_brand_spotlight(db: Session) -> str:
-    """Pick a random brand with 3+ emails in the last 7 days and spotlight it."""
-    since = datetime.utcnow() - timedelta(days=7)
+    """Pick a random brand with 3+ emails and spotlight it."""
+    since = _find_active_window(db, preferred_days=7)
 
     active_brands = (
         db.query(Email.brand, func.count(Email.id).label("cnt"))
@@ -279,7 +325,7 @@ def _build_brand_spotlight(db: Session) -> str:
 
     if not active_brands:
         return (
-            "No brand sent 3 or more emails this week — "
+            "No brand has 3 or more emails — "
             "not enough data for a spotlight."
         )
 
@@ -304,19 +350,31 @@ def _build_brand_spotlight(db: Session) -> str:
     fav_day = day_names[max(day_counts, key=day_counts.get)] if day_counts else "N/A"
     avg_subject_len = round(total_subject_len / len(emails)) if emails else 0
 
+    # Grab sample subjects for this brand
+    samples = (
+        db.query(Email.subject)
+        .filter(Email.brand == brand, Email.subject.isnot(None))
+        .order_by(func.random())
+        .limit(8)
+        .all()
+    )
+    sample_lines = "\n".join(f"  \"{s[0][:70]}\"" for s in samples) if samples else ""
+
     context = (
         f"Brand spotlight — {brand}:\n"
-        f"- Emails this week: {email_count}\n"
+        f"- Total emails tracked: {email_count}\n"
         f"- Favourite send day: {fav_day}\n"
         f"- Avg subject-line length: {avg_subject_len} chars\n"
+        f"- Sample subject lines:\n{sample_lines}\n"
         "Write an insightful tweet about this brand's email strategy."
     )
     return context
 
 
 def _build_subject_line_insight(db: Session) -> str:
-    """Analyse subject-line patterns from the last 7 days."""
-    since = datetime.utcnow() - timedelta(days=7)
+    """Analyse subject-line patterns from recent data."""
+    since = _find_active_window(db, preferred_days=7)
+    window = _window_label(since)
 
     subjects = (
         db.query(Email.subject)
@@ -343,12 +401,17 @@ def _build_subject_line_insight(db: Session) -> str:
         if any(w in s.lower() for w in urgency_words)
     )
 
+    # Pick a few example subjects for colour
+    sample = random.sample([(s,) for (s,) in subjects], min(8, len(subjects)))
+    examples = "\n".join(f"  \"{s[0][:70]}\"" for s in sample)
+
     context = (
-        f"Subject-line analysis from {total} emails this week:\n"
+        f"Subject-line analysis from {total} emails {window}:\n"
         f"- Questions: {questions} ({round(questions / total * 100)}%)\n"
         f"- With emoji: {with_emoji} ({round(with_emoji / total * 100)}%)\n"
         f"- With numbers: {with_numbers} ({round(with_numbers / total * 100)}%)\n"
         f"- Urgency words: {with_urgency} ({round(with_urgency / total * 100)}%)\n"
+        f"Example subject lines:\n{examples}\n"
         "Generate a tweet sharing a quick, actionable insight from these stats."
     )
     return context
@@ -590,18 +653,57 @@ def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str
             db.close()
 
 
+_VIRAL_ANGLES = [
+    {
+        "framework": "Myth Buster",
+        "instruction": "Use the MYTH BUSTER framework: Start by stating a common belief about email marketing, then demolish it with data. Make readers feel like everything they learned is wrong.",
+    },
+    {
+        "framework": "Contrarian Take",
+        "instruction": "Use the CONTRARIAN TAKE framework: Find a pattern where the data says the OPPOSITE of conventional wisdom. Lead with 'Everyone says X. The data says the opposite.'",
+    },
+    {
+        "framework": "Bold Claim + Proof",
+        "instruction": "Use the BOLD CLAIM + PROOF framework: Open with the most shocking single stat or finding, then spend the thread proving it with receipts and real examples.",
+    },
+    {
+        "framework": "Data-Driven Surprise",
+        "instruction": "Use the DATA-DRIVEN SURPRISE framework: Lead with the most counterintuitive stat you can find. Structure the thread as a countdown of surprising discoveries.",
+    },
+    {
+        "framework": "Good vs Bad Comparison",
+        "instruction": "Use the GOOD VS BAD COMPARISON framework: Pick 2-3 brands with opposite strategies and compare them head-to-head. Show how wildly different approaches can both work (or how one fails).",
+    },
+    {
+        "framework": "Brand Deep-Dive",
+        "instruction": "Pick ONE fascinating brand from the data and do a deep-dive thread on their email strategy. Analyze their subject lines, patterns, and what makes them unique. Make it feel like competitive intelligence people would pay for.",
+    },
+    {
+        "framework": "Industry Secrets",
+        "instruction": "Frame the thread as insider secrets from analyzing thousands of emails. Use 'I analyzed X emails and found Y things most marketers don't know.' Make each tweet a separate secret/finding.",
+    },
+]
+
+
 def _generate_viral_thread(context: str) -> str:
     """
     Generate a viral Twitter thread using Claude Sonnet and the full
     viral frameworks prompt. Returns tweets separated by \\n---\\n.
+    Randomly selects a framework/angle for variety.
     """
     client = _get_anthropic_client()
 
+    angle = random.choice(_VIRAL_ANGLES)
+
     user_prompt = (
+        f"FRAMEWORK TO USE: {angle['framework']}\n"
+        f"{angle['instruction']}\n\n"
         "Using the database stats below, write a VIRAL Twitter thread "
         "(7-9 tweets). Pick the most surprising/counterintuitive data "
-        "points and use the frameworks from your instructions.\n\n"
+        "points.\n\n"
         f"{context}\n\n"
+        "IMPORTANT: Make this thread DIFFERENT from a typical 'best brands "
+        "break all the rules' angle. Find a FRESH take from the data.\n\n"
         "Remember: tweet 1 hook must be under 110 chars. Each tweet under "
         "280 chars. Separate tweets with --- on its own line. Last tweet "
         "should mention mailmuse.in as CTA."
