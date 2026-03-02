@@ -4045,12 +4045,13 @@ def delete_tweet(
 
 @app.post("/admin/reclassify-types")
 def reclassify_null_types(
+    limit: int = 100,
     admin: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
     """
-    Batch-classify all emails with NULL type using Claude Haiku.
-    Processes in batches of 10 for efficiency.
+    Batch-classify emails with NULL type using Claude Haiku.
+    Use ?limit=100 to control how many per request. Call repeatedly until remaining=0.
     """
     import json as _json
     import time as _time
@@ -4062,16 +4063,24 @@ def reclassify_null_types(
         "Confirmation", "Brand Story", "Event / Invitation", "Referral",
     ]
 
-    # Get all NULL-type emails
+    # Count total remaining
+    total_remaining = (
+        db.query(func.count(models.Email.id))
+        .filter(models.Email.type.is_(None), models.Email.subject.isnot(None))
+        .scalar()
+    ) or 0
+
+    # Get NULL-type emails (limited to avoid timeout)
     null_emails = (
         db.query(models.Email.id, models.Email.brand, models.Email.subject)
         .filter(models.Email.type.is_(None), models.Email.subject.isnot(None))
         .order_by(models.Email.id)
+        .limit(limit)
         .all()
     )
     total = len(null_emails)
     if total == 0:
-        return {"message": "No emails to classify", "total": 0, "classified": 0}
+        return {"message": "All emails classified!", "total": 0, "classified": 0, "remaining": 0}
 
     # Get Anthropic client
     api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -4148,10 +4157,12 @@ Respond with ONLY a JSON array: [{{"i": 1, "t": "Product Showcase"}}, ...]"""
         if i + BATCH_SIZE < total:
             _time.sleep(0.3)
 
+    remaining = total_remaining - classified_count
     return {
-        "message": f"Classified {classified_count}/{total} emails",
+        "message": f"Classified {classified_count}/{total} emails ({remaining} remaining)",
         "total": total,
         "classified": classified_count,
+        "remaining": max(remaining, 0),
         "errors": errors,
         "type_distribution": type_counts,
     }
