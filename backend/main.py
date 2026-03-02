@@ -4169,6 +4169,145 @@ Respond with ONLY a JSON array: [{{"i": 1, "t": "Product Showcase"}}, ...]"""
     }
 
 
+@app.post("/admin/reclassify-all-types")
+def reclassify_all_types(
+    limit: int = 100,
+    offset: int = 0,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Re-classify ALL emails using Claude Haiku (not just NULLs).
+    Use ?limit=100&offset=0 and increment offset by limit each call.
+    """
+    import json as _json
+    import time as _time
+    from sqlalchemy import func
+
+    CAMPAIGN_TYPES = [
+        "Sale", "Welcome", "Abandoned Cart", "Newsletter", "New Arrival",
+        "Re-engagement", "Order Update", "Festive", "Loyalty", "Feedback",
+        "Back in Stock", "Educational", "Product Showcase", "Promotional",
+        "Confirmation", "Brand Story", "Event / Invitation", "Referral",
+    ]
+
+    # Count total emails
+    total_all = (
+        db.query(func.count(models.Email.id))
+        .filter(models.Email.subject.isnot(None))
+        .scalar()
+    ) or 0
+
+    # Get batch of emails at offset
+    emails_batch = (
+        db.query(models.Email.id, models.Email.brand, models.Email.subject)
+        .filter(models.Email.subject.isnot(None))
+        .order_by(models.Email.id)
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    total = len(emails_batch)
+    if total == 0:
+        return {"message": "No more emails to classify!", "total": 0, "classified": 0, "remaining": 0}
+
+    # Get Anthropic client
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise HTTPException(500, "ANTHROPIC_API_KEY not configured")
+    from anthropic import Anthropic
+    client = Anthropic(api_key=api_key)
+
+    BATCH_SIZE = 10
+    classified_count = 0
+    type_counts: dict = {}
+    errors = 0
+
+    for i in range(0, total, BATCH_SIZE):
+        batch = emails_batch[i : i + BATCH_SIZE]
+
+        lines = []
+        for j, (eid, brand, subject) in enumerate(batch):
+            lines.append(f"{j+1}. [{brand or 'Unknown'}] {subject or '(no subject)'}")
+
+        prompt = f"""Classify each marketing email into a campaign type.
+
+{chr(10).join(lines)}
+
+Types: {_json.dumps(CAMPAIGN_TYPES)}
+
+Guidelines:
+- "Sale" = discounts, % off, deals, clearance, flash sale, BOGO, "save", "extra off". MUST have a clear discount/deal angle.
+- "New Arrival" = new products, launches, collections, "just dropped", "just landed", "new in", "introducing"
+- "Product Showcase" = featuring products, lookbooks, styling, without sale angle. DEFAULT for product-focused emails.
+- "Brand Story" = brand narrative, behind-the-scenes, designer stories, fashion shows, collaborations, playlists, lifestyle content
+- "Educational" = tips, how-to, guides, blog content, health/wellness advice, routines
+- "Event / Invitation" = store events, pop-ups, webinars, "come visit us", "join us"
+- "Festive" = holiday-themed (Diwali, Christmas, Valentine's, Holi, Easter), gift guides
+- "Newsletter" = regular digests, roundups, curated picks, weekly updates, magazine-style content
+- "Loyalty" = points, rewards, VIP, member exclusives, tier upgrades
+- "Welcome" = first email after signup, onboarding, "welcome to"
+- "Re-engagement" = win-back, "we miss you", "come back", "take another look", cart-adjacent nudges
+- "Back in Stock" = restocked, "back in stock", "available again", explicit restock announcements only
+- "Referral" = refer-a-friend, invite rewards
+- "Confirmation" = email verification, subscription confirmation
+- "Abandoned Cart" = cart reminders, "left something behind"
+- "Order Update" = shipping, delivery, tracking
+- "Feedback" = reviews, surveys, rating requests
+- "Promotional" = general marketing, free shipping, bundles (LAST RESORT only)
+
+IMPORTANT: Be strict. Only classify as "Sale" if there is an explicit discount/offer. Default to "Product Showcase" for product-focused emails.
+
+Respond with ONLY a JSON array: [{{"i": 1, "t": "Product Showcase"}}, ...]"""
+
+        try:
+            response = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=400,
+                system="Precise email classifier. Respond with valid JSON only.",
+                messages=[{"role": "user", "content": prompt}],
+                timeout=25,
+            )
+            result_text = response.content[0].text.strip()
+            if result_text.startswith("```"):
+                result_text = result_text.split("```")[1]
+                if result_text.startswith("json"):
+                    result_text = result_text[4:]
+                result_text = result_text.strip()
+
+            results = _json.loads(result_text)
+            for item in results:
+                idx = item.get("i", item.get("index", 0)) - 1
+                ctype = item.get("t", item.get("type", "Promotional"))
+                if ctype not in CAMPAIGN_TYPES:
+                    ctype = "Promotional"
+                if 0 <= idx < len(batch):
+                    eid = batch[idx][0]
+                    email_obj = db.query(models.Email).filter(models.Email.id == eid).first()
+                    if email_obj:
+                        email_obj.type = ctype
+                        classified_count += 1
+                        type_counts[ctype] = type_counts.get(ctype, 0) + 1
+        except Exception as exc:
+            print(f"[Reclassify-All] Batch error at offset {offset}+{i}: {exc}")
+            errors += 1
+
+        db.commit()
+        if i + BATCH_SIZE < total:
+            _time.sleep(0.3)
+
+    remaining = max(total_all - offset - total, 0)
+    return {
+        "message": f"Classified {classified_count}/{total} emails (offset={offset}, remaining≈{remaining})",
+        "total": total,
+        "classified": classified_count,
+        "offset": offset,
+        "remaining": remaining,
+        "errors": errors,
+        "type_distribution": type_counts,
+    }
+
+
 # ── Email Analysis ──
 
 @app.get("/emails/{email_id}/analysis")
