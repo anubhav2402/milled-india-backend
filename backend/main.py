@@ -2336,6 +2336,36 @@ def get_brand_stats(
         if row.brand not in brand_industries or row.cnt > brand_industries[row.brand][1]:
             brand_industries[row.brand] = (row.industry, row.cnt)
 
+    # Extract domain from sender email for each brand (for logo URLs)
+    import re
+    sender_rows = db.query(
+        models.Email.brand,
+        models.Email.sender
+    ).filter(
+        models.Email.brand.isnot(None),
+        models.Email.sender.isnot(None)
+    ).distinct(models.Email.brand).all()
+
+    brand_domains = {}
+    for row in sender_rows:
+        if row.brand and row.sender:
+            # Extract domain from sender like "Brand <email@domain.com>"
+            email_match = re.search(r'<([^>]+)>', row.sender)
+            email_addr = email_match.group(1) if email_match else row.sender
+            domain_match = re.search(r'@([^@\s]+)', email_addr)
+            if domain_match:
+                domain = domain_match.group(1)
+                # Clean up subdomains like mail.brand.com -> brand.com
+                parts = domain.split('.')
+                if len(parts) > 2:
+                    # Keep last two parts for most cases (brand.com)
+                    # But handle .co.in, .com.au etc.
+                    if parts[-2] in ('co', 'com', 'org', 'net', 'ac'):
+                        domain = '.'.join(parts[-3:])
+                    else:
+                        domain = '.'.join(parts[-2:])
+                brand_domains[row.brand] = domain
+
     brand_stats = {}
     is_authenticated = current_user is not None
 
@@ -2363,19 +2393,23 @@ def get_brand_stats(
             freq = "1x"
 
         industry = brand_industries.get(brand, (None,))[0]
+        domain = brand_domains.get(brand)
+        logo_url = f"https://www.google.com/s2/favicons?domain={domain}&sz=128" if domain else None
 
         # Mask numeric stats for non-authenticated users; industry is always public
         if is_authenticated:
             brand_stats[brand] = {
                 "email_count": count,
                 "send_frequency": freq,
-                "industry": industry
+                "industry": industry,
+                "logo_url": logo_url,
             }
         else:
             brand_stats[brand] = {
                 "email_count": "xx",
                 "send_frequency": "xx",
-                "industry": industry
+                "industry": industry,
+                "logo_url": logo_url,
             }
 
     return brand_stats
@@ -2581,6 +2615,24 @@ def get_brand_analytics(
     else:
         emails_per_week = total_emails
     
+    # Extract logo URL from sender domain
+    logo_url = None
+    sender_email = next((e.sender for e in emails if e.sender), None)
+    if sender_email:
+        import re as _re
+        email_match = _re.search(r'<([^>]+)>', sender_email)
+        email_addr = email_match.group(1) if email_match else sender_email
+        domain_match = _re.search(r'@([^@\s]+)', email_addr)
+        if domain_match:
+            domain = domain_match.group(1)
+            parts = domain.split('.')
+            if len(parts) > 2:
+                if parts[-2] in ('co', 'com', 'org', 'net', 'ac'):
+                    domain = '.'.join(parts[-3:])
+                else:
+                    domain = '.'.join(parts[-2:])
+            logo_url = f"https://www.google.com/s2/favicons?domain={domain}&sz=128"
+
     # Build response
     if is_authenticated or is_sample:
         return {
@@ -2597,7 +2649,8 @@ def get_brand_analytics(
                 "avg_length": avg_subject_length,
                 "emoji_usage_rate": emoji_rate,
                 "top_words": top_words
-            }
+            },
+            "logo_url": logo_url,
         }
     else:
         # Masked response for unauthenticated users
@@ -2611,7 +2664,8 @@ def get_brand_analytics(
             "campaign_breakdown": {k: "xx" for k in campaign_breakdown},
             "send_day_distribution": "Login to view",
             "send_time_distribution": "Login to view",
-            "subject_line_stats": "Login to view"
+            "subject_line_stats": "Login to view",
+            "logo_url": logo_url,
         }
 
 
