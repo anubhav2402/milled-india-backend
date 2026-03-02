@@ -1032,6 +1032,27 @@ CAMPAIGN_TYPE_KEYWORDS = {
         "your", "you'll love", "just for you", "made for you",
         "attention", "detail", "quality", "craftsmanship",
     ],
+    "Brand Story": [
+        "behind the scenes", "our story", "our journey", "meet the founder",
+        "meet the designer", "meet the maker", "the story behind", "brand story",
+        "our mission", "our values", "heritage", "tradition", "legacy",
+        "fashion week", "fashion show", "runway", "campaign by", "first campaign",
+        "collaboration", "collab", "x collaboration", "partnership",
+        "playlist", "la famiglia", "in conversation", "interview with",
+        "a letter from", "note from", "from the desk", "from the founder",
+    ],
+    "Event / Invitation": [
+        "come visit", "visit us", "you're invited", "invitation", "invite",
+        "event", "pop-up", "popup", "pop up", "trunk show", "launch event",
+        "launch party", "store opening", "grand opening", "webinar", "live session",
+        "workshop", "masterclass", "meet us at", "join us", "rsvp",
+        "in-store", "in store", "save the date",
+    ],
+    "Referral": [
+        "refer a friend", "refer and earn", "invite a friend", "share with friends",
+        "referral", "give and get", "send to a friend", "tell a friend",
+        "invite friends", "share the love", "give your friends",
+    ],
 }
 
 
@@ -1116,11 +1137,14 @@ def _extract_campaign_type_by_keywords(subject=None, preview=None, html=None):
         "Abandoned Cart",    # Very specific - cart reminders
         "Welcome",           # Very specific - onboarding
         "Feedback",          # Very specific - surveys/reviews
+        "Referral",          # Specific - refer-a-friend
         "Back in Stock",     # Specific - inventory
         "Re-engagement",     # Specific - win-back
+        "Event / Invitation",# Specific - events, pop-ups
         "Sale",              # Common but specific intent
         "Festive",           # Seasonal/holiday
         "Loyalty",           # Rewards/points
+        "Brand Story",       # Brand narrative
         "New Arrival",       # Product launches
         "Educational",       # Tips/guides
         "Newsletter",        # Regular updates

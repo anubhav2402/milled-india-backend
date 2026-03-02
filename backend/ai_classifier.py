@@ -109,7 +109,7 @@ SUBCATEGORIES = {
     ],
 }
 
-# Campaign types (must match engine.py)
+# Campaign types (must match engine.py and type-utils.ts)
 CAMPAIGN_TYPES = [
     "Sale",
     "Welcome",
@@ -121,6 +121,14 @@ CAMPAIGN_TYPES = [
     "Festive",
     "Loyalty",
     "Feedback",
+    "Back in Stock",
+    "Educational",
+    "Product Showcase",
+    "Promotional",
+    "Confirmation",
+    "Brand Story",
+    "Event / Invitation",
+    "Referral",
 ]
 
 
@@ -301,16 +309,27 @@ Choose ONLY from these campaign types:
 {json.dumps(CAMPAIGN_TYPES, indent=2)}
 
 Guidelines:
-- "Sale" = discounts, offers, % off, deals, clearance
+- "Sale" = discounts, offers, % off, deals, clearance, flash sale, end of season
 - "Welcome" = first email after signup, onboarding
 - "Abandoned Cart" = reminders about items left in cart
-- "Newsletter" = regular updates, news, content
-- "New Arrival" = new products, launches, collections
-- "Re-engagement" = win-back emails, "we miss you"
+- "Newsletter" = regular updates, digests, roundups, curated picks
+- "New Arrival" = new products, launches, collections, "just dropped", "just landed"
+- "Re-engagement" = win-back emails, "we miss you", "come back"
 - "Order Update" = shipping, delivery, tracking
-- "Festive" = holiday-themed (Diwali, Christmas, etc.)
-- "Loyalty" = points, rewards, member benefits
-- "Feedback" = reviews, surveys, ratings
+- "Festive" = holiday-themed (Diwali, Christmas, Valentine's, etc.), gift guides
+- "Loyalty" = points, rewards, VIP, member exclusives
+- "Feedback" = reviews, surveys, ratings requests
+- "Back in Stock" = restocked, available again, selling fast
+- "Educational" = tips, how-to, guides, tutorials, blog content, health/wellness advice
+- "Product Showcase" = featuring specific products, lookbooks, styling, collections without sale angle
+- "Promotional" = general marketing, free shipping, bundles, gift with purchase
+- "Confirmation" = email verification, subscription confirmation
+- "Brand Story" = brand narrative, behind-the-scenes, designer stories, fashion shows, brand values, collaborations, playlists, lifestyle content
+- "Event / Invitation" = store events, pop-ups, webinars, launches, "come visit us"
+- "Referral" = refer-a-friend, share with friends, invite rewards
+
+Default to "Product Showcase" if the email is about products but doesn't fit Sale, New Arrival, or Back in Stock.
+Default to "Promotional" only as a last resort for general marketing emails.
 
 Respond with ONLY a JSON object:
 {{"campaign_type": "type name", "confidence": 0.95}}
