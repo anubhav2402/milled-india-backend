@@ -2,7 +2,7 @@ import os
 from typing import List, Optional
 from datetime import datetime, timedelta
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi import Body, Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -30,7 +30,7 @@ from .auth import (
 )
 from jose import jwt
 from .plans import get_effective_plan, PLAN_LIMITS, check_numeric_limit, get_limit
-from .twitter import generate_tweet_content, post_tweet, is_twitter_configured, get_twitter_client
+from .twitter import generate_tweet_content, post_tweet, is_twitter_configured, get_twitter_client, get_all_valid_types, get_output_mode
 from .email_analysis import analyze_email
 from .email_generator import extract_template_schema, generate_email
 from .payments import (
@@ -222,9 +222,9 @@ def run_migrations():
     if not inspect(engine).has_table("tweet_queue"):
         models.TweetQueue.__table__.create(engine)
 
-    # Add thread columns to tweet_queue if missing
+    # Add thread/reply columns to tweet_queue if missing
     with engine.connect() as conn3:
-        for col_name, col_type in [("thread_id", "VARCHAR"), ("thread_order", "INTEGER")]:
+        for col_name, col_type in [("thread_id", "VARCHAR"), ("thread_order", "INTEGER"), ("reply_to_id", "VARCHAR")]:
             try:
                 conn3.execute(text(f"ALTER TABLE tweet_queue ADD COLUMN {col_name} {col_type}"))
                 conn3.commit()
@@ -3796,6 +3796,31 @@ def seo_campaign_detail(festival_slug: str, year: int, db: Session = Depends(get
 
 # ── Admin: Tweet Queue ──
 
+@app.get("/admin/tweets/types")
+def list_tweet_types(admin: models.User = Depends(get_admin_user)):
+    """Return all available tweet types with their output mode and required params."""
+    types_info = {
+        # Legacy types
+        "daily_digest": {"output_mode": "single", "params": []},
+        "weekly_digest": {"output_mode": "single", "params": []},
+        "brand_spotlight": {"output_mode": "single", "params": []},
+        "subject_line_insight": {"output_mode": "single", "params": []},
+        "viral_thread": {"output_mode": "thread", "params": []},
+        # New P1–P10 types
+        "email_teardown": {"output_mode": "single", "params": []},
+        "strategy_thread": {"output_mode": "thread", "params": ["brand_name (optional)"]},
+        "blog_promo": {"output_mode": "variants", "params": ["url (required)", "title (required)", "topic", "key_stat", "audience"]},
+        "smart_reply": {"output_mode": "single", "params": ["tweet_text (required)", "author_handle", "category", "data_point", "reply_to_id"]},
+        "engagement_bait": {"output_mode": "variants", "params": ["topic", "trending"]},
+        "brand_comparison": {"output_mode": "single", "params": ["brand_a", "brand_b"]},
+        "weekly_roundup": {"output_mode": "single", "params": ["explanation"]},
+        "newsjacking": {"output_mode": "variants", "params": ["headline (required)", "summary", "source", "mailmuse_angle"]},
+        "subject_spotlight": {"output_mode": "single", "params": []},
+        "follow_up_reply": {"output_mode": "single", "params": ["original_reply (required)", "their_response (required)", "topic", "relevant_link", "reply_to_id"]},
+    }
+    return types_info
+
+
 @app.get("/admin/tweets")
 def list_tweets(
     status: str = None,
@@ -3818,6 +3843,7 @@ def list_tweets(
             "twitter_id": t.twitter_id,
             "thread_id": t.thread_id,
             "thread_order": t.thread_order,
+            "reply_to_id": t.reply_to_id,
             "created_at": t.created_at.isoformat() if t.created_at else None,
             "char_count": len(t.content),
         }
@@ -3828,15 +3854,31 @@ def list_tweets(
 @app.post("/admin/tweets/generate")
 def generate_tweets(
     tweet_type: str = "daily_digest",
+    params: dict = Body(default={}),
     admin: models.User = Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
-    valid_types = ["daily_digest", "weekly_digest", "brand_spotlight", "subject_line_insight", "viral_thread"]
+    """
+    Generate tweet(s) of the given type. For types that need extra input,
+    pass parameters in the JSON body:
+
+    - **email_teardown**: auto (no params needed)
+    - **strategy_thread**: optional `brand_name`
+    - **blog_promo**: requires `url`, `title`; optional `topic`, `key_stat`, `audience`
+    - **smart_reply**: requires `tweet_text`; optional `author_handle`, `category`, `data_point`, `reply_to_id`
+    - **engagement_bait**: optional `topic`, `trending`
+    - **brand_comparison**: optional `brand_a`, `brand_b`
+    - **weekly_roundup**: optional `explanation`
+    - **newsjacking**: requires `headline`; optional `summary`, `source`, `mailmuse_angle`
+    - **subject_spotlight**: auto (no params needed)
+    - **follow_up_reply**: requires `original_reply`, `their_response`; optional `topic`, `relevant_link`, `reply_to_id`
+    """
+    valid_types = get_all_valid_types()
     if tweet_type not in valid_types:
         raise HTTPException(400, f"Invalid type. Must be one of: {valid_types}")
 
     try:
-        content = generate_tweet_content(tweet_type, db)
+        content = generate_tweet_content(tweet_type, db, **params)
     except ValueError as exc:
         raise HTTPException(400, f"Configuration error: {exc}")
     except Exception as exc:
@@ -3845,8 +3887,11 @@ def generate_tweets(
             f"Failed to generate tweet: {exc}",
         )
 
-    # Viral threads return multiple tweets separated by ---
-    if tweet_type == "viral_thread":
+    output_mode = get_output_mode(tweet_type)
+    reply_to_id = params.get("reply_to_id")
+
+    # Thread types (viral_thread, strategy_thread): store as reply chain
+    if output_mode == "thread":
         import uuid
         thread_id = str(uuid.uuid4())[:8]
         tweets_text = [t.strip() for t in content.split("---") if t.strip()]
@@ -3854,7 +3899,7 @@ def generate_tweets(
         for i, tweet_text in enumerate(tweets_text):
             tweet = models.TweetQueue(
                 content=tweet_text,
-                tweet_type="viral_thread",
+                tweet_type=tweet_type,
                 status="draft",
                 thread_id=thread_id,
                 thread_order=i,
@@ -3873,10 +3918,41 @@ def generate_tweets(
         db.commit()
         return {"thread_id": thread_id, "tweets": created}
 
+    # Variant types (blog_promo, engagement_bait, newsjacking): store alternatives
+    if output_mode == "variants":
+        import uuid
+        group_id = str(uuid.uuid4())[:8]
+        variants_text = [t.strip() for t in content.split("---") if t.strip()]
+        created = []
+        for i, variant_text in enumerate(variants_text):
+            tweet = models.TweetQueue(
+                content=variant_text,
+                tweet_type=tweet_type,
+                status="draft",
+                thread_id=group_id,
+                thread_order=i,
+                reply_to_id=reply_to_id,
+            )
+            db.add(tweet)
+            db.flush()
+            created.append({
+                "id": tweet.id,
+                "content": tweet.content,
+                "tweet_type": tweet.tweet_type,
+                "status": tweet.status,
+                "char_count": len(tweet.content),
+                "variant_group": group_id,
+                "variant_index": i,
+            })
+        db.commit()
+        return {"variant_group": group_id, "variants": created}
+
+    # Single tweet types
     tweet = models.TweetQueue(
         content=content,
         tweet_type=tweet_type,
         status="draft",
+        reply_to_id=reply_to_id,
     )
     db.add(tweet)
     db.commit()
@@ -3956,7 +4032,13 @@ def post_tweet_endpoint(
         raise HTTPException(400, "Twitter API not configured. Set TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET env vars.")
 
     try:
-        twitter_id = post_tweet(tweet.content)
+        if tweet.reply_to_id:
+            # Post as a reply to a specific tweet
+            client = get_twitter_client()
+            response = client.create_tweet(text=tweet.content, in_reply_to_tweet_id=tweet.reply_to_id)
+            twitter_id = str(response.data["id"])
+        else:
+            twitter_id = post_tweet(tweet.content)
     except RuntimeError as exc:
         raise HTTPException(500, f"Twitter API error: {exc}")
     except Exception as exc:

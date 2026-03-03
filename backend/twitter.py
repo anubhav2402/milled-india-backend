@@ -86,20 +86,26 @@ def _get_anthropic_client():
     return Anthropic(api_key=api_key)
 
 
-def _call_claude_for_tweet(system_prompt: str, user_prompt: str) -> str:
+def _call_claude_for_tweet(
+    system_prompt: str,
+    user_prompt: str,
+    model: str = "claude-haiku-4-5-20251001",
+    max_tokens: int = 200,
+) -> str:
     """
     Ask Claude to write a tweet.  Returns the raw text from the model.
     """
     client = _get_anthropic_client()
 
+    timeout = 60 if "sonnet" in model else 25
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=200,
+        model=model,
+        max_tokens=max_tokens,
         system=system_prompt,
         messages=[
             {"role": "user", "content": user_prompt},
         ],
-        timeout=25,
+        timeout=timeout,
     )
 
     result_text = response.content[0].text.strip()
@@ -594,6 +600,803 @@ def _build_viral_thread(db: Session) -> str:
     return "\n".join(lines)
 
 
+# ---------------------------------------------------------------------------
+# NEW PROMPT SYSTEM: 10 Master Prompts for Twitter Content Engine
+# ---------------------------------------------------------------------------
+
+P1_EMAIL_TEARDOWN_SYSTEM = (
+    "You are the voice of MailMuse — an authoritative email marketing intelligence "
+    "platform. Your tone is sharp, data-informed, and confident. You never sound salesy. "
+    "You sound like the smartest person in the email marketing room.\n\n"
+    "TASK: Given the following brand email campaign data, write a single tweet (max 280 chars) "
+    "that breaks down one clever tactic the brand used, frames it as an insight, and ends with "
+    "a subtle hook back to MailMuse.\n\n"
+    "RULES:\n"
+    "1. Lead with the insight, not the brand name — make the reader think 'I need to know this'\n"
+    "2. Use specific language: '3-email welcome sequence' not 'a few emails'\n"
+    "3. Never use hashtags unless absolutely necessary (max 1)\n"
+    "4. End with ONE of these CTA styles (rotate):\n"
+    "   - 'We broke this down on MailMuse -> mailmuse.in'\n"
+    "   - 'See the full teardown -> mailmuse.in'\n"
+    "   - 'Tracked on MailMuse. Link in bio.'\n"
+    "5. No emojis in the first line. Max 1 emoji in the full tweet.\n"
+    "6. Sound like a strategist, not a fan\n\n"
+    "Return ONLY the tweet text — no quotes, no labels, no extra formatting."
+)
+
+P2_STRATEGY_THREAD_SYSTEM = (
+    "You are MailMuse's editorial voice — the authority on email marketing strategy. "
+    "Write a Twitter/X thread (5-7 tweets) analyzing a brand's email marketing approach.\n\n"
+    "THREAD STRUCTURE:\n"
+    "Tweet 1 (Hook): A bold, curiosity-driven opener. Pattern: '[Brand] sends X emails per week. "
+    "But here's what most people miss about their strategy 🧵'\n"
+    "Tweet 2-3 (Breakdown): Specific tactics with concrete details. What they do differently. "
+    "Reference actual email types and sequences.\n"
+    "Tweet 4 (The 'Why It Works' tweet): Explain the strategic reasoning — connect tactics to "
+    "email marketing principles.\n"
+    "Tweet 5 (Counter-intuitive insight): Share something surprising from the data. "
+    "Pattern: 'What surprised us: [unexpected finding]'\n"
+    "Tweet 6 (Takeaway): One actionable lesson any marketer can steal. Be specific.\n"
+    "Tweet 7 (CTA): Drive to MailMuse. Pattern: 'We track [Brand]'s full email strategy on "
+    "MailMuse — every campaign, every sequence, updated live -> mailmuse.in'\n\n"
+    "RULES:\n"
+    "1. Each tweet must stand alone if someone only sees one\n"
+    "2. Use 'we tracked' / 'we analyzed' / 'our data shows' — establish MailMuse as the source\n"
+    "3. No generic advice like 'personalization matters' — be surgically specific\n"
+    "4. Thread numbering: use '1/' '2/' etc.\n"
+    "5. Max 1 emoji per tweet, zero is fine\n"
+    "6. Never say 'game-changer' or 'revolutionary'\n"
+    "7. Each tweet MUST be under 280 characters\n\n"
+    "OUTPUT FORMAT:\n"
+    "Return ONLY the thread tweets, separated by exactly '---' on its own line.\n"
+    "No extra formatting. Just the raw tweet text between --- separators."
+)
+
+P3_BLOG_PROMO_SYSTEM = (
+    "You are MailMuse's growth marketer writing tweets to drive clicks to blog posts and "
+    "landing pages. Your voice is authoritative, slightly contrarian, and always specific.\n\n"
+    "WRITE 3 TWEET VARIANTS (separate each with --- on its own line):\n\n"
+    "Variant A — 'The Stat Hook': Lead with a surprising data point from the content. "
+    "Pattern: '[Surprising stat]. We dug into why -> [link]'\n\n"
+    "Variant B — 'The Contrarian': Challenge a common belief, then link to the proof. "
+    "Pattern: 'Everyone says [common belief]. The data says otherwise -> [link]'\n\n"
+    "Variant C — 'The Listicle Tease': Preview 1 of several insights to create curiosity. "
+    "Pattern: 'We analyzed [X brands'] [email type]. Finding #3 will change how you [action] -> [link]'\n\n"
+    "RULES:\n"
+    "1. Every variant must be under 260 characters (leave room for the link)\n"
+    "2. The link placeholder is [link] — system will replace with actual URL\n"
+    "3. Never start with 'Check out our new blog post' or any variation\n"
+    "4. Never use 'you won't believe' or clickbait language\n"
+    "5. Address the reader as a peer, not a student\n"
+    "6. Each variant should feel like it came from a different person on the same team\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels or formatting."
+)
+
+P4_SMART_REPLY_SYSTEM = (
+    "You are replying to tweets about email marketing on behalf of MailMuse. Your goal is "
+    "to add genuine value FIRST, then earn the right to mention MailMuse only when relevant.\n\n"
+    "GENERATE A REPLY following these tiers:\n\n"
+    "TIER 1 — VALUE REPLY (use 70% of the time):\n"
+    "Add a specific insight, stat, or tactical tip related to what they said. Do NOT mention "
+    "MailMuse. Just be genuinely helpful. Build reputation.\n\n"
+    "TIER 2 — VALUE + SOFT MENTION (use 25% of the time):\n"
+    "Add value, then naturally reference MailMuse as a source without being pushy.\n\n"
+    "TIER 3 — DIRECT RECOMMENDATION (use 5% of the time, only when someone explicitly asks "
+    "for tools/resources):\n"
+    "Directly recommend MailMuse only when someone asks 'what tools do you use' or "
+    "'where can I find email examples.'\n\n"
+    "RULES:\n"
+    "1. NEVER reply with just a link. Always lead with value.\n"
+    "2. NEVER be sycophantic ('Great point!' 'So true!'). Get to the substance.\n"
+    "3. Keep replies under 200 characters when possible — punchy wins on X\n"
+    "4. Match the energy of the original tweet (casual -> casual, technical -> technical)\n"
+    "5. If the original tweet is negative/ranting, empathize briefly, then offer a constructive angle\n"
+    "6. Never argue or correct people publicly — reframe instead\n"
+    "7. The reply should make the original author want to follow MailMuse\n\n"
+    "Return ONLY the reply text — no quotes, no labels, no extra formatting."
+)
+
+P5_ENGAGEMENT_BAIT_SYSTEM = (
+    "You are MailMuse's community voice. Write tweets designed to maximise replies and "
+    "engagement from email marketers. These are NOT promotional — they're conversation "
+    "starters that position MailMuse as the center of email marketing discourse.\n\n"
+    "GENERATE 2 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'The Hot Take Question':\n"
+    "Ask a question that email marketers have strong opinions about. It should be specific "
+    "enough that people MUST reply.\n"
+    "Pattern: '[Specific scenario]. What would you do — A or B?'\n\n"
+    "Variant B — 'The Show Your Work Prompt':\n"
+    "Ask people to share their own data, strategies, or examples.\n"
+    "Pattern: 'Drop your [specific metric/strategy]. I'll start: [MailMuse's own example]'\n\n"
+    "RULES:\n"
+    "1. Questions must be specific enough to answer in 1-2 sentences\n"
+    "2. Avoid yes/no questions — force a choice or a share\n"
+    "3. Never ask something Google could answer — ask for opinions and experience\n"
+    "4. Include MailMuse's own answer when using 'Show Your Work' format\n"
+    "5. No hashtags on engagement tweets — they reduce replies\n"
+    "6. These tweets should NEVER contain a link\n"
+    "7. Each variant must be under 280 characters\n\n"
+    "Return ONLY the 2 variants separated by --- on its own line. No labels or formatting."
+)
+
+P6_BRAND_COMPARISON_SYSTEM = (
+    "You are MailMuse's analyst. Write a tweet comparing two brands' email marketing approaches. "
+    "The goal: make marketers curious enough to explore the full comparison on MailMuse.\n\n"
+    "TWEET FORMAT:\n"
+    "'[Brand A] vs [Brand B] — two [industry] giants, completely different email playbooks.\n\n"
+    "[Brand A]: [1 specific tactic with data]\n"
+    "[Brand B]: [1 contrasting tactic with data]\n\n"
+    "Who's doing it better? We broke it down -> mailmuse.in'\n\n"
+    "RULES:\n"
+    "1. Never declare a winner — let the reader decide (this drives clicks AND replies)\n"
+    "2. Use concrete numbers, not vague descriptors\n"
+    "3. The comparison must highlight a genuinely interesting strategic difference\n"
+    "4. Keep the entire tweet under 280 characters\n"
+    "5. Format the brand names in a way that fans of both brands will notice in their timeline\n\n"
+    "Return ONLY the tweet text — no quotes, no labels, no extra formatting."
+)
+
+P7_WEEKLY_ROUNDUP_SYSTEM = (
+    "You are MailMuse's data team publishing a weekly insight. Write a tweet summarizing one "
+    "notable email marketing trend observed across the brands MailMuse tracks.\n\n"
+    "TWEET FORMAT:\n"
+    "📊 MailMuse Weekly: [Trend headline in 10 words or fewer]\n\n"
+    "[1-2 sentences explaining the trend with specifics]\n\n"
+    "Brands doing this: [Brand 1], [Brand 2], [Brand 3]\n\n"
+    "Full data on mailmuse.in\n\n"
+    "RULES:\n"
+    "1. The trend must be specific and data-backed, not a vague observation\n"
+    "2. Use the chart emoji ONLY for weekly roundup tweets (brand consistency)\n"
+    "3. Name real brands — specificity drives engagement\n"
+    "4. Keep the 'Full data' CTA simple — don't oversell\n"
+    "5. Keep the entire tweet under 280 characters\n\n"
+    "Return ONLY the tweet text — no quotes, no labels, no extra formatting."
+)
+
+P8_NEWSJACKING_SYSTEM = (
+    "You are MailMuse's editorial voice reacting to breaking or trending email marketing news. "
+    "Your take must add something the news article didn't — MailMuse's unique data angle.\n\n"
+    "GENERATE 2 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'The Data Reaction':\n"
+    "Acknowledge the news, then add MailMuse's data perspective.\n"
+    "Pattern: '[News in 1 sentence]. We looked at the data — here's what we're actually "
+    "seeing: [MailMuse insight]'\n\n"
+    "Variant B — 'The Prediction':\n"
+    "Use the news as a launchpad to predict what happens next.\n"
+    "Pattern: '[News]. Our take: this means [prediction]. Here's why -> [brief reasoning]. "
+    "We'll be tracking the fallout on mailmuse.in'\n\n"
+    "RULES:\n"
+    "1. Never just summarize the news — add a unique angle\n"
+    "2. Credit the source if referencing specific reporting\n"
+    "3. Keep the hot take defensible — don't chase controversy for its own sake\n"
+    "4. If MailMuse has no relevant data angle, use Variant B (prediction) instead\n"
+    "5. Each variant must be under 280 characters\n\n"
+    "Return ONLY the 2 variants separated by --- on its own line. No labels or formatting."
+)
+
+P9_SUBJECT_SPOTLIGHT_SYSTEM = (
+    "You are MailMuse's subject line curator. Write a tweet highlighting a standout subject "
+    "line spotted in the wild. This is a repeatable series format.\n\n"
+    "TWEET FORMAT:\n"
+    "Subject line of the day 👀\n\n"
+    "Brand: [brand]\n"
+    "Email: [type]\n"
+    "Subject: \"[subject line]\"\n\n"
+    "Why it works: [1-2 sentence analysis of the technique used]\n\n"
+    "More subject lines tracked daily on mailmuse.in\n\n"
+    "RULES:\n"
+    "1. The analysis must be tactical — explain the psychological or strategic principle at play\n"
+    "2. Rotate between different 'why it works' angles: curiosity, specificity, urgency, "
+    "social proof, personalization, pattern interrupt\n"
+    "3. Never just say 'it's catchy' — explain WHY it catches attention\n"
+    "4. Use the eyes emoji ONLY for this series (brand consistency)\n"
+    "5. Keep the subject line in quotes exactly as it appeared\n"
+    "6. Keep the entire tweet under 280 characters\n\n"
+    "Return ONLY the tweet text — no quotes, no labels, no extra formatting."
+)
+
+P10_FOLLOW_UP_REPLY_SYSTEM = (
+    "You are MailMuse continuing a conversation on X/Twitter. Someone engaged with your "
+    "previous reply. Write a follow-up that deepens the conversation and — if appropriate — "
+    "drives them to MailMuse.\n\n"
+    "FOLLOW-UP STRATEGY:\n\n"
+    "If they AGREED with you:\n"
+    "-> Add a deeper layer. 'Yeah — and what's even more interesting is [deeper insight]. "
+    "We actually track this across [X] brands if you want to dig in -> [link]'\n\n"
+    "If they DISAGREED or pushed back:\n"
+    "-> Acknowledge their point, offer nuance, never argue. 'Fair point — it probably depends "
+    "on [variable]. We've seen it go both ways. Here's some data that might add context -> [link]'\n\n"
+    "If they ASKED A QUESTION:\n"
+    "-> Answer it directly and thoroughly. If MailMuse has relevant data, link to it naturally.\n\n"
+    "If they SHARED THEIR OWN EXPERIENCE:\n"
+    "-> Validate, connect to broader patterns. 'That's a great example — and you're not alone. "
+    "We've seen [X]% of [industry] brands doing something similar.'\n\n"
+    "RULES:\n"
+    "1. Only include a link if it genuinely adds value to the conversation\n"
+    "2. Never repeat your original point — always go deeper\n"
+    "3. Keep follow-ups shorter than original replies — be more casual\n"
+    "4. If the conversation is flowing well without links, don't force one in\n"
+    "5. Match the conversational energy — if they're casual, be casual\n"
+    "6. Aim to get them to follow MailMuse, not just click once\n\n"
+    "Return ONLY the reply text — no quotes, no labels, no extra formatting."
+)
+
+
+# ---------------------------------------------------------------------------
+# Tactic detection helper
+# ---------------------------------------------------------------------------
+
+def _detect_tactic(subject: str) -> str:
+    """Detect the primary email marketing tactic from a subject line."""
+    lower = subject.lower()
+    if any(w in lower for w in ["last chance", "ending", "hurry", "urgent", "final", "limited"]):
+        return "urgency/scarcity"
+    if any(w in lower for w in ["just for you", "your ", "personalized", "picked for", "recommended"]):
+        return "personalization"
+    if any(w in lower for w in ["best seller", "trending", "popular", "everyone", "top rated"]):
+        return "social proof"
+    if any(w in lower for w in ["% off", "sale", "discount", "save ", "deal"]):
+        return "discount/promotion"
+    if any(w in lower for w in ["new", "introducing", "just dropped", "just launched", "first look"]):
+        return "novelty/exclusivity"
+    if any(w in lower for w in ["back in stock", "restocked", "available again"]):
+        return "scarcity (restock)"
+    if "?" in subject:
+        return "curiosity/question"
+    if any(w in lower for w in ["free", "gift", "bonus", "complimentary"]):
+        return "incentive/freebie"
+    return "brand storytelling"
+
+
+# ---------------------------------------------------------------------------
+# Data builders for new tweet types (P1–P10)
+# ---------------------------------------------------------------------------
+
+def _build_email_teardown(db: Session, **kwargs) -> str:
+    """P1: Pick a random brand email and build teardown context."""
+    since = _find_active_window(db, preferred_days=7)
+
+    active_brands = (
+        db.query(Email.brand, func.count(Email.id).label("cnt"))
+        .filter(Email.received_at >= since, Email.brand.isnot(None))
+        .group_by(Email.brand)
+        .having(func.count(Email.id) >= 3)
+        .all()
+    )
+    if not active_brands:
+        raise ValueError("Not enough email data for teardown")
+
+    brand, count = random.choice(active_brands)
+
+    email = (
+        db.query(Email)
+        .filter(Email.brand == brand, Email.received_at >= since)
+        .order_by(Email.received_at.desc())
+        .first()
+    )
+    email_type = email.type or "Promotional"
+    subject = email.subject
+    tactic = _detect_tactic(subject)
+
+    freq_days = max((datetime.utcnow() - since).days, 1)
+    frequency = f"{round(count / freq_days * 7, 1)} emails/week"
+
+    return (
+        f"Brand name: {brand}\n"
+        f"Email type: {email_type}\n"
+        f"Subject line: {subject}\n"
+        f"Key tactic observed: {tactic}\n"
+        f"Send frequency: {frequency}"
+    )
+
+
+def _build_strategy_thread(db: Session, **kwargs) -> str:
+    """P2: Build brand strategy data for a deep-dive thread."""
+    brand_name = kwargs.get("brand_name")
+    since = _find_active_window(db, preferred_days=30)
+
+    if brand_name:
+        count = (
+            db.query(func.count(Email.id))
+            .filter(Email.brand == brand_name, Email.received_at >= since)
+            .scalar()
+        ) or 0
+        if count < 5:
+            raise ValueError(f"Not enough data for {brand_name}")
+        brand = brand_name
+    else:
+        brands = (
+            db.query(Email.brand, func.count(Email.id).label("cnt"))
+            .filter(Email.received_at >= since, Email.brand.isnot(None))
+            .group_by(Email.brand)
+            .having(func.count(Email.id) >= 10)
+            .order_by(func.count(Email.id).desc())
+            .limit(20)
+            .all()
+        )
+        if not brands:
+            raise ValueError("Not enough data for strategy thread")
+        brand, _ = random.choice(brands)
+
+    types = (
+        db.query(Email.type, func.count(Email.id).label("cnt"))
+        .filter(Email.brand == brand, Email.received_at >= since, Email.type.isnot(None))
+        .group_by(Email.type)
+        .order_by(func.count(Email.id).desc())
+        .all()
+    )
+    email_types_list = ", ".join(f"{t} ({c})" for t, c in types)
+
+    industry_row = (
+        db.query(Email.industry)
+        .filter(Email.brand == brand, Email.industry.isnot(None))
+        .first()
+    )
+    industry = industry_row[0] if industry_row else "DTC/Ecommerce"
+
+    total = (
+        db.query(func.count(Email.id))
+        .filter(Email.brand == brand, Email.received_at >= since)
+        .scalar()
+    ) or 0
+    freq_days = max((datetime.utcnow() - since).days, 1)
+    emails_per_week = round(total / freq_days * 7, 1)
+
+    subjects = (
+        db.query(Email.subject)
+        .filter(Email.brand == brand, Email.subject.isnot(None))
+        .all()
+    )
+    avg_subj_len = round(sum(len(s[0]) for s in subjects) / len(subjects)) if subjects else 0
+
+    patterns = f"Send frequency: ~{emails_per_week} emails/week. Avg subject length: {avg_subj_len} chars."
+    top_type = types[0][0] if types else "Newsletter"
+    data_points = f"Avg emails/week: {emails_per_week}. Top-performing type: {top_type}. Total tracked: {total}."
+
+    return (
+        f"Brand name: {brand}\n"
+        f"Industry/vertical: {industry}\n"
+        f"Email types tracked: {email_types_list}\n"
+        f"Notable patterns: {patterns}\n"
+        f"Data points: {data_points}"
+    )
+
+
+def _build_blog_promo(db: Session, **kwargs) -> str:
+    """P3: Build context for blog/landing page promo (needs params)."""
+    url = kwargs.get("url", "")
+    title = kwargs.get("title", "")
+    topic = kwargs.get("topic", "")
+    key_stat = kwargs.get("key_stat", "")
+    audience = kwargs.get("audience", "ecommerce marketers")
+
+    if not url or not title:
+        raise ValueError("blog_promo requires 'url' and 'title' parameters")
+
+    return (
+        f"Page URL: {url}\n"
+        f"Page title: {title}\n"
+        f"Core topic: {topic}\n"
+        f"Key stat or finding: {key_stat}\n"
+        f"Target audience: {audience}"
+    )
+
+
+def _build_smart_reply(db: Session, **kwargs) -> str:
+    """P4: Build context for replying to an email marketing tweet."""
+    tweet_text = kwargs.get("tweet_text", "")
+    author_handle = kwargs.get("author_handle", "")
+    category = kwargs.get("category", "email marketing")
+
+    if not tweet_text:
+        raise ValueError("smart_reply requires 'tweet_text' parameter")
+
+    data_point = kwargs.get("data_point", "")
+    if not data_point:
+        since = _find_active_window(db, preferred_days=7)
+        total = (
+            db.query(func.count(Email.id))
+            .filter(Email.received_at >= since)
+            .scalar()
+        ) or 0
+        brands = (
+            db.query(func.count(func.distinct(Email.brand)))
+            .filter(Email.received_at >= since, Email.brand.isnot(None))
+            .scalar()
+        ) or 0
+        data_point = f"MailMuse tracks {brands}+ brands and {total}+ email campaigns"
+
+    return (
+        f"Original tweet text: {tweet_text}\n"
+        f"Tweet author handle: {author_handle}\n"
+        f"Tweet topic category: {category}\n"
+        f"Relevant MailMuse data point: {data_point}"
+    )
+
+
+def _build_engagement_bait(db: Session, **kwargs) -> str:
+    """P5: Build context for engagement/question tweets."""
+    topic = kwargs.get("topic", "")
+    trending = kwargs.get("trending", "")
+
+    if not topic:
+        topics = [
+            "subject lines", "send timing", "automation", "email design",
+            "deliverability", "welcome sequences", "abandoned cart emails",
+            "promotional emails", "segmentation", "open rates",
+        ]
+        topic = random.choice(topics)
+
+    return (
+        f"Topic area: {topic}\n"
+        f"Trending angle (optional): {trending}"
+    )
+
+
+def _build_brand_comparison(db: Session, **kwargs) -> str:
+    """P6: Build comparison data for two brands."""
+    brand_a = kwargs.get("brand_a", "")
+    brand_b = kwargs.get("brand_b", "")
+    since = _find_active_window(db, preferred_days=30)
+
+    if not brand_a or not brand_b:
+        brands = (
+            db.query(Email.brand, func.count(Email.id).label("cnt"))
+            .filter(Email.received_at >= since, Email.brand.isnot(None))
+            .group_by(Email.brand)
+            .having(func.count(Email.id) >= 10)
+            .order_by(func.count(Email.id).desc())
+            .limit(20)
+            .all()
+        )
+        if len(brands) < 2:
+            raise ValueError("Not enough brands for comparison")
+        selected = random.sample(brands, 2)
+        brand_a = selected[0][0]
+        brand_b = selected[1][0]
+
+    def _brand_stats(brand):
+        total = (
+            db.query(func.count(Email.id))
+            .filter(Email.brand == brand, Email.received_at >= since)
+            .scalar()
+        ) or 0
+        freq_days = max((datetime.utcnow() - since).days, 1)
+        per_week = round(total / freq_days * 7, 1)
+        subjects = (
+            db.query(Email.subject)
+            .filter(Email.brand == brand, Email.subject.isnot(None))
+            .limit(50)
+            .all()
+        )
+        avg_len = round(sum(len(s[0]) for s in subjects) / len(subjects)) if subjects else 0
+        top_type_row = (
+            db.query(Email.type, func.count(Email.id))
+            .filter(Email.brand == brand, Email.type.isnot(None))
+            .group_by(Email.type)
+            .order_by(func.count(Email.id).desc())
+            .first()
+        )
+        top = top_type_row[0] if top_type_row else "Unknown"
+        ind_row = (
+            db.query(Email.industry)
+            .filter(Email.brand == brand, Email.industry.isnot(None))
+            .first()
+        )
+        ind = ind_row[0] if ind_row else "DTC/Ecommerce"
+        return {"total": total, "per_week": per_week, "avg_subject_len": avg_len, "top_type": top, "industry": ind}
+
+    stats_a = _brand_stats(brand_a)
+    stats_b = _brand_stats(brand_b)
+
+    differences = []
+    if abs(stats_a["per_week"] - stats_b["per_week"]) > 1:
+        differences.append(f"send frequency ({stats_a['per_week']}/week vs {stats_b['per_week']}/week)")
+    if abs(stats_a["avg_subject_len"] - stats_b["avg_subject_len"]) > 10:
+        differences.append(f"subject line length ({stats_a['avg_subject_len']} chars vs {stats_b['avg_subject_len']} chars)")
+    if stats_a["top_type"] != stats_b["top_type"]:
+        differences.append(f"email types ({stats_a['top_type']} vs {stats_b['top_type']})")
+    difference = differences[0] if differences else "overall email strategy approach"
+
+    data_a = f"{stats_a['per_week']} emails/week, avg subject {stats_a['avg_subject_len']} chars, top type: {stats_a['top_type']}"
+    data_b = f"{stats_b['per_week']} emails/week, avg subject {stats_b['avg_subject_len']} chars, top type: {stats_b['top_type']}"
+
+    return (
+        f"Brand A: {brand_a}\n"
+        f"Brand B: {brand_b}\n"
+        f"Industry: {stats_a['industry']}\n"
+        f"Key difference: {difference}\n"
+        f"Data points — {brand_a}: {data_a}\n"
+        f"Data points — {brand_b}: {data_b}"
+    )
+
+
+def _build_weekly_roundup(db: Session, **kwargs) -> str:
+    """P7: Build weekly trend data from this week vs last week."""
+    now = datetime.utcnow()
+    this_week = now - timedelta(days=7)
+    last_week = this_week - timedelta(days=7)
+
+    def _week_stats(since, until):
+        total = (
+            db.query(func.count(Email.id))
+            .filter(Email.received_at >= since, Email.received_at < until)
+            .scalar()
+        ) or 0
+        types = (
+            db.query(Email.type, func.count(Email.id).label("cnt"))
+            .filter(Email.received_at >= since, Email.received_at < until, Email.type.isnot(None))
+            .group_by(Email.type)
+            .order_by(func.count(Email.id).desc())
+            .all()
+        )
+        return {"total": total, "types": types}
+
+    current = _week_stats(this_week, now)
+    previous = _week_stats(last_week, this_week)
+
+    current_types = {t: c for t, c in current["types"]}
+    previous_types = {t: c for t, c in previous["types"]}
+
+    trends = []
+    for t, c in current_types.items():
+        prev_c = previous_types.get(t, 0)
+        if prev_c > 0:
+            change = round((c - prev_c) / prev_c * 100)
+            if abs(change) >= 10:
+                trends.append((t, change, c))
+
+    if trends:
+        trends.sort(key=lambda x: abs(x[1]), reverse=True)
+        trend_type, trend_change, _ = trends[0]
+        direction = "more" if trend_change > 0 else "fewer"
+        trend = f"{abs(trend_change)}% {direction} {trend_type} emails this week vs last week"
+    else:
+        trend = f"{current['total']} email campaigns tracked this week across {len(current_types)} categories"
+
+    if trends:
+        examples_rows = (
+            db.query(Email.brand)
+            .filter(Email.received_at >= this_week, Email.type == trends[0][0], Email.brand.isnot(None))
+            .group_by(Email.brand)
+            .order_by(func.count(Email.id).desc())
+            .limit(3)
+            .all()
+        )
+    else:
+        examples_rows = (
+            db.query(Email.brand)
+            .filter(Email.received_at >= this_week, Email.brand.isnot(None))
+            .group_by(Email.brand)
+            .order_by(func.count(Email.id).desc())
+            .limit(3)
+            .all()
+        )
+    examples = ", ".join(r[0] for r in examples_rows) if examples_rows else "N/A"
+
+    week_str = now.strftime("%b %d, %Y")
+    explanation = kwargs.get("explanation", "Seasonal campaigns and shifting engagement patterns likely driving this.")
+
+    return (
+        f"Week/date: Week of {week_str}\n"
+        f"Trend observed: {trend}\n"
+        f"Supporting examples: {examples}\n"
+        f"Possible explanation: {explanation}"
+    )
+
+
+def _build_newsjacking(db: Session, **kwargs) -> str:
+    """P8: Build context for reacting to email marketing news (needs params)."""
+    headline = kwargs.get("headline", "")
+    summary = kwargs.get("summary", "")
+    source = kwargs.get("source", "")
+
+    if not headline:
+        raise ValueError("newsjacking requires 'headline' parameter")
+
+    mailmuse_angle = kwargs.get("mailmuse_angle", "")
+    if not mailmuse_angle:
+        since = _find_active_window(db, preferred_days=7)
+        total = (
+            db.query(func.count(Email.id))
+            .filter(Email.received_at >= since)
+            .scalar()
+        ) or 0
+        brands = (
+            db.query(func.count(func.distinct(Email.brand)))
+            .filter(Email.received_at >= since, Email.brand.isnot(None))
+            .scalar()
+        ) or 0
+        mailmuse_angle = (
+            f"We track {brands}+ brands and {total}+ campaigns — "
+            "watching how brands respond in real-time."
+        )
+
+    return (
+        f"News headline: {headline}\n"
+        f"News summary: {summary}\n"
+        f"MailMuse's relevant data angle: {mailmuse_angle}\n"
+        f"Source: {source}"
+    )
+
+
+def _build_subject_spotlight(db: Session, **kwargs) -> str:
+    """P9: Pick a standout subject line and build spotlight context."""
+    since = _find_active_window(db, preferred_days=7)
+
+    candidates = []
+
+    # Short creative subjects
+    short = (
+        db.query(Email)
+        .filter(
+            Email.received_at >= since,
+            Email.subject.isnot(None),
+            func.length(Email.subject) <= 30,
+            func.length(Email.subject) >= 5,
+        )
+        .order_by(func.random())
+        .limit(10)
+        .all()
+    )
+    candidates.extend(short)
+
+    # Question subjects
+    questions = (
+        db.query(Email)
+        .filter(Email.received_at >= since, Email.subject.like("%?%"))
+        .order_by(func.random())
+        .limit(10)
+        .all()
+    )
+    candidates.extend(questions)
+
+    # Urgency subjects
+    urgency_all = (
+        db.query(Email)
+        .filter(Email.received_at >= since, Email.subject.isnot(None))
+        .order_by(func.random())
+        .limit(30)
+        .all()
+    )
+    candidates.extend(
+        e for e in urgency_all
+        if any(w in (e.subject or "").lower() for w in ["last chance", "ending", "hurry", "final hours"])
+    )
+
+    if not candidates:
+        candidates = (
+            db.query(Email)
+            .filter(Email.received_at >= since, Email.subject.isnot(None))
+            .order_by(func.random())
+            .limit(5)
+            .all()
+        )
+
+    if not candidates:
+        raise ValueError("No emails found for subject spotlight")
+
+    email = random.choice(candidates)
+    brand = email.brand or "Unknown"
+    subject = email.subject
+    email_type = email.type or "Promotional"
+    analysis = _detect_tactic(subject)
+
+    return (
+        f"Brand: {brand}\n"
+        f"Subject line: {subject}\n"
+        f"Email type: {email_type}\n"
+        f"Why it works: {analysis}"
+    )
+
+
+def _build_follow_up_reply(db: Session, **kwargs) -> str:
+    """P10: Build context for a follow-up reply (needs params)."""
+    original_reply = kwargs.get("original_reply", "")
+    their_response = kwargs.get("their_response", "")
+    topic = kwargs.get("topic", "email marketing")
+    relevant_link = kwargs.get("relevant_link", "mailmuse.in")
+
+    if not original_reply or not their_response:
+        raise ValueError("follow_up_reply requires 'original_reply' and 'their_response' parameters")
+
+    return (
+        f"Your original reply: {original_reply}\n"
+        f"Their response to you: {their_response}\n"
+        f"Conversation topic: {topic}\n"
+        f"Relevant MailMuse page: {relevant_link}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tweet type configuration — maps type name to config dict
+# ---------------------------------------------------------------------------
+
+# output_mode: "single" = one tweet, "thread" = reply chain, "variants" = multiple alternatives
+_NEW_TWEET_TYPES = {
+    "email_teardown": {
+        "builder": _build_email_teardown,
+        "system_prompt": P1_EMAIL_TEARDOWN_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 200,
+        "output_mode": "single",
+        "append_url": True,
+    },
+    "strategy_thread": {
+        "builder": _build_strategy_thread,
+        "system_prompt": P2_STRATEGY_THREAD_SYSTEM,
+        "model": "claude-sonnet-4-20250514",
+        "max_tokens": 2500,
+        "output_mode": "thread",
+        "append_url": False,
+    },
+    "blog_promo": {
+        "builder": _build_blog_promo,
+        "system_prompt": P3_BLOG_PROMO_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 800,
+        "output_mode": "variants",
+        "append_url": False,  # URL is embedded in the prompt via [link]
+    },
+    "smart_reply": {
+        "builder": _build_smart_reply,
+        "system_prompt": P4_SMART_REPLY_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 200,
+        "output_mode": "single",
+        "append_url": False,
+    },
+    "engagement_bait": {
+        "builder": _build_engagement_bait,
+        "system_prompt": P5_ENGAGEMENT_BAIT_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 600,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "brand_comparison": {
+        "builder": _build_brand_comparison,
+        "system_prompt": P6_BRAND_COMPARISON_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 300,
+        "output_mode": "single",
+        "append_url": False,  # CTA is in the prompt
+    },
+    "weekly_roundup": {
+        "builder": _build_weekly_roundup,
+        "system_prompt": P7_WEEKLY_ROUNDUP_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 300,
+        "output_mode": "single",
+        "append_url": False,  # CTA is in the prompt
+    },
+    "newsjacking": {
+        "builder": _build_newsjacking,
+        "system_prompt": P8_NEWSJACKING_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 600,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "subject_spotlight": {
+        "builder": _build_subject_spotlight,
+        "system_prompt": P9_SUBJECT_SPOTLIGHT_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 300,
+        "output_mode": "single",
+        "append_url": False,  # CTA is in the prompt
+    },
+    "follow_up_reply": {
+        "builder": _build_follow_up_reply,
+        "system_prompt": P10_FOLLOW_UP_REPLY_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 200,
+        "output_mode": "single",
+        "append_url": False,
+    },
+}
+
+
 # Mapping of tweet types to their context-builder functions
 _TWEET_TYPE_BUILDERS = {
     "daily_digest": _build_daily_digest,
@@ -604,17 +1407,28 @@ _TWEET_TYPE_BUILDERS = {
 }
 
 
-def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str:
+def generate_tweet_content(
+    tweet_type: str,
+    db: Optional[Session] = None,
+    **kwargs,
+) -> str:
     """
     Generate tweet text for a given *tweet_type* using live DB data and Claude.
 
-    For ``viral_thread`` type, returns multiple tweets separated by ``\\n---\\n``.
-    For all other types, returns a single tweet with the MailMuse URL appended.
+    For thread types (viral_thread, strategy_thread), returns multiple tweets
+    separated by ``\\n---\\n``.
+    For variant types (blog_promo, engagement_bait, newsjacking), returns
+    multiple alternatives separated by ``\\n---\\n``.
+    For all other types, returns a single tweet.
+
+    Pass extra **kwargs for types that need manual input (e.g. smart_reply
+    needs tweet_text, blog_promo needs url/title, etc.).
     """
-    if tweet_type not in _TWEET_TYPE_BUILDERS:
+    all_types = set(_TWEET_TYPE_BUILDERS.keys()) | set(_NEW_TWEET_TYPES.keys())
+    if tweet_type not in all_types:
         raise ValueError(
             f"Unknown tweet_type '{tweet_type}'. "
-            f"Valid types: {list(_TWEET_TYPE_BUILDERS.keys())}"
+            f"Valid types: {sorted(all_types)}"
         )
 
     close_db = False
@@ -623,14 +1437,34 @@ def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str
         close_db = True
 
     try:
-        # 1. Build data context from DB
+        # --- New prompt-engine types (P1–P10) ---
+        if tweet_type in _NEW_TWEET_TYPES:
+            config = _NEW_TWEET_TYPES[tweet_type]
+            builder = config["builder"]
+            context = builder(db, **kwargs)
+
+            result = _call_claude_for_tweet(
+                system_prompt=config["system_prompt"],
+                user_prompt=context,
+                model=config["model"],
+                max_tokens=config["max_tokens"],
+            )
+
+            # For single tweets with append_url, add the site URL
+            if config["output_mode"] == "single" and config["append_url"]:
+                if len(result) > MAX_TWEET_BODY_LEN:
+                    result = result[: MAX_TWEET_BODY_LEN - 1] + "\u2026"
+                result = result + SITE_URL
+
+            return result
+
+        # --- Legacy types (daily_digest, weekly_digest, etc.) ---
         builder = _TWEET_TYPE_BUILDERS[tweet_type]
         context = builder(db)
 
         if tweet_type == "viral_thread":
             return _generate_viral_thread(context)
 
-        # 2. Call Claude to craft a single tweet
         user_prompt = (
             f"Tweet type: {tweet_type}\n\n"
             f"Data context:\n{context}\n\n"
@@ -640,11 +1474,9 @@ def generate_tweet_content(tweet_type: str, db: Optional[Session] = None) -> str
 
         tweet_body = _call_claude_for_tweet(SYSTEM_PROMPT, user_prompt)
 
-        # Ensure the body fits within the limit
         if len(tweet_body) > MAX_TWEET_BODY_LEN:
             tweet_body = tweet_body[: MAX_TWEET_BODY_LEN - 1] + "\u2026"
 
-        # 3. Append the site URL
         tweet = tweet_body + SITE_URL
         return tweet
 
@@ -727,3 +1559,21 @@ def _generate_viral_thread(context: str) -> str:
         result = result.strip()
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# Public helpers for main.py
+# ---------------------------------------------------------------------------
+
+def get_all_valid_types() -> list[str]:
+    """Return all valid tweet type names (legacy + new)."""
+    return sorted(set(_TWEET_TYPE_BUILDERS.keys()) | set(_NEW_TWEET_TYPES.keys()))
+
+
+def get_output_mode(tweet_type: str) -> str:
+    """Return the output mode for a tweet type: 'single', 'thread', or 'variants'."""
+    if tweet_type in _NEW_TWEET_TYPES:
+        return _NEW_TWEET_TYPES[tweet_type]["output_mode"]
+    if tweet_type == "viral_thread":
+        return "thread"
+    return "single"

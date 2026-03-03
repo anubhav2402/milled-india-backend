@@ -200,8 +200,9 @@ class TweetQueue(Base):
     scheduled_for = Column(DateTime, nullable=True)
     posted_at = Column(DateTime, nullable=True)
     twitter_id = Column(String, nullable=True)  # Twitter's tweet ID after posting
-    thread_id = Column(String, nullable=True, index=True)  # Groups tweets in same thread (UUID)
+    thread_id = Column(String, nullable=True, index=True)  # Groups tweets in same thread or variant group (UUID)
     thread_order = Column(Integer, nullable=True)  # Order within thread (0-indexed)
+    reply_to_id = Column(String, nullable=True)  # Twitter tweet ID to reply to (for smart_reply / follow_up_reply)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
