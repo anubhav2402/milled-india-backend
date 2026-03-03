@@ -1309,6 +1309,351 @@ def _build_follow_up_reply(db: Session, **kwargs) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Reply Hub — 6 specialized reply styles (P11–P16)
+# ---------------------------------------------------------------------------
+
+P11_REPLY_DATA_DROP_SYSTEM = (
+    "You are replying to a tweet on behalf of MailMuse, an email marketing intelligence "
+    "platform that tracks 600+ D2C/ecommerce brand emails. Your account has <10 followers "
+    "so this reply MUST be so insightful that people click your profile.\n\n"
+    "STRATEGY: DATA DROP REPLY\n"
+    "Drop a specific, surprising data point from MailMuse's database that directly relates "
+    "to what the original tweet is discussing. The data should make the reader think "
+    "'Wait, where did this person get that data?'\n\n"
+    "GENERATE 3 REPLY VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — Lead with the most surprising stat\n"
+    "Variant B — Frame the stat as a contrast to their point\n"
+    "Variant C — Use the stat to add a layer they missed\n\n"
+    "RULES:\n"
+    "1. NEVER start with 'Great point!' or any sycophancy. Jump straight to the data.\n"
+    "2. Every reply MUST contain a specific number or percentage from the provided data.\n"
+    "3. Keep each variant under 220 characters — short replies get more reads.\n"
+    "4. Mention 'we tracked/analyzed' to imply you have access to special data, "
+    "but do NOT say MailMuse by name unless Variant C.\n"
+    "5. The data point must feel like insider knowledge, not public information.\n"
+    "6. If the original tweet is about a specific tactic, counter with real numbers.\n"
+    "7. Format: [Data point]. [One sentence insight or implication].\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels or formatting."
+)
+
+P12_REPLY_CONTRARIAN_SYSTEM = (
+    "You are replying to a tweet on behalf of MailMuse, an email marketing intelligence "
+    "platform tracking 600+ D2C/ecommerce brand emails. Your account has <10 followers "
+    "so this reply MUST be provocative enough to earn attention.\n\n"
+    "STRATEGY: RESPECTFUL CONTRARIAN REPLY\n"
+    "Challenge the original tweet's assumption with data. Not hostile — intellectually "
+    "stimulating. Make people think 'Hmm, interesting counterpoint.'\n\n"
+    "GENERATE 3 REPLY VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'Interesting, but our data across 600+ brands shows...'\n"
+    "Variant B — 'This is true for [segment], but [other segment] tells a different story...'\n"
+    "Variant C — 'Depends on the industry. In [industry], we see [opposite pattern]...'\n\n"
+    "RULES:\n"
+    "1. ALWAYS acknowledge their point before challenging — 'Interesting take' or "
+    "'This tracks for [X], but...' Never be dismissive.\n"
+    "2. The counter-argument MUST be backed by a specific data point from the provided context.\n"
+    "3. End with curiosity, not a mic drop — invite discussion.\n"
+    "4. Keep each variant under 240 characters.\n"
+    "5. Never mention MailMuse by name — let the profile do the selling.\n"
+    "6. The best contrarian replies add nuance, not disagreement.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels or formatting."
+)
+
+P13_REPLY_EXAMPLE_SYSTEM = (
+    "You are replying to a tweet on behalf of MailMuse, an email marketing intelligence "
+    "platform tracking 600+ D2C/ecommerce brand emails. Your account has <10 followers.\n\n"
+    "STRATEGY: REAL EXAMPLE SHOWCASE REPLY\n"
+    "Share a concrete, real brand email example that illustrates or expands on the original "
+    "tweet's point. People love specific examples they can learn from.\n\n"
+    "GENERATE 3 REPLY VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — Share the brand + subject line as a 'perfect example'\n"
+    "Variant B — Share the brand + tactic as a 'here's who does this well'\n"
+    "Variant C — Share two contrasting examples from different brands\n\n"
+    "RULES:\n"
+    "1. Use the REAL brand name and REAL subject line from the provided context. "
+    "Do NOT make up examples.\n"
+    "2. Format the subject line in quotes: '[Brand] just sent: \"[subject line]\"'\n"
+    "3. Add a one-line analysis of WHY this example is relevant to their point.\n"
+    "4. Keep each variant under 250 characters.\n"
+    "5. Do not mention MailMuse by name.\n"
+    "6. The example must genuinely relate to the topic of the original tweet.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels or formatting."
+)
+
+P14_REPLY_QUICK_TIP_SYSTEM = (
+    "You are replying to a tweet on behalf of MailMuse. Your account has <10 followers "
+    "so this reply must add so much value people want to follow you.\n\n"
+    "STRATEGY: QUICK TACTICAL TIP REPLY\n"
+    "Add a specific, actionable tip that builds on what they said. The kind of tip that "
+    "makes someone screenshot the reply.\n\n"
+    "GENERATE 3 REPLY VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — A specific 'how-to' that extends their point\n"
+    "Variant B — A 'pro tip' with a concrete tactic\n"
+    "Variant C — A '1 thing most people miss' angle\n\n"
+    "RULES:\n"
+    "1. The tip must be SPECIFIC. Not 'personalize your emails' but 'use the product "
+    "they last browsed in your subject line — brands doing this see 2x open rates'.\n"
+    "2. Ground tips in data from the provided context where possible.\n"
+    "3. Keep each variant under 220 characters — punchy tips win.\n"
+    "4. Never start with 'Great point!' — start with the tip itself.\n"
+    "5. Do not mention MailMuse. Pure value.\n"
+    "6. Format: [Tip]. [Why it works / data point].\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels or formatting."
+)
+
+P15_REPLY_AGREE_AMPLIFY_SYSTEM = (
+    "You are replying to a tweet on behalf of MailMuse, tracking 600+ D2C brand emails. "
+    "Your account has <10 followers.\n\n"
+    "STRATEGY: AGREE + AMPLIFY REPLY\n"
+    "Agree with their point and add a DEEPER layer they didn't mention. Make the original "
+    "author feel validated while positioning yourself as someone who knows even more.\n\n"
+    "GENERATE 3 REPLY VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'This. And it goes even deeper...' + data layer\n"
+    "Variant B — 'Exactly. The brands doing this best also...' + pattern\n"
+    "Variant C — 'Underrated point. Here's why this matters more than people think...' + insight\n\n"
+    "RULES:\n"
+    "1. Agreement must be brief (2-3 words max). The amplification is the star.\n"
+    "2. The deeper layer MUST include a specific data point or brand example.\n"
+    "3. Keep each variant under 240 characters.\n"
+    "4. Never just agree — always add something the original author will learn from.\n"
+    "5. Do not mention MailMuse unless Variant C and only naturally.\n"
+    "6. The best agree+amplify makes the original author want to retweet your reply.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels or formatting."
+)
+
+P16_REPLY_RESOURCE_DROP_SYSTEM = (
+    "You are replying to a tweet on behalf of MailMuse, an email marketing intelligence "
+    "platform tracking 600+ D2C/ecommerce brand emails. Your account has <10 followers.\n\n"
+    "STRATEGY: RESOURCE DROP REPLY\n"
+    "ONLY use this when someone explicitly asks for tools, resources, or email examples. "
+    "Mention MailMuse naturally as one helpful resource.\n\n"
+    "GENERATE 3 REPLY VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — Answer their question first, mention MailMuse as 'one tool I use'\n"
+    "Variant B — Give a useful tip first, then 'btw mailmuse.in has [specific thing]'\n"
+    "Variant C — Share a specific finding, then 'we built this at mailmuse.in'\n\n"
+    "RULES:\n"
+    "1. This reply style should ONLY be used when someone asks for resources/tools.\n"
+    "2. ALWAYS lead with value. The MailMuse mention should feel like a natural addition.\n"
+    "3. Include the URL: mailmuse.in\n"
+    "4. Keep each variant under 250 characters.\n"
+    "5. Never sound like an ad. Sound like a peer sharing a tool they genuinely use.\n"
+    "6. Reference a specific MailMuse capability (track emails, browse subject lines, "
+    "compare brands) rather than generic 'check out MailMuse'.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels or formatting."
+)
+
+
+# ---------------------------------------------------------------------------
+# Reply Hub — data builder functions
+# ---------------------------------------------------------------------------
+
+def _build_reply_data_drop(db: Session, **kwargs) -> str:
+    """Build data-rich context for a data drop reply."""
+    tweet_text = kwargs.get("tweet_text", "")
+    author_handle = kwargs.get("author_handle", "")
+    target_category = kwargs.get("target_category", "")
+    if not tweet_text:
+        raise ValueError("reply_data_drop requires 'tweet_text' parameter")
+
+    since = _find_active_window(db, preferred_days=30)
+
+    total_emails = db.query(func.count(Email.id)).filter(Email.received_at >= since).scalar() or 0
+    total_brands = db.query(func.count(func.distinct(Email.brand))).filter(
+        Email.received_at >= since, Email.brand.isnot(None)
+    ).scalar() or 0
+
+    subjects = db.query(Email.subject).filter(
+        Email.received_at >= since, Email.subject.isnot(None)
+    ).all()
+    total_subj = len(subjects)
+    pct_questions = round(sum(1 for (s,) in subjects if "?" in s) / max(total_subj, 1) * 100, 1)
+    pct_exclamation = round(sum(1 for (s,) in subjects if "!" in s) / max(total_subj, 1) * 100, 1)
+    pct_urgency = round(sum(1 for (s,) in subjects if any(
+        w in s.lower() for w in ["last chance", "hurry", "ending", "limited", "final"]
+    )) / max(total_subj, 1) * 100, 1)
+    avg_subject_len = round(sum(len(s) for (s,) in subjects) / max(total_subj, 1), 1)
+
+    type_dist = db.query(Email.type, func.count(Email.id)).filter(
+        Email.received_at >= since, Email.type.isnot(None)
+    ).group_by(Email.type).order_by(func.count(Email.id).desc()).limit(5).all()
+    type_lines = ", ".join(f"{t}: {c}" for t, c in type_dist)
+
+    top_brands = db.query(Email.brand, func.count(Email.id)).filter(
+        Email.received_at >= since, Email.brand.isnot(None)
+    ).group_by(Email.brand).order_by(func.count(Email.id).desc()).limit(5).all()
+    top_brand_lines = ", ".join(f"{b} ({c} emails)" for b, c in top_brands)
+
+    return (
+        f"Original tweet: {tweet_text}\n"
+        f"Author: @{author_handle}\n"
+        f"Author category: {target_category}\n\n"
+        f"=== MAILMUSE DATA POINTS (pick the most relevant) ===\n"
+        f"Total emails analyzed: {total_emails}\n"
+        f"Total brands tracked: {total_brands}\n"
+        f"Avg subject line length: {avg_subject_len} chars\n"
+        f"Subject lines with questions: {pct_questions}%\n"
+        f"Subject lines with exclamation marks: {pct_exclamation}%\n"
+        f"Subject lines with urgency language: {pct_urgency}%\n"
+        f"Top email types: {type_lines}\n"
+        f"Most active brands: {top_brand_lines}\n"
+    )
+
+
+def _build_reply_contrarian(db: Session, **kwargs) -> str:
+    """Build contrarian data context for challenging a tweet's premise."""
+    tweet_text = kwargs.get("tweet_text", "")
+    author_handle = kwargs.get("author_handle", "")
+    if not tweet_text:
+        raise ValueError("reply_contrarian requires 'tweet_text' parameter")
+
+    since = _find_active_window(db, preferred_days=30)
+
+    total_brands = db.query(func.count(func.distinct(Email.brand))).filter(
+        Email.received_at >= since, Email.brand.isnot(None)
+    ).scalar() or 0
+
+    # Brands with shortest subject lines
+    from sqlalchemy import text as sa_text
+    short_subj = db.execute(sa_text(
+        "SELECT brand, ROUND(AVG(LENGTH(subject)), 1) as avg_len, COUNT(*) as cnt "
+        "FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL "
+        "AND received_at >= :since "
+        "GROUP BY brand HAVING COUNT(*) >= 5 "
+        "ORDER BY avg_len ASC LIMIT 5"
+    ), {"since": since}).fetchall()
+    short_brands = ", ".join(f"{r[0]} (avg {r[1]} chars)" for r in short_subj) if short_subj else "N/A"
+
+    # Brands that never use discount language
+    no_discount = db.execute(sa_text(
+        "SELECT brand, COUNT(*) as total "
+        "FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL "
+        "AND received_at >= :since "
+        "GROUP BY brand "
+        "HAVING COUNT(*) >= 5 "
+        "AND SUM(CASE WHEN LOWER(subject) LIKE '%% off%%' OR LOWER(subject) LIKE '%%sale%%' "
+        "OR LOWER(subject) LIKE '%%discount%%' THEN 1 ELSE 0 END) = 0 "
+        "ORDER BY total DESC LIMIT 5"
+    ), {"since": since}).fetchall()
+    no_discount_brands = ", ".join(f"{r[0]} ({r[1]} emails)" for r in no_discount) if no_discount else "N/A"
+
+    # Brands that never use exclamation marks
+    no_excl = db.execute(sa_text(
+        "SELECT brand, COUNT(*) as total "
+        "FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL "
+        "AND received_at >= :since "
+        "GROUP BY brand "
+        "HAVING COUNT(*) >= 5 "
+        "AND SUM(CASE WHEN subject LIKE '%%!%%' THEN 1 ELSE 0 END) = 0 "
+        "ORDER BY total DESC LIMIT 5"
+    ), {"since": since}).fetchall()
+    no_excl_brands = ", ".join(f"{r[0]} ({r[1]} emails)" for r in no_excl) if no_excl else "N/A"
+
+    return (
+        f"Original tweet: {tweet_text}\n"
+        f"Author: @{author_handle}\n\n"
+        f"=== CONTRARIAN DATA POINTS ===\n"
+        f"Total brands tracked: {total_brands}\n"
+        f"Brands that NEVER use exclamation marks: {no_excl_brands}\n"
+        f"Brands with shortest subject lines: {short_brands}\n"
+        f"Brands that NEVER mention discounts: {no_discount_brands}\n"
+        f"\nUse whichever data point best contradicts the original tweet's assumption."
+    )
+
+
+def _build_reply_example(db: Session, **kwargs) -> str:
+    """Fetch real brand email examples relevant to the tweet topic."""
+    tweet_text = kwargs.get("tweet_text", "")
+    author_handle = kwargs.get("author_handle", "")
+    if not tweet_text:
+        raise ValueError("reply_example requires 'tweet_text' parameter")
+
+    since = _find_active_window(db, preferred_days=7)
+
+    recent_emails = (
+        db.query(Email.brand, Email.subject, Email.type)
+        .filter(Email.received_at >= since, Email.subject.isnot(None), Email.brand.isnot(None))
+        .order_by(func.random())
+        .limit(15)
+        .all()
+    )
+
+    examples = "\n".join(
+        f"  - {e[0]} | Type: {e[2] or 'Unknown'} | Subject: \"{e[1][:80]}\""
+        for e in recent_emails
+    )
+
+    return (
+        f"Original tweet: {tweet_text}\n"
+        f"Author: @{author_handle}\n\n"
+        f"=== REAL EMAIL EXAMPLES (use the most relevant one) ===\n"
+        f"{examples}\n\n"
+        f"Pick the example that best relates to what the original tweet is discussing. "
+        f"Use the REAL brand name and REAL subject line."
+    )
+
+
+def _build_reply_quick_tip(db: Session, **kwargs) -> str:
+    """Build context for a tactical tip reply."""
+    tweet_text = kwargs.get("tweet_text", "")
+    author_handle = kwargs.get("author_handle", "")
+    if not tweet_text:
+        raise ValueError("reply_quick_tip requires 'tweet_text' parameter")
+
+    since = _find_active_window(db, preferred_days=30)
+    total_brands = db.query(func.count(func.distinct(Email.brand))).filter(
+        Email.received_at >= since, Email.brand.isnot(None)
+    ).scalar() or 0
+    total_emails = db.query(func.count(Email.id)).filter(Email.received_at >= since).scalar() or 0
+
+    subjects = db.query(Email.subject).filter(
+        Email.received_at >= since, Email.subject.isnot(None)
+    ).all()
+    total = len(subjects)
+    avg_len = round(sum(len(s) for (s,) in subjects) / max(total, 1))
+    pct_personalized = round(sum(1 for (s,) in subjects if any(
+        w in s.lower() for w in ["your ", "you ", "just for", "picked for"]
+    )) / max(total, 1) * 100, 1)
+
+    return (
+        f"Original tweet: {tweet_text}\n"
+        f"Author: @{author_handle}\n\n"
+        f"Context: We track {total_brands}+ brands, {total_emails}+ emails.\n"
+        f"Avg subject line: {avg_len} chars. {pct_personalized}% use personalization words.\n"
+        f"Ground your tip in real patterns where possible."
+    )
+
+
+def _build_reply_agree_amplify(db: Session, **kwargs) -> str:
+    """Build amplification data for an agree+amplify reply."""
+    # Reuse the data_drop builder — same rich data, different system prompt
+    return _build_reply_data_drop(db, **kwargs)
+
+
+def _build_reply_resource_drop(db: Session, **kwargs) -> str:
+    """Build context for a resource recommendation reply."""
+    tweet_text = kwargs.get("tweet_text", "")
+    author_handle = kwargs.get("author_handle", "")
+    if not tweet_text:
+        raise ValueError("reply_resource_drop requires 'tweet_text' parameter")
+
+    total_brands = db.query(func.count(func.distinct(Email.brand))).filter(
+        Email.brand.isnot(None)
+    ).scalar() or 0
+    total_emails = db.query(func.count(Email.id)).scalar() or 0
+
+    return (
+        f"Original tweet: {tweet_text}\n"
+        f"Author: @{author_handle}\n\n"
+        f"MailMuse capabilities:\n"
+        f"- Tracks {total_brands}+ D2C/ecommerce brands' email campaigns\n"
+        f"- {total_emails}+ emails in the database\n"
+        f"- Browse real email designs, subject lines, and strategies\n"
+        f"- Compare brands side-by-side\n"
+        f"- Filter by industry, email type, brand\n"
+        f"- URL: mailmuse.in"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Tweet type configuration — maps type name to config dict
 # ---------------------------------------------------------------------------
 
@@ -1392,6 +1737,55 @@ _NEW_TWEET_TYPES = {
         "model": "claude-haiku-4-5-20251001",
         "max_tokens": 200,
         "output_mode": "single",
+        "append_url": False,
+    },
+    # Reply Hub styles (P11–P16)
+    "reply_data_drop": {
+        "builder": _build_reply_data_drop,
+        "system_prompt": P11_REPLY_DATA_DROP_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 800,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "reply_contrarian": {
+        "builder": _build_reply_contrarian,
+        "system_prompt": P12_REPLY_CONTRARIAN_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 800,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "reply_example": {
+        "builder": _build_reply_example,
+        "system_prompt": P13_REPLY_EXAMPLE_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 800,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "reply_quick_tip": {
+        "builder": _build_reply_quick_tip,
+        "system_prompt": P14_REPLY_QUICK_TIP_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 800,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "reply_agree_amplify": {
+        "builder": _build_reply_agree_amplify,
+        "system_prompt": P15_REPLY_AGREE_AMPLIFY_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 800,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "reply_resource_drop": {
+        "builder": _build_reply_resource_drop,
+        "system_prompt": P16_REPLY_RESOURCE_DROP_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 800,
+        "output_mode": "variants",
         "append_url": False,
     },
 }

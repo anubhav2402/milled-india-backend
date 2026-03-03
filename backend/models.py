@@ -206,3 +206,20 @@ class TweetQueue(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+
+class ReplyTarget(Base):
+    """Twitter accounts to monitor and reply to for growth."""
+    __tablename__ = "reply_targets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    handle = Column(String, unique=True, nullable=False, index=True)
+    display_name = Column(String, nullable=False)
+    follower_count = Column(Integer, nullable=True)
+    category = Column(String, nullable=False, index=True)
+    notes = Column(Text, nullable=True)
+    is_active = Column(Integer, default=1)
+    reply_count = Column(Integer, default=0)
+    last_replied_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+

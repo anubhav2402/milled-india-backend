@@ -3817,6 +3817,13 @@ def list_tweet_types(admin: models.User = Depends(get_admin_user)):
         "newsjacking": {"output_mode": "variants", "params": ["headline (required)", "summary", "source", "mailmuse_angle"]},
         "subject_spotlight": {"output_mode": "single", "params": []},
         "follow_up_reply": {"output_mode": "single", "params": ["original_reply (required)", "their_response (required)", "topic", "relevant_link", "reply_to_id"]},
+        # Reply Hub styles (P11–P16)
+        "reply_data_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
+        "reply_contrarian": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "reply_example": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "reply_quick_tip": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "reply_agree_amplify": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
+        "reply_resource_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
     }
     return types_info
 
@@ -3872,6 +3879,14 @@ def generate_tweets(
     - **newsjacking**: requires `headline`; optional `summary`, `source`, `mailmuse_angle`
     - **subject_spotlight**: auto (no params needed)
     - **follow_up_reply**: requires `original_reply`, `their_response`; optional `topic`, `relevant_link`, `reply_to_id`
+
+    Reply Hub styles (all generate 3 variants):
+    - **reply_data_drop**: requires `tweet_text`; optional `author_handle`, `target_category`, `reply_to_id`
+    - **reply_contrarian**: requires `tweet_text`; optional `author_handle`, `reply_to_id`
+    - **reply_example**: requires `tweet_text`; optional `author_handle`, `reply_to_id`
+    - **reply_quick_tip**: requires `tweet_text`; optional `author_handle`, `reply_to_id`
+    - **reply_agree_amplify**: requires `tweet_text`; optional `author_handle`, `target_category`, `reply_to_id`
+    - **reply_resource_drop**: requires `tweet_text`; optional `author_handle`, `reply_to_id`
     """
     valid_types = get_all_valid_types()
     if tweet_type not in valid_types:
@@ -4121,6 +4136,144 @@ def delete_tweet(
     db.delete(tweet)
     db.commit()
     return {"deleted": True}
+
+
+# ── Admin: Reply Targets ──
+
+@app.get("/admin/reply-targets")
+def list_reply_targets(
+    category: str = None,
+    active_only: bool = True,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    q = db.query(models.ReplyTarget).order_by(models.ReplyTarget.follower_count.desc().nullslast())
+    if category:
+        q = q.filter(models.ReplyTarget.category == category)
+    if active_only:
+        q = q.filter(models.ReplyTarget.is_active == 1)
+    targets = q.all()
+    return [
+        {
+            "id": t.id,
+            "handle": t.handle,
+            "display_name": t.display_name,
+            "follower_count": t.follower_count,
+            "category": t.category,
+            "notes": t.notes,
+            "is_active": bool(t.is_active),
+            "reply_count": t.reply_count,
+            "last_replied_at": t.last_replied_at.isoformat() if t.last_replied_at else None,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        }
+        for t in targets
+    ]
+
+
+@app.post("/admin/reply-targets")
+def create_reply_target(
+    body: dict = Body(...),
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    handle = body.get("handle", "").strip().lstrip("@")
+    display_name = body.get("display_name", "").strip()
+    if not handle or not display_name:
+        raise HTTPException(400, "handle and display_name are required")
+    existing = db.query(models.ReplyTarget).filter(models.ReplyTarget.handle == handle).first()
+    if existing:
+        raise HTTPException(400, f"@{handle} already exists")
+    target = models.ReplyTarget(
+        handle=handle,
+        display_name=display_name,
+        follower_count=body.get("follower_count"),
+        category=body.get("category", "Email Marketing Expert"),
+        notes=body.get("notes"),
+    )
+    db.add(target)
+    db.commit()
+    db.refresh(target)
+    return {"id": target.id, "handle": target.handle, "display_name": target.display_name}
+
+
+@app.patch("/admin/reply-targets/{target_id}")
+def update_reply_target(
+    target_id: int,
+    body: dict = Body(...),
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    target = db.query(models.ReplyTarget).filter(models.ReplyTarget.id == target_id).first()
+    if not target:
+        raise HTTPException(404, "Target not found")
+    for field in ["handle", "display_name", "follower_count", "category", "notes", "is_active"]:
+        if field in body:
+            setattr(target, field, body[field])
+    target.updated_at = datetime.utcnow()
+    db.commit()
+    return {"id": target.id, "handle": target.handle, "updated": True}
+
+
+@app.delete("/admin/reply-targets/{target_id}")
+def delete_reply_target(
+    target_id: int,
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    target = db.query(models.ReplyTarget).filter(models.ReplyTarget.id == target_id).first()
+    if not target:
+        raise HTTPException(404, "Target not found")
+    db.delete(target)
+    db.commit()
+    return {"deleted": True}
+
+
+@app.get("/admin/reply-targets/categories")
+def list_target_categories(admin: models.User = Depends(get_admin_user)):
+    return [
+        "Email Marketing Expert",
+        "D2C Founder",
+        "Ecommerce Influencer",
+        "Tool Founder",
+        "Marketing Agency",
+    ]
+
+
+@app.post("/admin/reply-targets/seed")
+def seed_reply_targets(
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    SEED_ACCOUNTS = [
+        {"handle": "chasedimond", "display_name": "Chase Dimond", "follower_count": 200000, "category": "Email Marketing Expert"},
+        {"handle": "jabornstern", "display_name": "Jay Schwedelson", "follower_count": 50000, "category": "Email Marketing Expert"},
+        {"handle": "Val_Geisler", "display_name": "Val Geisler", "follower_count": 20000, "category": "Email Marketing Expert"},
+        {"handle": "samar_owais", "display_name": "Samar Owais", "follower_count": 12000, "category": "Email Marketing Expert"},
+        {"handle": "klaviyo", "display_name": "Klaviyo", "follower_count": 30000, "category": "Tool Founder"},
+        {"handle": "litaborsten", "display_name": "Litmus", "follower_count": 25000, "category": "Tool Founder"},
+        {"handle": "mailaborchimp", "display_name": "Mailchimp", "follower_count": 250000, "category": "Tool Founder"},
+        {"handle": "omnisend", "display_name": "Omnisend", "follower_count": 20000, "category": "Tool Founder"},
+        {"handle": "sendlane", "display_name": "Sendlane", "follower_count": 8000, "category": "Tool Founder"},
+        {"handle": "customerio", "display_name": "Customer.io", "follower_count": 15000, "category": "Tool Founder"},
+        {"handle": "emailonacid", "display_name": "Email on Acid", "follower_count": 12000, "category": "Tool Founder"},
+        {"handle": "draborip", "display_name": "Drip", "follower_count": 15000, "category": "Tool Founder"},
+        {"handle": "alexgarcia_atx", "display_name": "Alex Garcia", "follower_count": 150000, "category": "D2C Founder"},
+        {"handle": "ShaanVP", "display_name": "Shaan Puri", "follower_count": 400000, "category": "D2C Founder"},
+        {"handle": "DTC_Nik", "display_name": "Nik Sharma", "follower_count": 100000, "category": "D2C Founder"},
+        {"handle": "web", "display_name": "Web Smith", "follower_count": 60000, "category": "Ecommerce Influencer"},
+        {"handle": "retainful", "display_name": "Retainful", "follower_count": 5000, "category": "Tool Founder"},
+        {"handle": "beaborehiiv", "display_name": "beehiiv", "follower_count": 30000, "category": "Tool Founder"},
+        {"handle": "ConvertKit", "display_name": "Kit (ConvertKit)", "follower_count": 50000, "category": "Tool Founder"},
+        {"handle": "ActiveCampaign", "display_name": "ActiveCampaign", "follower_count": 25000, "category": "Tool Founder"},
+    ]
+    created = 0
+    for acct in SEED_ACCOUNTS:
+        existing = db.query(models.ReplyTarget).filter(models.ReplyTarget.handle == acct["handle"]).first()
+        if not existing:
+            db.add(models.ReplyTarget(**acct))
+            created += 1
+    db.commit()
+    return {"seeded": created, "skipped": len(SEED_ACCOUNTS) - created}
 
 
 # ── Admin: Reclassify Email Types ──
