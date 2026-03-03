@@ -355,7 +355,7 @@ def score_cta(html: str) -> dict:
                 break
     if action_found:
         score += 10
-        findings.append(_good(f"Action verbs: {', '.join(set(action_found)[:3])}"))
+        findings.append(_good(f"Action verbs: {', '.join(list(set(action_found))[:3])}"))
     else:
         findings.append(_bad("No strong action verbs in CTAs"))
 
