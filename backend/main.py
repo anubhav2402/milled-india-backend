@@ -1464,7 +1464,11 @@ def list_emails(
     if q:
         like = f"%{q}%"
         query = query.filter(
-            models.Email.subject.ilike(like) | models.Email.preview.ilike(like)
+            models.Email.subject.ilike(like)
+            | models.Email.preview.ilike(like)
+            | models.Email.brand.ilike(like)
+            | models.Email.type.ilike(like)
+            | models.Email.industry.ilike(like)
         )
 
     query = query.offset(skip)
