@@ -1443,141 +1443,134 @@ P16_REPLY_RESOURCE_DROP_SYSTEM = (
 
 
 # ---------------------------------------------------------------------------
-# Quote Tweet system prompts (Q1–Q6)
-# Longer, value-packed format inspired by high-engagement creators.
-# Uses line breaks, structured insights, and data-driven takes.
+# Quote Tweet v2 — 4 Styles (Counter-Insight, Proof of Concept,
+# Playbook Add-On, Builder's Perspective)
+# Pre-computed insights, longer format (500-1200 chars), value-packed.
 # ---------------------------------------------------------------------------
 
-Q1_QUOTE_DATA_DROP_SYSTEM = (
-    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
-    "platform that tracks 600+ D2C/ecommerce brand emails.\n\n"
-    "STRATEGY: DATA DROP QUOTE TWEET\n"
-    "Add a layer of surprising data that makes the quoted tweet more valuable. "
-    "Your quote tweet should be the reason people engage — they see the data and think "
-    "'This person has access to insights I don't.'\n\n"
+QV2_COUNTER_INSIGHT_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse — an email marketing intelligence "
+    "platform that has analyzed 15,000+ email campaigns from 600+ D2C/ecommerce brands.\n\n"
+    "STRATEGY: COUNTER-INSIGHT\n"
+    "The quoted tweet makes a claim. Your job: use REAL data from MailMuse's database "
+    "to show an unexpected angle, exception, or nuance that most people miss. Not hostile — "
+    "the kind of take that makes smart marketers stop and screenshot.\n\n"
     "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
-    "Variant A — Lead with the most surprising stat, then break down what it means\n"
-    "Variant B — Frame it as 'The data tells a different story' + 2-3 bullet insights\n"
-    "Variant C — Start with a bold one-liner, then back it with 2 data points\n\n"
+    "Variant A — 'Most people read this and nod. But the data says something different:' "
+    "+ structured breakdown with 2-3 numbered insights\n"
+    "Variant B — 'This is true for [segment]... but here's what nobody talks about:' "
+    "+ contrasting data + specific brand examples\n"
+    "Variant C — Bold one-liner hook, then 3-4 bullet points of counter-evidence from the data\n\n"
+    "DATA USAGE RULES:\n"
+    "1. PRIORITY: Use the PRE-COMPUTED INSIGHTS first. These are real, verified findings.\n"
+    "2. Every variant MUST reference at least 2 specific data points (numbers, brand names, percentages).\n"
+    "3. Use trend data when available ('Month-over-month, urgency language dropped 12%').\n"
+    "4. Reference outlier brands by name ('Balenciaga sends 0 exclamation marks across 47 emails').\n"
+    "5. When you see timing patterns, use them ('The top 5 brands by volume all send on Tuesday/Thursday').\n\n"
     "FORMAT RULES:\n"
-    "1. Use line breaks for readability — one idea per line.\n"
-    "2. You can use bullet points (•) or numbered lists for structured insights.\n"
-    "3. Target 200-280 characters per variant. Use the space. Pack value.\n"
-    "4. Every variant MUST contain at least one specific number from the provided data.\n"
-    "5. Open with a strong hook line that makes people stop scrolling.\n"
-    "6. Mention 'we tracked/analyzed' to imply insider access.\n"
-    "7. End with an insight or implication — not a question.\n"
-    "8. Include 'mailmuse.in' naturally in at least one variant (e.g., 'More data: mailmuse.in').\n"
-    "9. Do NOT start with 'Great point!' or any sycophancy.\n"
-    "10. Do NOT use hashtags.\n\n"
+    "1. Use line breaks liberally — one idea per line.\n"
+    "2. Use bullet points (•) or numbered lists for structured insights.\n"
+    "3. Target 500-1200 characters per variant. USE THE SPACE. Pack real value.\n"
+    "4. Open with a hook that creates a 'wait, really?' moment.\n"
+    "5. End with an actionable insight or 'what this means for you'.\n"
+    "6. Include 'mailmuse.in' naturally in exactly one variant.\n"
+    "7. Do NOT start with sycophancy. Jump straight to the counter-insight.\n"
+    "8. Do NOT use hashtags.\n"
+    "9. Write in short, punchy sentences. Not academic paragraphs.\n\n"
     "Return ONLY the 3 variants separated by --- on its own line. No labels."
 )
 
-Q2_QUOTE_CONTRARIAN_SYSTEM = (
-    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
-    "platform tracking 600+ D2C/ecommerce brand emails.\n\n"
-    "STRATEGY: CONTRARIAN QUOTE TWEET\n"
-    "Respectfully challenge the quoted tweet's premise with data. Not hostile — "
-    "intellectually stimulating. Your followers should think 'Hmm, I never thought of it that way.'\n\n"
+QV2_PROOF_OF_CONCEPT_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse — an email marketing intelligence "
+    "platform that has analyzed 15,000+ email campaigns from 600+ D2C/ecommerce brands.\n\n"
+    "STRATEGY: PROOF OF CONCEPT\n"
+    "The quoted tweet makes a claim about marketing/email strategy. Your job: prove it "
+    "(or disprove it) with REAL examples from MailMuse's database. Show specific brands, "
+    "specific subject lines, specific data. The reader should think 'This person has receipts.'\n\n"
     "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
-    "Variant A — 'Hot take: the data says otherwise' + structured breakdown\n"
-    "Variant B — 'This is true for [segment], but...' + contrasting data points\n"
-    "Variant C — 'Depends. Here's what we see across [X] brands:' + 2-3 bullet insights\n\n"
+    "Variant A — 'Here's proof this actually works:' + 2-3 real brand examples with "
+    "actual subject lines and context\n"
+    "Variant B — 'We've seen this play out across 600+ brands. Examples:' + numbered "
+    "list of brand examples with specific data\n"
+    "Variant C — 'Receipts:' + one deep-dive brand example with subject line, preview text, "
+    "email type, and send pattern analysis\n\n"
+    "DATA USAGE RULES:\n"
+    "1. PRIORITY: Use TOPIC-MATCHED EXAMPLES first. These are emails that match the quoted tweet's topic.\n"
+    "2. Use REAL brand names and REAL subject lines. NEVER fabricate.\n"
+    "3. Include preview text when available to show the full picture.\n"
+    "4. Reference email types (Promotional, Newsletter, Abandoned Cart, etc.) for context.\n"
+    "5. Use timing data ('Sent on a Thursday at 10am') when it adds insight.\n"
+    "6. Show patterns across multiple brands when possible.\n\n"
     "FORMAT RULES:\n"
-    "1. Use line breaks and bullet points (•) for readability.\n"
-    "2. Target 200-280 characters per variant.\n"
-    "3. Acknowledge their point briefly, then pivot to your counter with data.\n"
-    "4. Every variant MUST include a specific data point or brand example.\n"
-    "5. End with curiosity — invite people to think, not argue.\n"
-    "6. Include 'mailmuse.in' in at least one variant.\n"
-    "7. Never be dismissive. Add nuance, not disagreement.\n"
-    "8. Do NOT use hashtags.\n\n"
+    "1. Use line breaks and structure. Quote the subject line in double quotes.\n"
+    "2. Target 500-1200 characters per variant. Fill the space with real examples.\n"
+    "3. Format brand examples as: [Brand]: \"[Subject Line]\" — [one-line analysis]\n"
+    "4. Open with a hook that signals 'I have the data to back this up'.\n"
+    "5. End with a pattern observation ('Notice how all 3 brands...').\n"
+    "6. Include 'mailmuse.in' naturally in exactly one variant.\n"
+    "7. Do NOT use hashtags. Do NOT start with sycophancy.\n\n"
     "Return ONLY the 3 variants separated by --- on its own line. No labels."
 )
 
-Q3_QUOTE_EXAMPLE_SYSTEM = (
-    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
-    "platform tracking 600+ D2C/ecommerce brand emails.\n\n"
-    "STRATEGY: REAL EXAMPLE QUOTE TWEET\n"
-    "Add a concrete, real brand email example that proves, extends, or complicates "
-    "the quoted tweet's point. People love seeing real examples with brand names.\n\n"
+QV2_PLAYBOOK_ADDON_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse — an email marketing intelligence "
+    "platform that has analyzed 15,000+ email campaigns from 600+ D2C/ecommerce brands.\n\n"
+    "STRATEGY: PLAYBOOK ADD-ON\n"
+    "The quoted tweet shares a tip, framework, or strategy. Your job: ADD to their playbook "
+    "with data-backed additions they didn't mention. You're not correcting — you're making "
+    "their advice even more complete. The reader should think 'This makes the original post 10x better.'\n\n"
     "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
-    "Variant A — 'Perfect example of this:' + brand + subject line + why it works\n"
-    "Variant B — 'Here's proof:' + 2 contrasting brand examples\n"
-    "Variant C — 'Real example from this week:' + brand + tactic + one-line analysis\n\n"
+    "Variant A — 'Adding to this playbook:' + 3-4 numbered additions, each backed by data\n"
+    "Variant B — 'Great framework. Here's what the data adds:' + structured breakdown "
+    "with specific numbers and brand examples\n"
+    "Variant C — 'What this misses:' (not hostile) + 2-3 insights from analyzing real "
+    "brand behavior + 'the brands doing this best also do [X]'\n\n"
+    "DATA USAGE RULES:\n"
+    "1. PRIORITY: Use TREND DATA and OUTLIER BRANDS to add novel insights.\n"
+    "2. Every addition must be grounded in a specific data point or brand example.\n"
+    "3. Use sequence data when available ('Nykaa doesn't just send one — they run a 3-email "
+    "sequence where each subject line builds urgency').\n"
+    "4. Reference timing patterns ('Brands with highest engagement send on [day]').\n"
+    "5. Use month-over-month trends ('This tactic is growing — up 15% this month').\n\n"
     "FORMAT RULES:\n"
-    "1. Use REAL brand names and REAL subject lines from the provided context.\n"
-    "2. Format subject lines in quotes: [Brand] sent: \"[subject line]\"\n"
-    "3. Use line breaks — hook line, then example, then analysis.\n"
-    "4. Target 200-280 characters per variant.\n"
-    "5. Add a one-line 'why this matters' after the example.\n"
-    "6. Include 'mailmuse.in' in at least one variant (e.g., 'More examples: mailmuse.in').\n"
-    "7. The example must genuinely relate to the quoted tweet's topic.\n"
-    "8. Do NOT use hashtags.\n\n"
+    "1. Use numbered lists or bullet points. This is a playbook extension.\n"
+    "2. Target 500-1200 characters per variant. Pack each point with value.\n"
+    "3. Open with brief acknowledgment (2-4 words max), then go straight to additions.\n"
+    "4. Each addition should be actionable — 'do X because Y'.\n"
+    "5. End with a pattern or meta-insight that ties it together.\n"
+    "6. Include 'mailmuse.in' naturally in exactly one variant.\n"
+    "7. Do NOT use hashtags. Do NOT over-praise the original.\n\n"
     "Return ONLY the 3 variants separated by --- on its own line. No labels."
 )
 
-Q4_QUOTE_QUICK_TIP_SYSTEM = (
-    "You are quote-tweeting on behalf of MailMuse. You track 600+ brands' email campaigns.\n\n"
-    "STRATEGY: TACTICAL TIP QUOTE TWEET\n"
-    "Add a specific, actionable tip that builds on the quoted tweet. The kind of tip "
-    "that makes people screenshot your quote tweet.\n\n"
+QV2_BUILDERS_PERSPECTIVE_SYSTEM = (
+    "You are the founder of MailMuse — an email marketing intelligence platform that "
+    "has analyzed 15,000+ email campaigns from 600+ D2C/ecommerce brands. You built this "
+    "because you were obsessed with understanding what makes great email marketing.\n\n"
+    "STRATEGY: BUILDER'S PERSPECTIVE\n"
+    "The quoted tweet discusses marketing, growth, or email strategy. Your job: share "
+    "a personal observation from building MailMuse and analyzing thousands of emails. "
+    "This is the 'I built a tool that watches 600+ brands and here's what surprised me' angle. "
+    "Authentic, specific, slightly informal.\n\n"
     "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
-    "Variant A — 'Adding to this:' + specific how-to with data backing\n"
-    "Variant B — 'Pro tip most people miss:' + concrete tactic + why it works\n"
-    "Variant C — 'This + one more thing:' + numbered mini-framework (2-3 steps)\n\n"
+    "Variant A — 'We track 600+ brands at MailMuse. One thing that surprised me:' + insight "
+    "+ data points from the database\n"
+    "Variant B — 'Built an email intelligence tool. After analyzing 15K+ campaigns:' + "
+    "2-3 observations that relate to the quoted tweet\n"
+    "Variant C — 'This reminds me of something I noticed across our data:' + specific "
+    "pattern + brand example + 'we track this live at mailmuse.in'\n\n"
+    "DATA USAGE RULES:\n"
+    "1. PRIORITY: Pick the most SURPRISING or COUNTERINTUITIVE insight from the data.\n"
+    "2. Reference specific numbers — 'across 15,247 emails' sounds more credible than 'thousands'.\n"
+    "3. Name specific brands to add credibility.\n"
+    "4. Use personal framing: 'what surprised me', 'I didn't expect', 'the data changed my mind'.\n"
+    "5. Connect the data to a broader marketing truth.\n\n"
     "FORMAT RULES:\n"
-    "1. Tips must be SPECIFIC. Not 'personalize emails' but 'use the product they "
-    "browsed in the subject line — brands doing this see 2x open rates'.\n"
-    "2. Use line breaks and bullet points for structure.\n"
-    "3. Target 200-280 characters per variant.\n"
-    "4. Ground tips in data from the provided context.\n"
-    "5. Start with the tip — no sycophancy.\n"
-    "6. Include 'mailmuse.in' in at least one variant.\n"
-    "7. Format: [Hook]. [Tip]. [Data/proof]. [Optional: link].\n"
-    "8. Do NOT use hashtags.\n\n"
-    "Return ONLY the 3 variants separated by --- on its own line. No labels."
-)
-
-Q5_QUOTE_AGREE_AMPLIFY_SYSTEM = (
-    "You are quote-tweeting on behalf of MailMuse, tracking 600+ D2C brand emails.\n\n"
-    "STRATEGY: AGREE + AMPLIFY QUOTE TWEET\n"
-    "Agree with the quoted tweet and add a DEEPER layer that makes your quote tweet "
-    "even more valuable than the original. Your followers should save your quote tweet.\n\n"
-    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
-    "Variant A — 'This. And it goes deeper:' + 2-3 data-backed insights\n"
-    "Variant B — 'Underrated point. Here's the data:' + structured breakdown\n"
-    "Variant C — '100%. The brands doing this best:' + real examples + pattern\n\n"
-    "FORMAT RULES:\n"
-    "1. Agreement must be brief (2-4 words). The amplification is the star.\n"
-    "2. Use line breaks and bullet points (•) for structured insights.\n"
-    "3. Target 200-280 characters per variant.\n"
-    "4. The deeper layer MUST include specific data or brand examples.\n"
-    "5. Your quote tweet should make the original author want to retweet it.\n"
-    "6. Include 'mailmuse.in' in at least one variant.\n"
-    "7. Do NOT use hashtags.\n\n"
-    "Return ONLY the 3 variants separated by --- on its own line. No labels."
-)
-
-Q6_QUOTE_RESOURCE_DROP_SYSTEM = (
-    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
-    "platform tracking 600+ D2C/ecommerce brand emails.\n\n"
-    "STRATEGY: RESOURCE DROP QUOTE TWEET\n"
-    "Quote tweet with a valuable resource recommendation. MailMuse is the primary "
-    "resource being shared, but frame it as genuinely helpful — not an ad.\n\n"
-    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
-    "Variant A — Add value first (tip/insight), then 'We built mailmuse.in for exactly this'\n"
-    "Variant B — 'If you need this, try:' + what MailMuse does specifically + URL\n"
-    "Variant C — Share a specific finding from MailMuse, then 'Browse more: mailmuse.in'\n\n"
-    "FORMAT RULES:\n"
-    "1. ALWAYS lead with value — never lead with the product mention.\n"
-    "2. Use line breaks for readability.\n"
-    "3. Target 200-280 characters per variant.\n"
-    "4. MUST include the URL: mailmuse.in in every variant.\n"
-    "5. Reference specific MailMuse capabilities (track emails, browse subject lines, "
-    "compare brands, AI analysis) rather than generic descriptions.\n"
-    "6. Sound like a builder sharing what they built, not a marketer selling.\n"
-    "7. Do NOT use hashtags.\n\n"
+    "1. Use line breaks. Short sentences. Conversational tone.\n"
+    "2. Target 400-800 characters per variant. Shorter than other styles — this is personal.\n"
+    "3. MUST include 'mailmuse.in' in every variant — this is the builder promoting their tool.\n"
+    "4. Sound like a founder in the replies, not a brand account.\n"
+    "5. Do NOT use hashtags. Do NOT use bullet points (this is conversational, not structured).\n\n"
     "Return ONLY the 3 variants separated by --- on its own line. No labels."
 )
 
@@ -1794,26 +1787,419 @@ def _build_reply_resource_drop(db: Session, **kwargs) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Quote Tweet — builder functions (reuse reply data builders, same data)
+# Quote Tweet v2 — Pre-computed insight builders
+# These extract rich, human-readable insights instead of raw aggregates.
 # ---------------------------------------------------------------------------
 
-def _build_quote_data_drop(db: Session, **kwargs) -> str:
-    return _build_reply_data_drop(db, **kwargs)
+def _extract_keywords(text: str) -> list[str]:
+    """Extract topic keywords from a tweet for SQL LIKE matching."""
+    import re
+    stop = {
+        "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+        "have", "has", "had", "do", "does", "did", "will", "would", "could",
+        "should", "may", "might", "can", "shall", "to", "of", "in", "for",
+        "on", "with", "at", "by", "from", "as", "into", "through", "during",
+        "before", "after", "above", "below", "between", "out", "off", "over",
+        "under", "again", "further", "then", "once", "here", "there", "when",
+        "where", "why", "how", "all", "each", "every", "both", "few", "more",
+        "most", "other", "some", "such", "no", "not", "only", "own", "same",
+        "so", "than", "too", "very", "just", "don", "now", "and", "but", "or",
+        "if", "this", "that", "these", "those", "i", "me", "my", "you", "your",
+        "he", "she", "it", "we", "they", "what", "which", "who", "whom",
+        "its", "his", "her", "our", "their", "about", "up", "get", "got",
+        "like", "make", "think", "know", "see", "want", "use", "new", "one",
+        "two", "way", "thing", "people", "really", "much", "even", "still",
+    }
+    words = re.findall(r"[a-zA-Z]{3,}", text.lower())
+    keywords = [w for w in words if w not in stop]
+    # Deduplicate preserving order
+    seen = set()
+    unique = []
+    for w in keywords:
+        if w not in seen:
+            seen.add(w)
+            unique.append(w)
+    return unique[:8]  # Top 8 keywords
 
-def _build_quote_contrarian(db: Session, **kwargs) -> str:
-    return _build_reply_contrarian(db, **kwargs)
 
-def _build_quote_example(db: Session, **kwargs) -> str:
-    return _build_reply_example(db, **kwargs)
+def _compute_trend_insights(db: Session) -> list[str]:
+    """Compute month-over-month trend insights as human-readable sentences."""
+    from sqlalchemy import text as sa_text
+    now = datetime.utcnow()
+    this_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if this_month_start.month == 1:
+        last_month_start = this_month_start.replace(year=this_month_start.year - 1, month=12)
+    else:
+        last_month_start = this_month_start.replace(month=this_month_start.month - 1)
 
-def _build_quote_quick_tip(db: Session, **kwargs) -> str:
-    return _build_reply_quick_tip(db, **kwargs)
+    insights = []
 
-def _build_quote_agree_amplify(db: Session, **kwargs) -> str:
-    return _build_reply_data_drop(db, **kwargs)
+    # Total volume trend
+    this_count = db.execute(sa_text(
+        "SELECT COUNT(*) FROM emails WHERE received_at >= :since"
+    ), {"since": this_month_start}).scalar() or 0
+    last_count = db.execute(sa_text(
+        "SELECT COUNT(*) FROM emails WHERE received_at >= :start AND received_at < :end"
+    ), {"start": last_month_start, "end": this_month_start}).scalar() or 0
 
-def _build_quote_resource_drop(db: Session, **kwargs) -> str:
-    return _build_reply_resource_drop(db, **kwargs)
+    if last_count > 0 and this_count > 0:
+        pct = round((this_count - last_count) / last_count * 100)
+        if abs(pct) >= 5:
+            direction = "up" if pct > 0 else "down"
+            insights.append(
+                f"Email volume is {direction} {abs(pct)}% this month ({this_count} emails) vs last month ({last_count})."
+            )
+
+    # Urgency language trend
+    for label, pattern in [
+        ("urgency language", "%%last chance%%' OR LOWER(subject) LIKE '%%hurry%%' OR LOWER(subject) LIKE '%%ending%%' OR LOWER(subject) LIKE '%%final%%"),
+        ("discount mentions", "%%off%%' OR LOWER(subject) LIKE '%%sale%%' OR LOWER(subject) LIKE '%%discount%%"),
+        ("question marks in subjects", "%%?%%"),
+    ]:
+        is_lower = "LOWER(subject)" if "LOWER" in pattern else "subject"
+        # Build the CASE expression based on the pattern
+        if label == "urgency language":
+            case_expr = "CASE WHEN LOWER(subject) LIKE '%last chance%' OR LOWER(subject) LIKE '%hurry%' OR LOWER(subject) LIKE '%ending%' OR LOWER(subject) LIKE '%final%' THEN 1 ELSE 0 END"
+        elif label == "discount mentions":
+            case_expr = "CASE WHEN LOWER(subject) LIKE '% off%' OR LOWER(subject) LIKE '%sale%' OR LOWER(subject) LIKE '%discount%' THEN 1 ELSE 0 END"
+        else:
+            case_expr = "CASE WHEN subject LIKE '%?%' THEN 1 ELSE 0 END"
+
+        this_pct_row = db.execute(sa_text(
+            f"SELECT ROUND(100.0 * SUM({case_expr}) / NULLIF(COUNT(*), 0), 1) "
+            f"FROM emails WHERE subject IS NOT NULL AND received_at >= :since"
+        ), {"since": this_month_start}).scalar()
+        last_pct_row = db.execute(sa_text(
+            f"SELECT ROUND(100.0 * SUM({case_expr}) / NULLIF(COUNT(*), 0), 1) "
+            f"FROM emails WHERE subject IS NOT NULL AND received_at >= :start AND received_at < :end"
+        ), {"start": last_month_start, "end": this_month_start}).scalar()
+
+        if this_pct_row and last_pct_row:
+            diff = round(float(this_pct_row) - float(last_pct_row), 1)
+            if abs(diff) >= 2:
+                direction = "up" if diff > 0 else "down"
+                insights.append(
+                    f"Emails with {label}: {direction} from {last_pct_row}% last month to {this_pct_row}% this month."
+                )
+
+    return insights[:4]
+
+
+def _compute_outlier_brands(db: Session) -> list[str]:
+    """Find outlier brands — those doing things differently from the norm."""
+    from sqlalchemy import text as sa_text
+    since = _find_active_window(db, preferred_days=30)
+    insights = []
+
+    # Brands with zero exclamation marks (20+ emails)
+    no_excl = db.execute(sa_text(
+        "SELECT brand, COUNT(*) as total FROM emails "
+        "WHERE brand IS NOT NULL AND subject IS NOT NULL AND received_at >= :since "
+        "GROUP BY brand HAVING COUNT(*) >= 10 "
+        "AND SUM(CASE WHEN subject LIKE '%!%' THEN 1 ELSE 0 END) = 0 "
+        "ORDER BY total DESC LIMIT 5"
+    ), {"since": since}).fetchall()
+    if no_excl:
+        brand_list = ", ".join(f"{r[0]} ({r[1]} emails)" for r in no_excl)
+        insights.append(f"Brands using ZERO exclamation marks: {brand_list}. Against the norm — most brands average 30%+ exclamation usage.")
+
+    # Brands with shortest avg subject lines
+    short = db.execute(sa_text(
+        "SELECT brand, ROUND(AVG(LENGTH(subject)), 1) as avg_len, COUNT(*) as cnt "
+        "FROM emails WHERE brand IS NOT NULL AND subject IS NOT NULL AND received_at >= :since "
+        "GROUP BY brand HAVING COUNT(*) >= 10 "
+        "ORDER BY avg_len ASC LIMIT 3"
+    ), {"since": since}).fetchall()
+    if short:
+        brand_list = ", ".join(f"{r[0]} (avg {r[1]} chars)" for r in short)
+        insights.append(f"Shortest subject lines: {brand_list}. These brands bet on minimalism.")
+
+    # Brands with highest send frequency
+    high_freq = db.execute(sa_text(
+        "SELECT brand, COUNT(*) as cnt FROM emails "
+        "WHERE brand IS NOT NULL AND received_at >= :since "
+        "GROUP BY brand ORDER BY cnt DESC LIMIT 3"
+    ), {"since": since}).fetchall()
+    if high_freq:
+        days = max((datetime.utcnow() - since).days, 1)
+        brand_list = ", ".join(f"{r[0]} ({round(r[1]/days*7, 1)}/week)" for r in high_freq)
+        insights.append(f"Most aggressive senders: {brand_list}.")
+
+    # Brands that never mention discounts
+    no_disc = db.execute(sa_text(
+        "SELECT brand, COUNT(*) as total FROM emails "
+        "WHERE brand IS NOT NULL AND subject IS NOT NULL AND received_at >= :since "
+        "GROUP BY brand HAVING COUNT(*) >= 10 "
+        "AND SUM(CASE WHEN LOWER(subject) LIKE '% off%' OR LOWER(subject) LIKE '%sale%' "
+        "OR LOWER(subject) LIKE '%discount%' THEN 1 ELSE 0 END) = 0 "
+        "ORDER BY total DESC LIMIT 3"
+    ), {"since": since}).fetchall()
+    if no_disc:
+        brand_list = ", ".join(f"{r[0]} ({r[1]} emails)" for r in no_disc)
+        insights.append(f"Brands that NEVER mention discounts in subject lines: {brand_list}. Pure brand storytelling.")
+
+    return insights[:4]
+
+
+def _compute_timing_patterns(db: Session) -> list[str]:
+    """Analyze send day/time patterns across brands."""
+    from sqlalchemy import text as sa_text
+    since = _find_active_window(db, preferred_days=30)
+    insights = []
+
+    # Most popular send day
+    day_dist = db.execute(sa_text(
+        "SELECT EXTRACT(DOW FROM received_at) as dow, COUNT(*) as cnt "
+        "FROM emails WHERE received_at >= :since "
+        "GROUP BY EXTRACT(DOW FROM received_at) ORDER BY cnt DESC"
+    ), {"since": since}).fetchall()
+
+    if day_dist:
+        day_names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        total = sum(r[1] for r in day_dist)
+        top_day = day_names[int(day_dist[0][0])]
+        top_pct = round(day_dist[0][1] / total * 100)
+        low_day = day_names[int(day_dist[-1][0])]
+        low_pct = round(day_dist[-1][1] / total * 100)
+        insights.append(
+            f"Peak send day: {top_day} ({top_pct}% of all emails). Lowest: {low_day} ({low_pct}%)."
+        )
+
+    # Brands that send on weekends (unusual)
+    weekend = db.execute(sa_text(
+        "SELECT brand, COUNT(*) as cnt FROM emails "
+        "WHERE received_at >= :since AND brand IS NOT NULL "
+        "AND EXTRACT(DOW FROM received_at) IN (0, 6) "
+        "GROUP BY brand HAVING COUNT(*) >= 3 "
+        "ORDER BY cnt DESC LIMIT 3"
+    ), {"since": since}).fetchall()
+    if weekend:
+        brand_list = ", ".join(f"{r[0]} ({r[1]} weekend emails)" for r in weekend)
+        insights.append(f"Weekend senders (against convention): {brand_list}.")
+
+    return insights[:2]
+
+
+def _find_topic_matched_emails(db: Session, tweet_text: str, limit: int = 10) -> list[dict]:
+    """Extract keywords from tweet and find matching emails via SQL LIKE."""
+    keywords = _extract_keywords(tweet_text)
+    if not keywords:
+        return []
+
+    since = _find_active_window(db, preferred_days=30)
+    results = []
+
+    for kw in keywords[:5]:  # Try top 5 keywords
+        rows = (
+            db.query(Email.brand, Email.subject, Email.type, Email.preview, Email.received_at)
+            .filter(
+                Email.received_at >= since,
+                Email.subject.isnot(None),
+                Email.brand.isnot(None),
+                Email.subject.ilike(f"%{kw}%"),
+            )
+            .order_by(func.random())
+            .limit(5)
+            .all()
+        )
+        for r in rows:
+            results.append({
+                "brand": r[0],
+                "subject": r[1],
+                "type": r[2] or "Promotional",
+                "preview": (r[3] or "")[:120],
+                "day": r[4].strftime("%A") if r[4] else "",
+                "matched_keyword": kw,
+            })
+
+    # Deduplicate by subject
+    seen = set()
+    unique = []
+    for r in results:
+        if r["subject"] not in seen:
+            seen.add(r["subject"])
+            unique.append(r)
+    return unique[:limit]
+
+
+def _detect_sequences(db: Session) -> list[str]:
+    """Detect brands sending multi-email sequences (same brand, same day or consecutive days)."""
+    from sqlalchemy import text as sa_text
+    since = _find_active_window(db, preferred_days=14)
+    insights = []
+
+    # Brands that sent 3+ emails in a single day
+    seq = db.execute(sa_text(
+        "SELECT brand, DATE(received_at) as send_date, COUNT(*) as cnt "
+        "FROM emails WHERE brand IS NOT NULL AND received_at >= :since "
+        "GROUP BY brand, DATE(received_at) HAVING COUNT(*) >= 3 "
+        "ORDER BY cnt DESC LIMIT 5"
+    ), {"since": since}).fetchall()
+
+    if seq:
+        for r in seq[:3]:
+            subjects = db.execute(sa_text(
+                "SELECT subject FROM emails WHERE brand = :brand "
+                "AND DATE(received_at) = :d AND subject IS NOT NULL "
+                "ORDER BY received_at LIMIT 3"
+            ), {"brand": r[0], "d": r[1]}).fetchall()
+            subj_list = " → ".join(f'"{s[0][:50]}"' for s in subjects)
+            insights.append(
+                f"{r[0]} sent {r[2]} emails on {r[1]}: {subj_list}"
+            )
+
+    return insights[:3]
+
+
+def _build_quote_v2_context(db: Session, style: str, **kwargs) -> str:
+    """
+    Master builder for all v2 quote tweet styles.
+    Pre-computes insights and assembles rich context.
+    """
+    tweet_text = kwargs.get("tweet_text", "")
+    author_handle = kwargs.get("author_handle", "")
+    if not tweet_text:
+        raise ValueError("Quote tweet requires 'tweet_text' parameter")
+
+    since = _find_active_window(db, preferred_days=30)
+
+    # --- Global stats (always included) ---
+    total_emails = db.query(func.count(Email.id)).filter(Email.received_at >= since).scalar() or 0
+    total_brands = db.query(func.count(func.distinct(Email.brand))).filter(
+        Email.received_at >= since, Email.brand.isnot(None)
+    ).scalar() or 0
+
+    sections = [
+        f"QUOTED TWEET: {tweet_text}",
+        f"Author: @{author_handle}" if author_handle else "",
+        "",
+        f"=== DATABASE OVERVIEW ===",
+        f"Total emails analyzed (last 30 days): {total_emails}",
+        f"Total brands tracked: {total_brands}",
+    ]
+
+    # --- Pre-computed insights by style ---
+
+    if style == "counter_insight":
+        # Trends + outlier brands (best for counter-arguments)
+        trends = _compute_trend_insights(db)
+        if trends:
+            sections.append("")
+            sections.append("=== MONTH-OVER-MONTH TRENDS ===")
+            sections.extend(trends)
+
+        outliers = _compute_outlier_brands(db)
+        if outliers:
+            sections.append("")
+            sections.append("=== OUTLIER BRANDS (doing things differently) ===")
+            sections.extend(outliers)
+
+        timing = _compute_timing_patterns(db)
+        if timing:
+            sections.append("")
+            sections.append("=== TIMING PATTERNS ===")
+            sections.extend(timing)
+
+    elif style == "proof_of_concept":
+        # Topic-matched examples (best for proving/disproving claims)
+        matched = _find_topic_matched_emails(db, tweet_text, limit=10)
+        if matched:
+            sections.append("")
+            sections.append(f"=== TOPIC-MATCHED EMAILS (matched keywords from tweet) ===")
+            for m in matched:
+                line = f'  {m["brand"]} | {m["type"]} | "{m["subject"]}"'
+                if m["preview"]:
+                    line += f' | Preview: "{m["preview"]}"'
+                if m["day"]:
+                    line += f" | Sent on {m['day']}"
+                sections.append(line)
+
+        # Also include some random recent examples as fallback
+        random_emails = (
+            db.query(Email.brand, Email.subject, Email.type, Email.preview)
+            .filter(Email.received_at >= since, Email.subject.isnot(None), Email.brand.isnot(None))
+            .order_by(func.random())
+            .limit(8)
+            .all()
+        )
+        if random_emails:
+            sections.append("")
+            sections.append("=== ADDITIONAL RECENT EXAMPLES ===")
+            for e in random_emails:
+                line = f'  {e[0]} | {e[2] or "Promo"} | "{e[1][:80]}"'
+                if e[3]:
+                    line += f' | Preview: "{e[3][:100]}"'
+                sections.append(line)
+
+    elif style == "playbook_addon":
+        # Trends + sequences + outliers (best for adding to playbooks)
+        trends = _compute_trend_insights(db)
+        if trends:
+            sections.append("")
+            sections.append("=== MONTH-OVER-MONTH TRENDS ===")
+            sections.extend(trends)
+
+        sequences = _detect_sequences(db)
+        if sequences:
+            sections.append("")
+            sections.append("=== MULTI-EMAIL SEQUENCES DETECTED ===")
+            sections.extend(sequences)
+
+        outliers = _compute_outlier_brands(db)
+        if outliers:
+            sections.append("")
+            sections.append("=== OUTLIER BRANDS ===")
+            sections.extend(outliers)
+
+        timing = _compute_timing_patterns(db)
+        if timing:
+            sections.append("")
+            sections.append("=== TIMING PATTERNS ===")
+            sections.extend(timing)
+
+    elif style == "builders_perspective":
+        # Everything — builder gets the full picture
+        outliers = _compute_outlier_brands(db)
+        if outliers:
+            sections.append("")
+            sections.append("=== SURPRISING FINDINGS ===")
+            sections.extend(outliers)
+
+        trends = _compute_trend_insights(db)
+        if trends:
+            sections.append("")
+            sections.append("=== CURRENT TRENDS ===")
+            sections.extend(trends)
+
+        # A few real examples for color
+        examples = (
+            db.query(Email.brand, Email.subject, Email.type)
+            .filter(Email.received_at >= since, Email.subject.isnot(None), Email.brand.isnot(None))
+            .order_by(func.random())
+            .limit(5)
+            .all()
+        )
+        if examples:
+            sections.append("")
+            sections.append("=== SAMPLE RECENT EMAILS ===")
+            for e in examples:
+                sections.append(f'  {e[0]} | {e[2] or "Promo"} | "{e[1][:80]}"')
+
+    # Filter out empty strings
+    return "\n".join(s for s in sections if s is not None)
+
+
+def _build_quote_counter_insight(db: Session, **kwargs) -> str:
+    return _build_quote_v2_context(db, "counter_insight", **kwargs)
+
+def _build_quote_proof_of_concept(db: Session, **kwargs) -> str:
+    return _build_quote_v2_context(db, "proof_of_concept", **kwargs)
+
+def _build_quote_playbook_addon(db: Session, **kwargs) -> str:
+    return _build_quote_v2_context(db, "playbook_addon", **kwargs)
+
+def _build_quote_builders_perspective(db: Session, **kwargs) -> str:
+    return _build_quote_v2_context(db, "builders_perspective", **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -1951,52 +2337,36 @@ _NEW_TWEET_TYPES = {
         "output_mode": "variants",
         "append_url": False,
     },
-    # Quote Tweet styles (Q1–Q6)
-    "quote_data_drop": {
-        "builder": _build_quote_data_drop,
-        "system_prompt": Q1_QUOTE_DATA_DROP_SYSTEM,
+    # Quote Tweet v2 styles (4 styles, pre-computed insights, longer format)
+    "quote_counter_insight": {
+        "builder": _build_quote_counter_insight,
+        "system_prompt": QV2_COUNTER_INSIGHT_SYSTEM,
         "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 1000,
+        "max_tokens": 2000,
         "output_mode": "variants",
         "append_url": False,
     },
-    "quote_contrarian": {
-        "builder": _build_quote_contrarian,
-        "system_prompt": Q2_QUOTE_CONTRARIAN_SYSTEM,
+    "quote_proof_of_concept": {
+        "builder": _build_quote_proof_of_concept,
+        "system_prompt": QV2_PROOF_OF_CONCEPT_SYSTEM,
         "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 1000,
+        "max_tokens": 2000,
         "output_mode": "variants",
         "append_url": False,
     },
-    "quote_example": {
-        "builder": _build_quote_example,
-        "system_prompt": Q3_QUOTE_EXAMPLE_SYSTEM,
+    "quote_playbook_addon": {
+        "builder": _build_quote_playbook_addon,
+        "system_prompt": QV2_PLAYBOOK_ADDON_SYSTEM,
         "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 1000,
+        "max_tokens": 2000,
         "output_mode": "variants",
         "append_url": False,
     },
-    "quote_quick_tip": {
-        "builder": _build_quote_quick_tip,
-        "system_prompt": Q4_QUOTE_QUICK_TIP_SYSTEM,
+    "quote_builders_perspective": {
+        "builder": _build_quote_builders_perspective,
+        "system_prompt": QV2_BUILDERS_PERSPECTIVE_SYSTEM,
         "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 1000,
-        "output_mode": "variants",
-        "append_url": False,
-    },
-    "quote_agree_amplify": {
-        "builder": _build_quote_agree_amplify,
-        "system_prompt": Q5_QUOTE_AGREE_AMPLIFY_SYSTEM,
-        "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 1000,
-        "output_mode": "variants",
-        "append_url": False,
-    },
-    "quote_resource_drop": {
-        "builder": _build_quote_resource_drop,
-        "system_prompt": Q6_QUOTE_RESOURCE_DROP_SYSTEM,
-        "model": "claude-haiku-4-5-20251001",
-        "max_tokens": 1000,
+        "max_tokens": 2000,
         "output_mode": "variants",
         "append_url": False,
     },

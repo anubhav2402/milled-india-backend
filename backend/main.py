@@ -3837,13 +3837,11 @@ def list_tweet_types(admin: models.User = Depends(get_admin_user)):
         "reply_quick_tip": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
         "reply_agree_amplify": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
         "reply_resource_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
-        # Quote Tweet styles (Q1–Q6)
-        "quote_data_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
-        "quote_contrarian": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
-        "quote_example": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
-        "quote_quick_tip": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
-        "quote_agree_amplify": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
-        "quote_resource_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        # Quote Tweet v2 styles (4 styles, pre-computed insights)
+        "quote_counter_insight": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "quote_proof_of_concept": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "quote_playbook_addon": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "quote_builders_perspective": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
     }
     return types_info
 
