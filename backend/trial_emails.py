@@ -152,7 +152,7 @@ def send_trial_reminders():
               <li>HTML template exports</li>
             </ul>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              Upgrade now to keep everything — Starter is just ₹599/month, or go Pro for ₹1,599/month.
+              Upgrade now to keep everything — Starter is just $9/month, or go Pro for $19/month.
             </p>
             """
             if _send_email(user.email, subject, _email_template(subject, body, "Upgrade Now")):
@@ -173,9 +173,9 @@ def send_trial_reminders():
               If you've been enjoying advanced search, the 6-month archive, and more views — now's the time to upgrade.
             </p>
             <p style="font-size:14px;color:#666;line-height:1.6;background:#faf5f2;padding:16px;border-radius:8px;">
-              <strong>Starter:</strong> ₹599/mo — 6-month archive, 75 views/day, advanced search<br/>
-              <strong>Pro:</strong> ₹1,599/mo — Full archive, unlimited everything, analytics<br/>
-              <em>Annual plans save 17%.</em>
+              <strong>Starter:</strong> $9/mo — 6-month archive, 75 views/day, advanced search<br/>
+              <strong>Pro:</strong> $19/mo — Full archive, unlimited everything, analytics<br/>
+              <em>Annual plans save 18%.</em>
             </p>
             """
             if _send_email(user.email, subject, _email_template(subject, body, "Choose a Plan")):
@@ -196,7 +196,7 @@ def send_trial_reminders():
               You can still browse the last 30 days of emails and view up to 20 per day. But if you'd like the 6-month archive, 75 views/day, and advanced search back — upgrading takes just a minute.
             </p>
             <p style="font-size:15px;color:#444;line-height:1.6;">
-              Plans start at ₹599/month with a 7-day money-back guarantee.
+              Plans start at $9/month with a 7-day money-back guarantee.
             </p>
             """
             if _send_email(user.email, subject, _email_template(subject, body, "Upgrade Now")):
