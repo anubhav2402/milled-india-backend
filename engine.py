@@ -448,7 +448,7 @@ BRAND_INDUSTRY_MAPPING = {
     "skechers": "Apparel & Accessories",
     "hrx": "Apparel & Accessories",
     "allbirds": "Apparel & Accessories",  # Sustainable sneakers
-    "strava": "Apparel & Accessories",  # Fitness tracking app
+    "strava": "Health, Fitness & Wellness",  # Fitness tracking app
     "new balance": "Apparel & Accessories",
     "under armour": "Apparel & Accessories",
     "lululemon": "Apparel & Accessories",
@@ -493,7 +493,7 @@ BRAND_INDUSTRY_MAPPING = {
     # Home & Living
     "burrow": "Home & Living",
     "brooklinen": "Home & Living",
-    "stayvista": "Home & Living",  # Vacation homes/stays
+    "stayvista": "Travel & Outdoors",  # Vacation homes/stays
     "circus": "Home & Living",  # Circus by Godrej — home/lifestyle
 
     # Luxury / Multi-category Retail (not purely women's fashion)
@@ -595,9 +595,7 @@ BRAND_INDUSTRY_MAPPING = {
     "marie claire": "Apparel & Accessories",  # Fashion magazine/brand
     "aromaworks london": "Beauty & Personal Care",  # Aromatherapy
 
-    # Food & Beverages (missed)
-    "native pet": "Food & Beverage",  # Pet food (closest category)
-    "farmer's dog": "Food & Beverage",  # Pet food delivery
+    # (native pet + farmer's dog moved to Pets — see lines 322-325)
 
     # Health & Wellness
     "cava athleisure": "Apparel & Accessories",  # Athleisure
@@ -619,7 +617,7 @@ BRAND_INDUSTRY_MAPPING = {
     "kellie hackney": "General / Department Store",
     "maddison cox": "General / Department Store",
     "theo at growthrocks": "General / Department Store",
-    "matt | the farmer's dog": "Food & Beverage",
+    "matt | the farmer's dog": "Pets",
 
     # SaaS/Tools — classify as General Retail rather than None
     "zendesk": "General / Department Store",
@@ -627,6 +625,279 @@ BRAND_INDUSTRY_MAPPING = {
     "zendesk sell": "General / Department Store",
     "topconsumerreviews.com": "General / Department Store",
     "gabit": "Electronics & Tech",  # Wearable tech
+
+    # ============ Round 3 — comprehensive misclassification cleanup ============
+
+    # ---- Brands wrongly in Finance & Fintech ----
+    "about you": "Apparel & Accessories",
+    "aday": "Apparel & Accessories",
+    "aventon": "Electronics & Tech",  # E-bikes
+    "bed bath & beyond": "Home & Living",
+    "berluti": "Luxury & High-End Goods",
+    "birchbox": "Beauty & Personal Care",
+    "blenders": "Apparel & Accessories",  # Eyewear
+    "blenders eyewear": "Apparel & Accessories",
+    "bloomscape": "Home & Living",  # Indoor plants
+    "bodily": "Baby & Kids",  # Maternity wear
+    "bonafide": "Health, Fitness & Wellness",  # Women's health
+    "cuts": "Apparel & Accessories",  # Men's clothing
+    "cyrillus": "Apparel & Accessories",  # French family fashion
+    "cyrillus service client": "Apparel & Accessories",
+    "dia & co": "Apparel & Accessories",  # Plus-size fashion
+    "hodinkee": "Apparel & Accessories",  # Watch media/shop
+    "journelle": "Apparel & Accessories",  # Lingerie
+    "ledger": "Electronics & Tech",  # Crypto hardware wallet
+    "lovesac": "Home & Living",  # Furniture (Sactionals)
+    "lovevery": "Baby & Kids",  # Baby development toys
+    "mario badescu": "Beauty & Personal Care",  # Skincare
+    "michaels": "Home & Living",  # Arts & crafts retail
+    "na-kd.com": "Apparel & Accessories",  # Swedish fashion
+    "primally pure": "Beauty & Personal Care",  # Clean beauty
+    "pvolve": "Health, Fitness & Wellness",  # Fitness
+    "stutterheim": "Apparel & Accessories",  # Rainwear
+    "target": "General / Department Store",
+    "tecnifibre": "Apparel & Accessories",  # Tennis equipment
+    "topo designs": "Apparel & Accessories",  # Outdoor bags/clothing
+    "vince": "Apparel & Accessories",  # Luxury casual fashion
+    "year & day": "Home & Living",  # Tableware/dinnerware
+
+    # ---- Brands wrongly in Baby & Kids ----
+    "article": "Home & Living",  # Furniture
+    "beyond polish": "Beauty & Personal Care",  # Nail polish
+    "brad at meundies": "General / Department Store",
+    "buffy": "Home & Living",  # Bedding/comforters
+    "dl1961": "Apparel & Accessories",  # Premium denim
+    "graza": "Food & Beverage",  # Olive oil
+    "jordan craig": "Apparel & Accessories",  # Streetwear
+    "lensabl": "Apparel & Accessories",  # Prescription lenses
+    "liquid i.v": "Health, Fitness & Wellness",  # Hydration
+    "outer": "Home & Living",  # Outdoor furniture
+    "pier 1": "Home & Living",  # Home decor
+    "plunge": "Health, Fitness & Wellness",  # Cold plunge
+    "qalo": "Apparel & Accessories",  # Silicone rings
+    "saye": "Apparel & Accessories",  # Sustainable sneakers
+    "sijo": "Home & Living",  # Luxury bedding
+    "soko glam": "Beauty & Personal Care",  # K-beauty
+    "solé bicycles": "Travel & Outdoors",  # Bicycles
+    "teva": "Apparel & Accessories",  # Sandals/footwear
+
+    # ---- Brands wrongly in Food & Beverage ----
+    "blue nile": "Apparel & Accessories",  # Online jewelry
+    "manolo blahnik": "Luxury & High-End Goods",  # Luxury shoes
+    "catalyst pet": "Pets",
+    "chippin": "Pets",  # Dog treats
+    "petplate": "Pets",  # Pet food
+    "buffer": "Business & B2B Retail",  # Social media tool
+    "carbon6": "Business & B2B Retail",  # Amazon seller tools
+    "maap": "Apparel & Accessories",  # Cycling apparel
+    "kotn": "Apparel & Accessories",  # Sustainable basics
+    "reigning champ": "Apparel & Accessories",  # Athletic wear
+    "state bags": "Apparel & Accessories",  # Bags/backpacks
+    "sprayground": "Apparel & Accessories",  # Backpacks
+    "gitman vintage": "Apparel & Accessories",  # Shirts
+    "sur la table": "Home & Living",  # Kitchen/cookware
+    "patch": "Home & Living",  # Plants
+    "supergoop": "Beauty & Personal Care",  # Sunscreen
+
+    # ---- Brands wrongly in Electronics & Tech ----
+    "bombtech golf": "Apparel & Accessories",  # Golf equipment
+    "ecommerce bridge": "Business & B2B Retail",  # Newsletter
+    "hype": "Apparel & Accessories",  # Streetwear brand
+    "insights marketing": "Business & B2B Retail",
+    "kartox": "Business & B2B Retail",  # Packaging company
+    "tone it up": "Health, Fitness & Wellness",  # Fitness
+    "velvet caviar": "Apparel & Accessories",  # Phone cases
+
+    # ---- Brands wrongly in Home & Living ----
+    "sundays for dogs": "Pets",  # Dog food
+    "bodybuilding.com": "Health, Fitness & Wellness",
+    "esty lingerie": "Apparel & Accessories",
+    "naked sundays": "Beauty & Personal Care",  # SPF skincare
+    "ray-ban": "Apparel & Accessories",  # Eyewear
+    "vanity planet": "Beauty & Personal Care",  # Beauty tools
+    "home chef": "Food & Beverage",  # Meal kits
+    "belazu": "Food & Beverage",  # Gourmet ingredients
+
+    # ---- Brands wrongly in Apparel & Accessories ----
+    "crown affair": "Beauty & Personal Care",  # Haircare
+    "foreo": "Beauty & Personal Care",  # Beauty devices
+    "instant hydration": "Beauty & Personal Care",  # Skincare
+    "moon juice": "Health, Fitness & Wellness",  # Adaptogen supplements
+    "war paint for men": "Beauty & Personal Care",  # Men's cosmetics
+    "womaness": "Health, Fitness & Wellness",  # Menopause wellness
+    "wild one": "Pets",  # Pet accessories
+    "strava craft coffee": "Food & Beverage",
+    "tiesta tea": "Food & Beverage",
+    "cowboy": "Electronics & Tech",  # E-bikes
+    "rad power bikes": "Electronics & Tech",  # E-bikes
+    "serena & lily": "Home & Living",  # Home decor/furniture
+    "serena & lily sale": "Home & Living",
+    "swoon": "Home & Living",  # Furniture
+    "weekendjeweg.nl": "Travel & Outdoors",  # Travel deals
+    "gap app exclusive": "General / Department Store",
+    "gap encore program": "General / Department Store",
+    "gapjeans event": "Apparel & Accessories",
+
+    # ---- Brands wrongly in Health, Fitness & Wellness ----
+    "spiritual gangster": "Apparel & Accessories",  # Yoga-inspired clothing
+    "slate milk": "Food & Beverage",  # Chocolate milk brand
+
+    # ---- Brands wrongly in Entertainment ----
+    "red antler": "Business & B2B Retail",  # Branding agency
+
+    # ---- Brands wrongly in Travel & Outdoors ----
+    "jaanuu": "Apparel & Accessories",  # Medical scrubs
+    "monos": "Apparel & Accessories",  # Luggage brand
+    "venus": "Apparel & Accessories",  # Swimwear/clothing
+
+    # ---- Luxury brands misclassified elsewhere ----
+    "marni": "Luxury & High-End Goods",
+    "marni online store": "Luxury & High-End Goods",
+
+    # ---- Pet brands misclassified elsewhere ----
+    "supertails+ clinic": "Pets",
+
+    # ---- Newsletter/marketing brands → Business & B2B Retail ----
+    "retailboss daily": "Business & B2B Retail",
+    "entrepreneur daily": "Business & B2B Retail",
+    "entrepreneur": "Business & B2B Retail",
+    "discourse blog": "Business & B2B Retail",
+    "heather cox richardson from letters from an american": "Business & B2B Retail",
+    "huffpost morning": "Business & B2B Retail",
+    "ny post morning report": "Business & B2B Retail",
+    "new york post": "Business & B2B Retail",
+    "rolling stone": "Entertainment",
+    "rolling stone: breaking news": "Entertainment",
+    "bill bishop at sinocism": "Business & B2B Retail",
+    "javi carnicero": "Business & B2B Retail",
+    "euractiv": "Business & B2B Retail",
+    "euractiv | red thread": "Business & B2B Retail",
+    "decoding asia by the business times": "Business & B2B Retail",
+    "businessesforsale.com": "Business & B2B Retail",
+    "secondarymarket.news": "Business & B2B Retail",
+    "whitepaper.mx": "Business & B2B Retail",
+    "first round": "Business & B2B Retail",  # VC newsletter
+    "first round review": "Business & B2B Retail",
+    "lean in": "Business & B2B Retail",
+    "ecommpills": "Business & B2B Retail",
+    "ecommartech por andrés barreto": "Business & B2B Retail",
+    "charles d'e-commerce nation": "Business & B2B Retail",
+    "ecdb e-commerce": "Business & B2B Retail",
+    "focus lab": "Business & B2B Retail",  # Design agency
+    "debutify development": "Business & B2B Retail",
+    "highsnobiety": "Entertainment",  # Fashion/culture media
+    "consumerlab.com": "Health, Fitness & Wellness",
+    "insidetracker": "Health, Fitness & Wellness",
+    "long game by mbg": "Health, Fitness & Wellness",
+    "havenbedrijf rotterdam": "Business & B2B Retail",
+
+    # ---- Misc corrections ----
+    "boat lifestyle": "Electronics & Tech",
+    "rosie at magic spoon": "Food & Beverage",
+    "sloane @ state bags": "Apparel & Accessories",
+    "rachel at daily harvest": "Food & Beverage",
+    "brad @ meundies": "General / Department Store",
+    "maeve at brooklinen": "Home & Living",
+    "onewith": "Apparel & Accessories",  # Swim/activewear
+    "onewith swim": "Apparel & Accessories",
+    "hayley @ onewith": "Apparel & Accessories",
+    "address home": "Home & Living",
+    "dolce vita": "Apparel & Accessories",  # Shoes
+    "oh polly": "Apparel & Accessories",
+    "nobull": "Apparel & Accessories",  # CrossFit shoes/apparel
+    "ten thousand": "Apparel & Accessories",  # Athletic wear
+    "ringly guys": "Apparel & Accessories",  # Rings
+    "mott & bow": "Apparel & Accessories",  # Denim
+    "krewe": "Apparel & Accessories",  # Eyewear
+    "linksoul": "Apparel & Accessories",  # Golf apparel
+    "italic": "General / Department Store",  # DTC marketplace
+    "rent the runway": "Apparel & Accessories",
+    "rainbow shops": "Apparel & Accessories",
+    "tobi": "Apparel & Accessories",  # Women's fashion
+    "self edge": "Apparel & Accessories",  # Denim
+    "suitsupply": "Apparel & Accessories",
+    "thousand fell": "Apparel & Accessories",  # Sneakers
+    "everybody.world": "Apparel & Accessories",
+    "wolf & badger": "Apparel & Accessories",
+    "wolf & shepherd": "Apparel & Accessories",  # Shoes
+    "tie bar": "Apparel & Accessories",  # Men's accessories
+    "warp + weft": "Apparel & Accessories",  # Denim
+    "universal standard": "Apparel & Accessories",  # Size-inclusive fashion
+    "house of masaba": "Apparel & Accessories",
+    "vrai": "Apparel & Accessories",  # Lab-grown diamonds/jewelry
+    "themjewelersny": "Apparel & Accessories",  # Jewelry
+    "tribe amrapali": "Apparel & Accessories",
+    "tribe amarpali": "Apparel & Accessories",
+    "tilfi banaras": "Apparel & Accessories",
+    "caratlane, a tanishq partnership": "Apparel & Accessories",
+    "caratlane - a tata product": "Apparel & Accessories",
+    "caratlane – a tata product": "Apparel & Accessories",
+    "caratlane_a tata product": "Apparel & Accessories",
+    "calvin klein outlet": "Apparel & Accessories",
+    "newbie": "Baby & Kids",  # Baby clothing
+    "babyshop": "Baby & Kids",
+    "monica + andy warehouse sale": "Baby & Kids",
+    "nature baby": "Baby & Kids",
+    "beauty pie": "Beauty & Personal Care",
+    "caia cosmetics": "Beauty & Personal Care",
+    "colleen rothschild beauty": "Beauty & Personal Care",
+    "fragrancex.com": "Beauty & Personal Care",
+    "k-beauty skin – authentic korean skincare & beauty products": "Beauty & Personal Care",
+    "kylie cosmetics": "Beauty & Personal Care",
+    "miller harris": "Beauty & Personal Care",
+    "niche beauty": "Beauty & Personal Care",
+    "niche-beauty.com": "Beauty & Personal Care",
+    "opi": "Beauty & Personal Care",
+    "pattern beauty": "Beauty & Personal Care",
+    "revolution beauty": "Beauty & Personal Care",
+    "shu uemura": "Beauty & Personal Care",
+    "trinny london": "Beauty & Personal Care",
+    "sephora sale": "Beauty & Personal Care",
+    "what's new at zendesk": "Business & B2B Retail",
+    "net-a-porter sale": "Luxury & High-End Goods",
+    "net-a-porter promotion": "Luxury & High-End Goods",
+    "net-a-porter promotions": "Luxury & High-End Goods",
+    "net-a-porter rewards": "Luxury & High-End Goods",
+    "net a porter rewards": "Luxury & High-End Goods",
+    "anthropologie sale": "General / Department Store",
+    "james allen": "Apparel & Accessories",  # Engagement rings/jewelry
+    "dolce vita": "Apparel & Accessories",
+    "fly by jing": "Food & Beverage",  # Sichuan sauce/food
+    "fortnum & mason": "Food & Beverage",
+    "gainful": "Food & Beverage",  # Personalized nutrition
+    "origin coffee roasters": "Food & Beverage",
+    "proxies": "Food & Beverage",  # Non-alcoholic wine
+    "sleepy owl coffee": "Food & Beverage",
+    "chai point": "Food & Beverage",
+    "home depot": "Home & Living",
+    "circus a godrej enterprises brand": "Home & Living",
+    "mio meraki": "Home & Living",
+    "vacasa": "Travel & Outdoors",
+    "reggie": "Health, Fitness & Wellness",
+    "juna": "Health, Fitness & Wellness",
+    "innermost": "Health, Fitness & Wellness",
+    "thorne": "Health, Fitness & Wellness",
+    "organic pharmacy": "Health, Fitness & Wellness",
+    "wellbefore": "Health, Fitness & Wellness",
+    "well.ca": "Health, Fitness & Wellness",
+    "rumpl": "Travel & Outdoors",  # Outdoor blankets
+    "canopy": "Home & Living",  # Humidifiers
+
+    # ---- Final overrides (last-wins for correct classification) ----
+    # Luxury retailers — should NOT be General / Department Store
+    "net-a-porter": "Luxury & High-End Goods",
+    "luisaviaroma": "Luxury & High-End Goods",
+    "mytheresa": "Luxury & High-End Goods",
+    "shopbop": "Luxury & High-End Goods",
+    # Anthro normalized form (normalize strips "black friday" etc.)
+    "anthro": "General / Department Store",
+    # Bombas = socks/underwear, not department store
+    "bombas": "Apparel & Accessories",
+    # Outerknown wrongly matched "outer" → Home
+    "outerknown": "Apparel & Accessories",  # Sustainable clothing
+    # Newaudience/Nik Sharma = marketing newsletters
+    "newaudience": "Business & B2B Retail",
+    "nik sharma": "Business & B2B Retail",
 }
 
 

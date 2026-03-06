@@ -45,8 +45,6 @@ PLAN_LIMITS = {
         "alerts": 0,
         "seats": 1,
         "template_editor": "view_only",    # can open but not export
-        "bulk_export": False,
-        "downloadable_reports": False,
         "follows": 3,
         "bookmarks": 10,
         "email_analysis": "teaser",        # overall score only
@@ -65,8 +63,6 @@ PLAN_LIMITS = {
         "alerts": 0,
         "seats": 1,
         "template_editor": "limited",      # edit + 3 exports/mo
-        "bulk_export": False,
-        "downloadable_reports": False,
         "follows": 10,
         "bookmarks": 50,
         "email_analysis": "full",          # full dimension breakdown
@@ -85,8 +81,6 @@ PLAN_LIMITS = {
         "alerts": 5,
         "seats": 3,
         "template_editor": "unlimited",
-        "bulk_export": False,
-        "downloadable_reports": False,
         "follows": None,
         "bookmarks": None,
         "email_analysis": "full",
@@ -105,8 +99,6 @@ PLAN_LIMITS = {
         "alerts": None,                    # unlimited
         "seats": 10,
         "template_editor": "unlimited",
-        "bulk_export": True,
-        "downloadable_reports": True,
         "follows": None,
         "bookmarks": None,
         "email_analysis": "full",
@@ -114,12 +106,12 @@ PLAN_LIMITS = {
     },
 }
 
-# Pricing constants (in INR)
+# Pricing constants (in USD)
 PLAN_PRICES = {
     "free": {"monthly": 0, "annual": 0},
-    "starter": {"monthly": 599, "annual": 5999},
-    "pro": {"monthly": 1599, "annual": 15999},
-    "agency": {"monthly": 3999, "annual": 39999},
+    "starter": {"monthly": 9, "annual": 89},
+    "pro": {"monthly": 19, "annual": 189},
+    "agency": {"monthly": 49, "annual": 489},
 }
 
 
