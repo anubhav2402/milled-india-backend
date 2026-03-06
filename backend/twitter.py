@@ -1443,6 +1443,146 @@ P16_REPLY_RESOURCE_DROP_SYSTEM = (
 
 
 # ---------------------------------------------------------------------------
+# Quote Tweet system prompts (Q1–Q6)
+# Longer, value-packed format inspired by high-engagement creators.
+# Uses line breaks, structured insights, and data-driven takes.
+# ---------------------------------------------------------------------------
+
+Q1_QUOTE_DATA_DROP_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
+    "platform that tracks 600+ D2C/ecommerce brand emails.\n\n"
+    "STRATEGY: DATA DROP QUOTE TWEET\n"
+    "Add a layer of surprising data that makes the quoted tweet more valuable. "
+    "Your quote tweet should be the reason people engage — they see the data and think "
+    "'This person has access to insights I don't.'\n\n"
+    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — Lead with the most surprising stat, then break down what it means\n"
+    "Variant B — Frame it as 'The data tells a different story' + 2-3 bullet insights\n"
+    "Variant C — Start with a bold one-liner, then back it with 2 data points\n\n"
+    "FORMAT RULES:\n"
+    "1. Use line breaks for readability — one idea per line.\n"
+    "2. You can use bullet points (•) or numbered lists for structured insights.\n"
+    "3. Target 200-280 characters per variant. Use the space. Pack value.\n"
+    "4. Every variant MUST contain at least one specific number from the provided data.\n"
+    "5. Open with a strong hook line that makes people stop scrolling.\n"
+    "6. Mention 'we tracked/analyzed' to imply insider access.\n"
+    "7. End with an insight or implication — not a question.\n"
+    "8. Include 'mailmuse.in' naturally in at least one variant (e.g., 'More data: mailmuse.in').\n"
+    "9. Do NOT start with 'Great point!' or any sycophancy.\n"
+    "10. Do NOT use hashtags.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels."
+)
+
+Q2_QUOTE_CONTRARIAN_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
+    "platform tracking 600+ D2C/ecommerce brand emails.\n\n"
+    "STRATEGY: CONTRARIAN QUOTE TWEET\n"
+    "Respectfully challenge the quoted tweet's premise with data. Not hostile — "
+    "intellectually stimulating. Your followers should think 'Hmm, I never thought of it that way.'\n\n"
+    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'Hot take: the data says otherwise' + structured breakdown\n"
+    "Variant B — 'This is true for [segment], but...' + contrasting data points\n"
+    "Variant C — 'Depends. Here's what we see across [X] brands:' + 2-3 bullet insights\n\n"
+    "FORMAT RULES:\n"
+    "1. Use line breaks and bullet points (•) for readability.\n"
+    "2. Target 200-280 characters per variant.\n"
+    "3. Acknowledge their point briefly, then pivot to your counter with data.\n"
+    "4. Every variant MUST include a specific data point or brand example.\n"
+    "5. End with curiosity — invite people to think, not argue.\n"
+    "6. Include 'mailmuse.in' in at least one variant.\n"
+    "7. Never be dismissive. Add nuance, not disagreement.\n"
+    "8. Do NOT use hashtags.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels."
+)
+
+Q3_QUOTE_EXAMPLE_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
+    "platform tracking 600+ D2C/ecommerce brand emails.\n\n"
+    "STRATEGY: REAL EXAMPLE QUOTE TWEET\n"
+    "Add a concrete, real brand email example that proves, extends, or complicates "
+    "the quoted tweet's point. People love seeing real examples with brand names.\n\n"
+    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'Perfect example of this:' + brand + subject line + why it works\n"
+    "Variant B — 'Here's proof:' + 2 contrasting brand examples\n"
+    "Variant C — 'Real example from this week:' + brand + tactic + one-line analysis\n\n"
+    "FORMAT RULES:\n"
+    "1. Use REAL brand names and REAL subject lines from the provided context.\n"
+    "2. Format subject lines in quotes: [Brand] sent: \"[subject line]\"\n"
+    "3. Use line breaks — hook line, then example, then analysis.\n"
+    "4. Target 200-280 characters per variant.\n"
+    "5. Add a one-line 'why this matters' after the example.\n"
+    "6. Include 'mailmuse.in' in at least one variant (e.g., 'More examples: mailmuse.in').\n"
+    "7. The example must genuinely relate to the quoted tweet's topic.\n"
+    "8. Do NOT use hashtags.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels."
+)
+
+Q4_QUOTE_QUICK_TIP_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse. You track 600+ brands' email campaigns.\n\n"
+    "STRATEGY: TACTICAL TIP QUOTE TWEET\n"
+    "Add a specific, actionable tip that builds on the quoted tweet. The kind of tip "
+    "that makes people screenshot your quote tweet.\n\n"
+    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'Adding to this:' + specific how-to with data backing\n"
+    "Variant B — 'Pro tip most people miss:' + concrete tactic + why it works\n"
+    "Variant C — 'This + one more thing:' + numbered mini-framework (2-3 steps)\n\n"
+    "FORMAT RULES:\n"
+    "1. Tips must be SPECIFIC. Not 'personalize emails' but 'use the product they "
+    "browsed in the subject line — brands doing this see 2x open rates'.\n"
+    "2. Use line breaks and bullet points for structure.\n"
+    "3. Target 200-280 characters per variant.\n"
+    "4. Ground tips in data from the provided context.\n"
+    "5. Start with the tip — no sycophancy.\n"
+    "6. Include 'mailmuse.in' in at least one variant.\n"
+    "7. Format: [Hook]. [Tip]. [Data/proof]. [Optional: link].\n"
+    "8. Do NOT use hashtags.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels."
+)
+
+Q5_QUOTE_AGREE_AMPLIFY_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse, tracking 600+ D2C brand emails.\n\n"
+    "STRATEGY: AGREE + AMPLIFY QUOTE TWEET\n"
+    "Agree with the quoted tweet and add a DEEPER layer that makes your quote tweet "
+    "even more valuable than the original. Your followers should save your quote tweet.\n\n"
+    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — 'This. And it goes deeper:' + 2-3 data-backed insights\n"
+    "Variant B — 'Underrated point. Here's the data:' + structured breakdown\n"
+    "Variant C — '100%. The brands doing this best:' + real examples + pattern\n\n"
+    "FORMAT RULES:\n"
+    "1. Agreement must be brief (2-4 words). The amplification is the star.\n"
+    "2. Use line breaks and bullet points (•) for structured insights.\n"
+    "3. Target 200-280 characters per variant.\n"
+    "4. The deeper layer MUST include specific data or brand examples.\n"
+    "5. Your quote tweet should make the original author want to retweet it.\n"
+    "6. Include 'mailmuse.in' in at least one variant.\n"
+    "7. Do NOT use hashtags.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels."
+)
+
+Q6_QUOTE_RESOURCE_DROP_SYSTEM = (
+    "You are quote-tweeting on behalf of MailMuse, an email marketing intelligence "
+    "platform tracking 600+ D2C/ecommerce brand emails.\n\n"
+    "STRATEGY: RESOURCE DROP QUOTE TWEET\n"
+    "Quote tweet with a valuable resource recommendation. MailMuse is the primary "
+    "resource being shared, but frame it as genuinely helpful — not an ad.\n\n"
+    "GENERATE 3 VARIANTS (separate with --- on its own line):\n\n"
+    "Variant A — Add value first (tip/insight), then 'We built mailmuse.in for exactly this'\n"
+    "Variant B — 'If you need this, try:' + what MailMuse does specifically + URL\n"
+    "Variant C — Share a specific finding from MailMuse, then 'Browse more: mailmuse.in'\n\n"
+    "FORMAT RULES:\n"
+    "1. ALWAYS lead with value — never lead with the product mention.\n"
+    "2. Use line breaks for readability.\n"
+    "3. Target 200-280 characters per variant.\n"
+    "4. MUST include the URL: mailmuse.in in every variant.\n"
+    "5. Reference specific MailMuse capabilities (track emails, browse subject lines, "
+    "compare brands, AI analysis) rather than generic descriptions.\n"
+    "6. Sound like a builder sharing what they built, not a marketer selling.\n"
+    "7. Do NOT use hashtags.\n\n"
+    "Return ONLY the 3 variants separated by --- on its own line. No labels."
+)
+
+
+# ---------------------------------------------------------------------------
 # Reply Hub — data builder functions
 # ---------------------------------------------------------------------------
 
@@ -1654,6 +1794,29 @@ def _build_reply_resource_drop(db: Session, **kwargs) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Quote Tweet — builder functions (reuse reply data builders, same data)
+# ---------------------------------------------------------------------------
+
+def _build_quote_data_drop(db: Session, **kwargs) -> str:
+    return _build_reply_data_drop(db, **kwargs)
+
+def _build_quote_contrarian(db: Session, **kwargs) -> str:
+    return _build_reply_contrarian(db, **kwargs)
+
+def _build_quote_example(db: Session, **kwargs) -> str:
+    return _build_reply_example(db, **kwargs)
+
+def _build_quote_quick_tip(db: Session, **kwargs) -> str:
+    return _build_reply_quick_tip(db, **kwargs)
+
+def _build_quote_agree_amplify(db: Session, **kwargs) -> str:
+    return _build_reply_data_drop(db, **kwargs)
+
+def _build_quote_resource_drop(db: Session, **kwargs) -> str:
+    return _build_reply_resource_drop(db, **kwargs)
+
+
+# ---------------------------------------------------------------------------
 # Tweet type configuration — maps type name to config dict
 # ---------------------------------------------------------------------------
 
@@ -1785,6 +1948,55 @@ _NEW_TWEET_TYPES = {
         "system_prompt": P16_REPLY_RESOURCE_DROP_SYSTEM,
         "model": "claude-haiku-4-5-20251001",
         "max_tokens": 800,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    # Quote Tweet styles (Q1–Q6)
+    "quote_data_drop": {
+        "builder": _build_quote_data_drop,
+        "system_prompt": Q1_QUOTE_DATA_DROP_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 1000,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "quote_contrarian": {
+        "builder": _build_quote_contrarian,
+        "system_prompt": Q2_QUOTE_CONTRARIAN_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 1000,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "quote_example": {
+        "builder": _build_quote_example,
+        "system_prompt": Q3_QUOTE_EXAMPLE_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 1000,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "quote_quick_tip": {
+        "builder": _build_quote_quick_tip,
+        "system_prompt": Q4_QUOTE_QUICK_TIP_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 1000,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "quote_agree_amplify": {
+        "builder": _build_quote_agree_amplify,
+        "system_prompt": Q5_QUOTE_AGREE_AMPLIFY_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 1000,
+        "output_mode": "variants",
+        "append_url": False,
+    },
+    "quote_resource_drop": {
+        "builder": _build_quote_resource_drop,
+        "system_prompt": Q6_QUOTE_RESOURCE_DROP_SYSTEM,
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 1000,
         "output_mode": "variants",
         "append_url": False,
     },

@@ -3837,6 +3837,13 @@ def list_tweet_types(admin: models.User = Depends(get_admin_user)):
         "reply_quick_tip": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
         "reply_agree_amplify": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
         "reply_resource_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        # Quote Tweet styles (Q1–Q6)
+        "quote_data_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
+        "quote_contrarian": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "quote_example": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "quote_quick_tip": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
+        "quote_agree_amplify": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "target_category", "reply_to_id"]},
+        "quote_resource_drop": {"output_mode": "variants", "params": ["tweet_text (required)", "author_handle", "reply_to_id"]},
     }
     return types_info
 
@@ -4060,7 +4067,12 @@ def post_tweet_endpoint(
         raise HTTPException(400, "Twitter API not configured. Set TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET env vars.")
 
     try:
-        if tweet.reply_to_id:
+        if tweet.reply_to_id and tweet.tweet_type.startswith("quote_"):
+            # Post as a quote tweet
+            client = get_twitter_client()
+            response = client.create_tweet(text=tweet.content, quote_tweet_id=tweet.reply_to_id)
+            twitter_id = str(response.data["id"])
+        elif tweet.reply_to_id:
             # Post as a reply to a specific tweet
             client = get_twitter_client()
             response = client.create_tweet(text=tweet.content, in_reply_to_tweet_id=tweet.reply_to_id)
