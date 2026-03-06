@@ -211,7 +211,7 @@ def verify_google_token(token: str) -> Optional[dict]:
         from google.oauth2 import id_token
         from google.auth.transport import requests
         
-        google_client_id = os.getenv("GOOGLE_CLIENT_ID")
+        google_client_id = os.getenv("GOOGLE_SIGNIN_CLIENT_ID") or os.getenv("GOOGLE_CLIENT_ID")
         if not google_client_id:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
