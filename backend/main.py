@@ -935,11 +935,20 @@ def cancel_user_subscription(
 
 
 @app.post("/webhook/razorpay")
-async def razorpay_webhook(request_obj: dict, db: Session = Depends(get_db)):
+async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
     """Handle Razorpay webhook events for subscription renewals and cancellations."""
-    from fastapi import Request
-    # Note: For production, verify webhook signature using raw body
-    # For now, process the event payload
+    import json as _json
+
+    raw_body = await request.body()
+    signature = request.headers.get("X-Razorpay-Signature", "")
+
+    if not verify_webhook_signature(raw_body, signature):
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    try:
+        request_obj = _json.loads(raw_body)
+    except _json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
 
     event = request_obj.get("event", "")
     payload = request_obj.get("payload", {})
