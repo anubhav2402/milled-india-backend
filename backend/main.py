@@ -1,3 +1,4 @@
+import json
 import os
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -217,6 +218,11 @@ def run_migrations():
             conn.commit()
         except Exception:
             pass
+
+    # Create insight_cache table
+    if not inspect(engine).has_table("insight_cache"):
+        models.InsightCache.__table__.create(engine)
+        print("Migration: Created insight_cache table")
 
     # Create tweet_queue table
     if not inspect(engine).has_table("tweet_queue"):
@@ -3064,6 +3070,77 @@ def get_analytics_overview(
             "campaign_types": {k: "xx" for k in campaign_types},
             "top_brands": [{"brand": b["brand"], "count": "xx"} for b in top_brands]
         }
+
+
+# ============ Insights Endpoints ============
+
+from .insights import get_latest_insight, compute_and_store, compute_all as compute_all_insights, COMPUTE_FUNCTIONS
+
+
+@app.get("/insights/{insight_type}")
+def get_insight(
+    insight_type: str,
+    current_user: Optional[models.User] = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    """Return the most recently computed insight of the given type."""
+    valid_types = list(COMPUTE_FUNCTIONS.keys())
+    if insight_type not in valid_types:
+        raise HTTPException(400, f"Invalid insight type. Must be one of: {valid_types}")
+
+    if not current_user:
+        raise HTTPException(401, "Login required to view insights")
+
+    data = get_latest_insight(db, insight_type)
+    if not data:
+        raise HTTPException(404, f"No computed insight found for type: {insight_type}")
+
+    return data
+
+
+@app.get("/insights")
+def list_insights(
+    current_user: Optional[models.User] = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    """Return summary of all computed insight types."""
+    if not current_user:
+        raise HTTPException(401, "Login required to view insights")
+
+    result = {}
+    for itype in COMPUTE_FUNCTIONS:
+        row = db.query(models.InsightCache).filter(
+            models.InsightCache.insight_type == itype,
+        ).order_by(models.InsightCache.computed_at.desc()).first()
+        if row:
+            result[itype] = {
+                "week": json.loads(row.data).get("week"),
+                "computed_at": row.computed_at.isoformat() if row.computed_at else None,
+            }
+        else:
+            result[itype] = None
+    return result
+
+
+@app.post("/admin/insights/compute")
+def trigger_insight_computation(
+    insight_type: Optional[str] = Query(default=None),
+    admin: models.User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """Manually trigger insight computation. Omit insight_type to compute all."""
+    if insight_type:
+        valid_types = list(COMPUTE_FUNCTIONS.keys())
+        if insight_type not in valid_types:
+            raise HTTPException(400, f"Invalid type. Must be one of: {valid_types}")
+        try:
+            data = compute_and_store(db, insight_type)
+            return {"status": "ok", "insight_type": insight_type, "week": data.get("week")}
+        except Exception as e:
+            raise HTTPException(500, f"Computation failed: {e}")
+    else:
+        results = compute_all_insights(db)
+        return {"status": "ok", "results": results}
 
 
 # ============ SEO Endpoints (Public, Ungated) ============

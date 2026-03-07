@@ -207,6 +207,21 @@ class TweetQueue(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class InsightCache(Base):
+    """Cached computed insights, stored as JSON blobs."""
+    __tablename__ = "insight_cache"
+
+    id = Column(Integer, primary_key=True, index=True)
+    insight_type = Column(String, nullable=False, index=True)
+    week_label = Column(String, nullable=False)  # ISO week like "2026-W10"
+    data = Column(Text, nullable=False)  # JSON blob
+    computed_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("insight_type", "week_label", name="uq_insight_type_week"),
+    )
+
+
 class ReplyTarget(Base):
     """Twitter accounts to monitor and reply to for growth."""
     __tablename__ = "reply_targets"
