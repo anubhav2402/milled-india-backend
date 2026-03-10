@@ -140,6 +140,32 @@ def extract_template_schema(html: str) -> dict:
     }
 
 
+# ── HTML slimming for AI input ──
+
+def _slim_html(html: str) -> str:
+    """Strip bloat from email HTML to reduce token count while keeping design."""
+    # Remove tracking pixels (1x1 images)
+    html = re.sub(
+        r'<img[^>]*(?:width\s*=\s*["\']?1["\']?[^>]*height\s*=\s*["\']?1["\']?|height\s*=\s*["\']?1["\']?[^>]*width\s*=\s*["\']?1["\']?)[^>]*/?\s*>',
+        '', html, flags=re.IGNORECASE
+    )
+    # Remove HTML comments (except conditional IE comments)
+    html = re.sub(r'<!--(?!\[if).*?-->', '', html, flags=re.DOTALL)
+    # Remove data-* attributes
+    html = re.sub(r'\s+data-[a-z0-9_-]+\s*=\s*"[^"]*"', '', html, flags=re.IGNORECASE)
+    # Remove tracking/analytics URLs in img src (long URLs with utm_, tracking, etc.)
+    html = re.sub(
+        r'(<img[^>]*src\s*=\s*")[^"]{300,}(")',
+        r'\1#\2', html, flags=re.IGNORECASE
+    )
+    # Collapse excessive whitespace
+    html = re.sub(r'\n\s*\n\s*\n', '\n\n', html)
+    html = re.sub(r'[ \t]{4,}', ' ', html)
+    # Remove empty style blocks
+    html = re.sub(r'<style[^>]*>\s*</style>', '', html, flags=re.IGNORECASE)
+    return html.strip()
+
+
 # ── Claude AI generation ──
 
 def _get_anthropic_client():
@@ -262,8 +288,10 @@ def generate_email(
     client = _get_anthropic_client()
 
     if original_html:
-        # Trim HTML if extremely large (>80k chars) to stay within token limits
-        html_input = original_html[:80000] if len(original_html) > 80000 else original_html
+        # Slim and trim HTML to reduce token count
+        html_input = _slim_html(original_html)
+        if len(html_input) > 40000:
+            html_input = html_input[:40000]
 
         user_prompt = f"""Rewrite this email for a new brand. Keep the EXACT same HTML structure, design, and styling — only change the text content, links, and alt text.
 
@@ -324,7 +352,7 @@ Important:
         max_tokens=16384,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_prompt}],
-        timeout=120,
+        timeout=300,
     )
 
     result_text = response.content[0].text.strip()
