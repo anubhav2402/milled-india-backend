@@ -1586,6 +1586,19 @@ def list_industries(db: Session = Depends(get_db)):
     return sorted([r[0] for r in result if r[0]])
 
 
+@app.get("/emails/category-counts")
+def get_category_counts(db: Session = Depends(get_db)):
+    """Get email counts grouped by category/subcategory."""
+    from sqlalchemy import func
+    rows = (
+        db.query(models.Email.category, func.count(models.Email.id))
+        .filter(models.Email.category.isnot(None), models.Email.category != "")
+        .group_by(models.Email.category)
+        .all()
+    )
+    return {cat: count for cat, count in rows}
+
+
 @app.get("/emails/count")
 def count_emails(db: Session = Depends(get_db)):
     """Get total number of emails in the database."""
