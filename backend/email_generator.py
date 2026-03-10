@@ -296,13 +296,17 @@ Important:
 
     response = client.messages.create(
         model="claude-sonnet-4-5-20250929",
-        max_tokens=4096,
+        max_tokens=16384,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_prompt}],
-        timeout=60,
+        timeout=120,
     )
 
     result_text = response.content[0].text.strip()
+
+    # If the response was truncated (max_length), the JSON will be incomplete
+    if response.stop_reason == "max_tokens":
+        raise ValueError("AI response was truncated — email too complex. Try a simpler template.")
 
     # Strip markdown code fences if present
     if result_text.startswith("```"):
