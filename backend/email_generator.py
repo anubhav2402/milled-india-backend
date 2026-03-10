@@ -171,6 +171,86 @@ Rules:
 - The response must be valid JSON with the exact schema specified"""
 
 
+def _parse_json_response(text: str) -> dict:
+    """Robustly parse JSON from AI response, handling HTML-in-JSON edge cases."""
+    # 1. Direct parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # 2. Find outermost { ... } by brace counting (skipping string interiors)
+    start = text.find("{")
+    if start == -1:
+        raise ValueError("AI response did not contain valid JSON")
+
+    depth = 0
+    in_string = False
+    escape = False
+    end = start
+    for i in range(start, len(text)):
+        c = text[i]
+        if escape:
+            escape = False
+            continue
+        if c == "\\":
+            escape = True
+            continue
+        if c == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+
+    candidate = text[start:end + 1]
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError:
+        pass
+
+    # 3. Extract fields individually as fallback
+    subject = ""
+    preview = ""
+    html = ""
+    slots = {}
+
+    sm = re.search(r'"subject"\s*:\s*"((?:[^"\\]|\\.)*)"', candidate)
+    if sm:
+        subject = sm.group(1)
+    pm = re.search(r'"preview_text"\s*:\s*"((?:[^"\\]|\\.)*)"', candidate)
+    if pm:
+        preview = pm.group(1)
+
+    # Extract HTML — find "html" key then grab everything between its quotes
+    hm = re.search(r'"html"\s*:\s*"', candidate)
+    if hm:
+        h_start = hm.end()
+        # Walk forward finding the closing quote (not escaped)
+        i = h_start
+        while i < len(candidate):
+            if candidate[i] == "\\" :
+                i += 2
+                continue
+            if candidate[i] == '"':
+                break
+            i += 1
+        html = candidate[h_start:i]
+        # Unescape
+        html = html.replace("\\n", "\n").replace('\\"', '"').replace("\\\\", "\\")
+
+    if html:
+        return {"subject": subject, "preview_text": preview, "html": html, "slots": slots}
+
+    raise ValueError("Failed to parse AI response as JSON")
+
+
 def generate_email(
     template_schema: dict,
     brand_name: str,
@@ -209,7 +289,10 @@ Return a JSON object with this exact structure:
   }}
 }}
 
-Important: The "html" field must contain a COMPLETE, production-ready HTML email that renders well in Gmail, Outlook, and Apple Mail. Use tables for layout. All CSS must be inline."""
+Important:
+- The "html" field must contain a COMPLETE, production-ready HTML email that renders well in Gmail, Outlook, and Apple Mail. Use tables for layout. All CSS must be inline.
+- The response MUST be a single valid JSON object. Escape all special characters in string values (use \\n for newlines, \\" for quotes inside strings).
+- Do NOT wrap the JSON in markdown code fences."""
 
     response = client.messages.create(
         model="claude-sonnet-4-5-20250929",
@@ -224,25 +307,13 @@ Important: The "html" field must contain a COMPLETE, production-ready HTML email
     # Strip markdown code fences if present
     if result_text.startswith("```"):
         lines = result_text.split("\n")
-        # Remove first and last lines if they're fences
         if lines[0].startswith("```"):
             lines = lines[1:]
         if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
         result_text = "\n".join(lines)
 
-    try:
-        result = json.loads(result_text)
-    except json.JSONDecodeError:
-        # Try to extract JSON from the response
-        json_match = re.search(r'\{[\s\S]*\}', result_text)
-        if json_match:
-            try:
-                result = json.loads(json_match.group())
-            except json.JSONDecodeError:
-                raise ValueError("Failed to parse AI response as JSON")
-        else:
-            raise ValueError("AI response did not contain valid JSON")
+    result = _parse_json_response(result_text)
 
     # Validate required fields
     if "html" not in result:
