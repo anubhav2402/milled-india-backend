@@ -1,6 +1,6 @@
 """
-AI Email Generator — extracts template schema from existing emails
-and generates new email content using Claude.
+AI Email Generator — takes an existing email's HTML and rewrites
+the content for a new brand while preserving the design/layout.
 """
 
 import os
@@ -10,7 +10,7 @@ from html.parser import HTMLParser
 from typing import Optional
 
 
-# ── Template schema extraction ──
+# ── Template schema extraction (for UI display only) ──
 
 class TemplateExtractor(HTMLParser):
     """Parse email HTML and extract structural blocks + content slots."""
@@ -46,7 +46,6 @@ class TemplateExtractor(HTMLParser):
         if tag == "a":
             href = attr_dict.get("href", "")
             style = attr_dict.get("style", "")
-            # Detect styled CTA buttons
             is_button = any(kw in style.lower() for kw in [
                 "background-color", "background:", "padding:", "border-radius",
             ]) or any(kw in (attr_dict.get("class", "")).lower() for kw in [
@@ -122,10 +121,8 @@ def extract_template_schema(html: str) -> dict:
     except Exception:
         pass
 
-    # Deduplicate and limit
     blocks = extractor.blocks[:20]
 
-    # Identify template structure
     has_hero = any(b["type"] == "image" and b.get("slot") == "image_1" for b in blocks)
     heading_count = len([b for b in blocks if b["type"] == "heading"])
     cta_count = len([b for b in blocks if b["type"] == "cta"])
@@ -153,22 +150,21 @@ def _get_anthropic_client():
     return Anthropic(api_key=api_key)
 
 
-SYSTEM_PROMPT = """You are an expert email copywriter and HTML developer. You create professional marketing emails.
+SYSTEM_PROMPT = """You are an expert email copywriter. You take existing marketing emails and rewrite them for a different brand.
 
-Given a template structure and brand details, generate:
-1. All text content (headings, body copy, CTA text) that matches the brand's voice
-2. A complete, production-ready HTML email
+Your job:
+1. KEEP the exact HTML structure, layout, tables, styles, colors, and design of the original email
+2. REPLACE all text content (headings, body copy, CTA text, alt text) with new content for the target brand
+3. REPLACE all URLs/links with placeholder URLs using the brand's domain (or # if no domain given)
+4. KEEP all images — update their alt text to match the new content
+5. Generate a compelling subject line and preview text
 
 Rules:
-- Use inline CSS only (no external stylesheets)
-- Use tables for layout (email-safe)
-- Keep the same structural layout as the template (same number of sections, CTAs, images)
-- Make the copy compelling, on-brand, and action-oriented
-- Include a meta viewport tag for mobile responsiveness
-- Use the brand's color scheme if provided, otherwise use professional defaults
-- Replace placeholder image URLs with descriptive alt text
+- Do NOT simplify, restructure, or strip the HTML — preserve it exactly as-is except for text content
+- Keep the same visual design: colors, fonts, spacing, borders, backgrounds
+- Match the requested tone while keeping copy compelling and action-oriented
 - Keep subject line under 60 characters
-- The response must be valid JSON with the exact schema specified"""
+- The response must be valid JSON"""
 
 
 def _parse_json_response(text: str) -> dict:
@@ -232,17 +228,15 @@ def _parse_json_response(text: str) -> dict:
     hm = re.search(r'"html"\s*:\s*"', candidate)
     if hm:
         h_start = hm.end()
-        # Walk forward finding the closing quote (not escaped)
         i = h_start
         while i < len(candidate):
-            if candidate[i] == "\\" :
+            if candidate[i] == "\\":
                 i += 2
                 continue
             if candidate[i] == '"':
                 break
             i += 1
         html = candidate[h_start:i]
-        # Unescape
         html = html.replace("\\n", "\n").replace('\\"', '"').replace("\\\\", "\\")
 
     if html:
@@ -258,15 +252,46 @@ def generate_email(
     industry: str = "",
     tone: str = "professional",
     instructions: str = "",
+    original_html: str = "",
 ) -> dict:
     """
-    Generate a new email based on a template schema and brand details.
-
-    Returns dict with: subject, preview_text, html, slots (filled content)
+    Generate a new email based on an original email's HTML and brand details.
+    If original_html is provided, rewrites the content preserving design.
+    Falls back to schema-based generation if no HTML provided.
     """
     client = _get_anthropic_client()
 
-    user_prompt = f"""Generate a marketing email for this brand:
+    if original_html:
+        # Trim HTML if extremely large (>80k chars) to stay within token limits
+        html_input = original_html[:80000] if len(original_html) > 80000 else original_html
+
+        user_prompt = f"""Rewrite this email for a new brand. Keep the EXACT same HTML structure, design, and styling — only change the text content, links, and alt text.
+
+Target brand details:
+- Brand: {brand_name}
+- Website: {brand_url or 'N/A'}
+- Industry: {industry or 'N/A'}
+- Tone: {tone}
+{f'- Special instructions: {instructions}' if instructions else ''}
+
+Here is the original email HTML to rewrite:
+
+{html_input}
+
+Return a JSON object with this exact structure:
+{{
+  "subject": "New subject line for {brand_name} (under 60 chars)",
+  "preview_text": "Preview text for inbox (under 100 chars)",
+  "html": "The rewritten HTML email — same structure/design, new content for {brand_name}"
+}}
+
+Important:
+- The "html" field must contain the COMPLETE rewritten HTML. Keep every table, div, style, image tag from the original — only change text and links.
+- Escape all special characters in JSON string values (use \\n for newlines, \\" for quotes).
+- Do NOT wrap the JSON in markdown code fences."""
+    else:
+        # Fallback: schema-based generation (legacy)
+        user_prompt = f"""Generate a marketing email for this brand:
 
 Brand: {brand_name}
 Website: {brand_url}
@@ -304,7 +329,6 @@ Important:
 
     result_text = response.content[0].text.strip()
 
-    # If the response was truncated (max_length), the JSON will be incomplete
     if response.stop_reason == "max_tokens":
         raise ValueError("AI response was truncated — email too complex. Try a simpler template.")
 
@@ -319,7 +343,6 @@ Important:
 
     result = _parse_json_response(result_text)
 
-    # Validate required fields
     if "html" not in result:
         raise ValueError("AI response missing 'html' field")
 

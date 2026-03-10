@@ -4729,12 +4729,13 @@ def extract_email_template(
 
 
 class GenerateEmailRequest(schemas.BaseModel):
-    template_schema: dict
+    template_schema: dict = {}
     brand_name: str
     brand_url: str = ""
     industry: str = ""
     tone: str = "professional"
     instructions: str = ""
+    email_id: Optional[int] = None
 
 
 @app.post("/ai/generate-email")
@@ -4767,6 +4768,13 @@ def ai_generate_email(
                 detail=f"Monthly AI generation limit reached ({ai_limit}). Upgrade for more.",
             )
 
+    # Fetch original email HTML if email_id provided
+    original_html = ""
+    if req.email_id:
+        email = db.query(models.Email).filter(models.Email.id == req.email_id).first()
+        if email and email.html:
+            original_html = email.html
+
     try:
         result = generate_email(
             template_schema=req.template_schema,
@@ -4775,6 +4783,7 @@ def ai_generate_email(
             industry=req.industry,
             tone=req.tone,
             instructions=req.instructions,
+            original_html=original_html,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
